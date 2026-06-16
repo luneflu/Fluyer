@@ -37,9 +37,7 @@
 						? 'animate__animated animate__fadeOut'
 						: 'animate__animated animate__fadeIn'
 					: ''}
-				{@const itemStyle = hiddenBySidebar
-					? 'pointer-events: none; opacity: 0;'
-					: 'opacity: 1;'}
+				{@const itemStyle = hiddenBySidebar ? 'pointer-events: none; opacity: 0;' : 'opacity: 1;'}
 				{@const displayStyle = visibleByFilter ? undefined : 'none'}
 				<div
 					use:vm.observeElement={itemKey}

@@ -4,7 +4,10 @@ import { MusicConfig } from '$lib/constants/MusicConfig';
 import ProgressService from '$lib/services/ProgressService.svelte';
 import MusicPlayerService from '$lib/services/MusicPlayerService.svelte';
 import ToastService from '$lib/services/ToastService.svelte';
-import TauriLibraryAPI, { CollectionType, type CollectionContext } from '$lib/tauri/TauriLibraryAPI';
+import TauriLibraryAPI, {
+	CollectionType,
+	type CollectionContext
+} from '$lib/tauri/TauriLibraryAPI';
 import filterStore from '$lib/stores/filter.svelte';
 import musicStore from '$lib/stores/music.svelte';
 import { MusicListType } from '$lib/features/music/types';

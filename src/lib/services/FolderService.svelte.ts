@@ -2,9 +2,8 @@ import TauriFolderAPI from '$lib/tauri/TauriFolderAPI';
 import { type FolderData, type MusicData } from '$lib/features/music/types';
 import { isWindows } from '$lib/platform';
 import folderStore from '$lib/stores/folder.svelte';
-import musicSvelte from '$lib/stores/music.svelte';
-import LibraryService from '$lib/services/LibraryService.svelte';
 import PersistentStoreService from '$lib/services/PersistentStoreService.svelte';
+import TauriLibraryAPI from '$lib/tauri/TauriLibraryAPI';
 
 const PATH_SEPARATOR = isWindows() ? '\\' : '/';
 const FolderService = {
@@ -30,7 +29,11 @@ const FolderService = {
 
 					folders.sort((a, b) => a.path.localeCompare(b.path, undefined, { sensitivity: 'base' }));
 
-					folderStore.list = folders;
+					// Pre-filter folders to only those containing music
+					const validPaths = await TauriLibraryAPI.filterFoldersWithMusic(
+						folders.map((f) => f.path)
+					);
+					folderStore.list = validPaths.map((path) => ({ path }));
 				})()
 		);
 	},
@@ -76,18 +79,6 @@ const FolderService = {
 		return FolderService.normalizePath(music.path).startsWith(
 			FolderService.normalizePath(folder.path)
 		);
-	},
-
-	getMusicList: (folder: FolderData | null): MusicData[] => {
-		if (!folder) return [];
-
-		const filteredMusic = musicSvelte.list?.filter((music) =>
-			FolderService.containsMusicRecursive(music, folder)
-		);
-
-		if (!filteredMusic) return [];
-
-		return LibraryService.sortMusicList(filteredMusic);
 	}
 };
 

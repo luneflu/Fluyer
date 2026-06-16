@@ -53,7 +53,11 @@ const itemHeight = $derived(state.itemWidth + (window.innerWidth > 640 ? 52 : 44
 const isHorizontal = $derived(musicStore.listType !== MusicListType.Album);
 
 const containerHeight = $derived.by(() => {
-	if (musicStore.listType === MusicListType.Playlist ? playlistStore.list.length === 0 : visualIndices.size === 0) {
+	if (
+		musicStore.listType === MusicListType.Playlist
+			? playlistStore.list.length === 0
+			: visualIndices.size === 0
+	) {
 		return 0;
 	}
 	if (isHorizontal) {
@@ -88,8 +92,9 @@ function itemClass(inViewport: boolean, hiddenBySidebar: boolean, extraClass = '
 }
 
 function itemStyle(hiddenBySidebar: boolean): string {
-	return `width: ${state.itemWidth}px; animation-duration: 500ms; ${hiddenBySidebar ? 'pointer-events: none; opacity: 0;' : 'opacity: 1;'
-		}`;
+	return `width: ${state.itemWidth}px; animation-duration: 500ms; ${
+		hiddenBySidebar ? 'pointer-events: none; opacity: 0;' : 'opacity: 1;'
+	}`;
 }
 
 function updateItemWidth() {
@@ -382,21 +387,37 @@ export function useAlbumList() {
 			}
 		});
 		return {
-			destroy() { }
+			destroy() {}
 		};
 	}
 
 	return {
 		state,
 
-		get isHorizontal() { return isHorizontal; },
-		get paddingTop() { return paddingTop; },
-		get itemHeight() { return itemHeight; },
-		get containerHeight() { return containerHeight; },
-		get bottomPadding() { return bottomPadding; },
-		get scrollClass() { return scrollClass; },
-		get data() { return data; },
-		get visibleItems() { return visibleItems; },
+		get isHorizontal() {
+			return isHorizontal;
+		},
+		get paddingTop() {
+			return paddingTop;
+		},
+		get itemHeight() {
+			return itemHeight;
+		},
+		get containerHeight() {
+			return containerHeight;
+		},
+		get bottomPadding() {
+			return bottomPadding;
+		},
+		get scrollClass() {
+			return scrollClass;
+		},
+		get data() {
+			return data;
+		},
+		get visibleItems() {
+			return visibleItems;
+		},
 
 		itemClass,
 		itemStyle,

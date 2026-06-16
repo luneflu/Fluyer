@@ -5,7 +5,6 @@ import MetadataService from '$lib/services/MetadataService.svelte';
 import MusicPlayerService from '$lib/services/MusicPlayerService.svelte';
 import PageService from '$lib/services/PageService.svelte';
 import QueueService from '$lib/services/QueueService.svelte';
-import LibraryService from '$lib/services/LibraryService.svelte';
 import LyricService, { type MusicLyric } from '$lib/services/LyricService.svelte';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import TauriBackgroundAPI from '$lib/tauri/TauriBackgroundAPI';

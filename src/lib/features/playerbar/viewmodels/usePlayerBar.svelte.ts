@@ -1,6 +1,4 @@
 import { PageRoutes } from '$lib/constants/PageRoutes';
-import { MusicConfig } from '$lib/constants/MusicConfig';
-import { type MusicData } from '$lib/features/music/types';
 import MetadataService from '$lib/services/MetadataService.svelte';
 import musicStore from '$lib/stores/music.svelte';
 import settingStore from '$lib/stores/setting.svelte';
@@ -9,7 +7,6 @@ import ProgressService from '$lib/services/ProgressService.svelte';
 import PageService from '$lib/services/PageService.svelte';
 import playerBarStore from '$lib/stores/playerBar.svelte';
 import QueueService from '$lib/services/QueueService.svelte';
-import LibraryService from '$lib/services/LibraryService.svelte';
 import { CoverArtSize } from '$lib/services/CoverArtService.svelte';
 
 let element = $state<HTMLDivElement>();

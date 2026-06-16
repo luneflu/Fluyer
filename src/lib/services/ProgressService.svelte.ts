@@ -12,8 +12,7 @@ const ProgressService = {
 
 		console.log(`Starting progress with duration: ${musicStore.currentMusic?.duration}`);
 
-		const updateInterval =
-			(musicStore.currentMusic!.duration / MusicConfig.max) * MusicConfig.step;
+		const updateInterval = (musicStore.currentMusic!.duration / MusicConfig.max) * MusicConfig.step;
 
 		musicStore.progressIntervalId = setInterval(() => {
 			musicStore.progressValue += MusicConfig.step;

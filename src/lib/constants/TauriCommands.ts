@@ -40,6 +40,8 @@ export const TauriCommands = {
 	LIBRARY_COLLECTION_ADD_AND_PLAY: 'library_collection_add_and_play',
 	LIBRARY_COLLECTION_ADD_TO_QUEUE: 'library_collection_add_to_queue',
 	LIBRARY_COLLECTION_SHUFFLE_AND_PLAY: 'library_collection_shuffle_and_play',
+	LIBRARY_FOLDER_INFO_GET: 'library_folder_info_get',
+	LIBRARY_FOLDERS_FILTER_HAS_MUSIC: 'library_folders_filter_has_music',
 
 	PLAYLIST_ALL_GET: 'playlist_all_get',
 	PLAYLIST_CREATE: 'playlist_create',
@@ -72,4 +74,3 @@ export const TauriCommands = {
 
 	UPDATE_CHECK: 'update_check'
 };
-

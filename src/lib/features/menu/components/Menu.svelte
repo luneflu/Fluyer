@@ -9,8 +9,8 @@
 	import { isDesktop, isWindows } from '$lib/platform';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import TauriBackgroundAPI from '$lib/tauri/TauriBackgroundAPI';
-	
-async function gotoPlayPage() {
+
+	async function gotoPlayPage() {
 		if (isDesktop()) {
 			await getCurrentWindow().setFullscreen(true);
 			if (isWindows()) {

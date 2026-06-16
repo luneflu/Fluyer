@@ -41,6 +41,8 @@ pub const COMMAND_HANDLERS: fn(tauri::ipc::Invoke) -> bool = tauri::generate_han
     crate::library::commands::library_album_count_get,
     crate::library::commands::library_album_get_by_index,
     crate::library::commands::library_album_get_first_by_index,
+    crate::library::commands::library_folder_info_get,
+    crate::library::commands::library_folders_filter_has_music,
     crate::library::commands::music_queue_count_get,
     crate::library::commands::music_queue_get_by_index,
     crate::library::commands::library_collection_add_and_play,
@@ -84,4 +86,3 @@ pub const COMMAND_HANDLERS: fn(tauri::ipc::Invoke) -> bool = tauri::generate_han
     crate::playlist::commands::playlist_image_upload,
     crate::playlist::commands::playlist_image_read,
 ];
-

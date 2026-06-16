@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { type MusicData } from '$lib/features/music/types';
 	import { useAlbumItem } from '$lib/features/album/viewmodels/useAlbumItem.svelte';
 
 	interface Props {

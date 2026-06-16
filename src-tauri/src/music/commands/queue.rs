@@ -26,4 +26,3 @@ pub fn music_queue_moveto(state: State<AppState>, from: usize, to: usize) {
 pub fn music_queue_shuffle(state: State<AppState>) {
     state.music_player.shuffle_track();
 }
-

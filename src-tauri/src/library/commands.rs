@@ -13,6 +13,13 @@ pub struct LibraryCounts {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FolderInfo {
+    pub track_count: usize,
+    pub total_duration: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum CollectionContext {
     Album {
@@ -145,6 +152,45 @@ pub fn music_queue_get_by_index(state: State<'_, AppState>, index: usize) -> Opt
     state.music_player.queue_get_by_index(index)
 }
 
+#[tauri::command]
+pub fn library_folder_info_get(lib: State<'_, SharedLibraryState>, path: String) -> FolderInfo {
+    let guard = lib.0.read().unwrap();
+    let mut track_count = 0;
+    let mut total_duration = 0.0;
+
+    for m in &guard.music_list {
+        if std::path::Path::new(&m.path).starts_with(&path) {
+            track_count += 1;
+            if let Some(d) = m.duration {
+                total_duration += d as f64;
+            }
+        }
+    }
+
+    FolderInfo {
+        track_count,
+        total_duration,
+    }
+}
+
+#[tauri::command]
+pub fn library_folders_filter_has_music(
+    lib: State<'_, SharedLibraryState>,
+    paths: Vec<String>,
+) -> Vec<String> {
+    let guard = lib.0.read().unwrap();
+    paths
+        .into_iter()
+        .filter(|p| {
+            let p_path = std::path::Path::new(p);
+            guard
+                .music_list
+                .iter()
+                .any(|m| std::path::Path::new(&m.path).starts_with(p_path))
+        })
+        .collect()
+}
+
 fn resolve_tracks(
     lib: &crate::library::LibraryState,
     context: &CollectionContext,
@@ -167,12 +213,14 @@ fn resolve_tracks(
             }
             albums.get(*index).map(|v| (*v).clone()).unwrap_or_default()
         }
-        CollectionContext::Folder { path } => lib
-            .music_list
-            .iter()
-            .filter(|m| m.path.starts_with(path.as_str()))
-            .cloned()
-            .collect(),
+        CollectionContext::Folder { path } => {
+            let p_path = std::path::Path::new(path);
+            lib.music_list
+                .iter()
+                .filter(|m| std::path::Path::new(&m.path).starts_with(p_path))
+                .cloned()
+                .collect()
+        }
         CollectionContext::Playlist { paths } => {
             let set: std::collections::HashSet<&str> = paths.iter().map(String::as_str).collect();
             lib.music_list
@@ -257,7 +305,9 @@ pub async fn library_sync() {
     let mut search_dirs: Vec<String> = vec![];
 
     // Get store music paths
-    let dir = match crate::state::app_store().get(crate::music::commands::directory::MUSIC_STORE_PATH_NAME) {
+    let dir = match crate::state::app_store()
+        .get(crate::music::commands::directory::MUSIC_STORE_PATH_NAME)
+    {
         Some(d) => d.to_string(),
         None => return,
     };
@@ -291,4 +341,3 @@ pub async fn library_sync() {
         now.elapsed().as_secs_f64()
     );
 }
-

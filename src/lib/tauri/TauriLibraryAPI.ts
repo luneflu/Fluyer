@@ -28,6 +28,11 @@ export type CollectionContext =
 	| { type: CollectionType.Folder; path: string }
 	| { type: CollectionType.Playlist; paths: string[] };
 
+export interface FolderInfo {
+	trackCount: number;
+	totalDuration: number;
+}
+
 const TauriLibraryAPI = {
 	load: async (): Promise<LibraryCounts> => {
 		return invoke<LibraryCounts>(TauriCommands.LIBRARY_LOAD);
@@ -91,6 +96,14 @@ const TauriLibraryAPI = {
 
 	collectionShuffleAndPlay: async (context: CollectionContext): Promise<void> => {
 		return invoke<void>(TauriCommands.LIBRARY_COLLECTION_SHUFFLE_AND_PLAY, { context });
+	},
+
+	getFolderInfo: async (path: string): Promise<FolderInfo> => {
+		return invoke<FolderInfo>(TauriCommands.LIBRARY_FOLDER_INFO_GET, { path });
+	},
+
+	filterFoldersWithMusic: async (paths: string[]): Promise<string[]> => {
+		return invoke<string[]>(TauriCommands.LIBRARY_FOLDERS_FILTER_HAS_MUSIC, { paths });
 	},
 
 	sync: async (): Promise<void> => {

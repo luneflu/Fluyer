@@ -5,7 +5,6 @@ import musicStore from '$lib/stores/music.svelte';
 import { type AlbumData, type MusicData, MusicListType } from '$lib/features/music/types';
 import ProgressService from '$lib/services/ProgressService.svelte';
 import { COVER_ART_DEBOUNCE_DELAY, CoverArtSize } from '$lib/services/CoverArtService.svelte';
-import QueueService from '$lib/services/QueueService.svelte';
 import MusicPlayerService from '$lib/services/MusicPlayerService.svelte';
 import TauriLibraryAPI, { CollectionType } from '$lib/tauri/TauriLibraryAPI';
 

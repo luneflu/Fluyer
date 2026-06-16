@@ -13,7 +13,6 @@ use tauri_plugin_fluyer::FluyerExt;
 
 use super::bass::*;
 
-
 #[derive(Clone, Debug)]
 struct TrackItem {
     metadata: MusicMetadata,
@@ -382,10 +381,7 @@ impl MusicPlayer {
     }
 
     pub fn queue_count(&self) -> usize {
-        self.state
-            .lock()
-            .map(|s| s.track.len())
-            .unwrap_or(0)
+        self.state.lock().map(|s| s.track.len()).unwrap_or(0)
     }
 
     pub fn queue_get_by_index(&self, index: usize) -> Option<MusicMetadata> {

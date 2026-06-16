@@ -18,13 +18,7 @@ export default defineConfig([
 		}
 	},
 	{
-		ignores: [
-			'build/',
-			'.svelte-kit/',
-			'dist/',
-			'node_modules/',
-			'src-tauri/'
-		]
+		ignores: ['build/', '.svelte-kit/', 'dist/', 'node_modules/', 'src-tauri/']
 	},
 	{
 		files: ['**/*.svelte'],
@@ -58,6 +52,5 @@ export default defineConfig([
 				}
 			]
 		}
-	},
+	}
 ]);
-

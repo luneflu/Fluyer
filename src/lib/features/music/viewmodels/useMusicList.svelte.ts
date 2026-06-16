@@ -4,7 +4,6 @@ import filterStore from '$lib/stores/filter.svelte';
 import filterBarStore from '$lib/stores/filterBar.svelte';
 import folderStore from '$lib/stores/folder.svelte';
 import playlistStore from '$lib/stores/playlist.svelte';
-import FolderService from '$lib/services/FolderService.svelte';
 import sidebarStore from '$lib/stores/sidebar.svelte';
 import { SidebarType } from '$lib/features/sidebar/types';
 import TauriLibraryAPI, { type MusicFilter } from '$lib/tauri/TauriLibraryAPI';
@@ -68,13 +67,10 @@ function buildFilter(): MusicFilter {
 const data = $derived.by(() => {
 	const isFolderMode = musicStore.listType === MusicListType.Folder;
 
-	const musicIndices: (number | FolderData)[] = Array.from(
-		{ length: rustMusicCount },
-		(_, i) => i
-	);
+	const musicIndices: (number | FolderData)[] = Array.from({ length: rustMusicCount }, (_, i) => i);
 
 	if (isFolderMode) {
-		let folders = folderStore.list.filter((f) => FolderService.getMusicList(f).length > 0);
+		let folders = folderStore.list;
 		if (!filterBarStore.sortAsc) folders = [...folders].reverse();
 		return [...musicIndices, ...folders];
 	}

@@ -58,7 +58,9 @@ impl LibraryState {
                 }
                 // Folder filter
                 if let Some(fp) = folder_path {
-                    if !m.path.starts_with(fp) {
+                    let fp_path = std::path::Path::new(fp);
+                    let m_path = std::path::Path::new(&m.path);
+                    if m_path.parent() != Some(fp_path) {
                         return false;
                     }
                 }

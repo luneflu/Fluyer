@@ -10,6 +10,7 @@ import QueueService from '$lib/services/QueueService.svelte';
 import MusicPlayerService from '$lib/services/MusicPlayerService.svelte';
 import ToastService from '$lib/services/ToastService.svelte';
 import { COVER_ART_DEBOUNCE_DELAY, CoverArtSize } from '$lib/services/CoverArtService.svelte';
+import TauriLibraryAPI, { CollectionType, type FolderInfo } from '$lib/tauri/TauriLibraryAPI';
 
 export function useMusicItem(
 	getMusic: () => MusicData | undefined,
@@ -18,6 +19,7 @@ export function useMusicItem(
 ) {
 	let coverArt = $state<Promise<string | null> | null>(null);
 	let currentBlobUrl: string | null = null;
+	let folderInfo = $state<FolderInfo | null>(null);
 
 	const music = $derived(getMusic());
 	const folder = $derived(getFolder());
@@ -31,6 +33,14 @@ export function useMusicItem(
 		const currentFolder = folder;
 
 		if (!isVisible) return;
+
+		if (currentFolder) {
+			TauriLibraryAPI.getFolderInfo(currentFolder.path).then((info) => {
+				if (!cancelled) {
+					folderInfo = info;
+				}
+			});
+		}
 
 		let cancelled = false;
 		const timeoutId = setTimeout(async () => {
@@ -84,10 +94,9 @@ export function useMusicItem(
 
 	const smallLabel = $derived.by(() => {
 		if (folder) {
-			const folderMusic = FolderService.getMusicList(folder);
-			const totalDuration = folderMusic.reduce((acc, m) => acc + m.duration, 0);
-			const durationText = ProgressService.formatDuration(totalDuration);
-			return `${folderMusic.length} ${MusicConfig.separator} ${durationText}`;
+			if (!folderInfo) return '';
+			const durationText = ProgressService.formatDuration(folderInfo.totalDuration);
+			return `${folderInfo.trackCount} ${MusicConfig.separator} ${durationText}`;
 		}
 
 		const duration = ProgressService.formatDuration(music?.duration ?? 0);
@@ -105,24 +114,29 @@ export function useMusicItem(
 	async function addMusicAndPlay() {
 		if (music) {
 			await QueueService.resetAndAdd(music);
-		} else {
-			await QueueService.resetAndAddList(FolderService.getMusicList(folder!));
+			MusicPlayerService.play();
+		} else if (folder) {
+			await TauriLibraryAPI.collectionAddAndPlay({
+				type: CollectionType.Folder,
+				path: folder.path
+			});
 		}
-		MusicPlayerService.play();
 	}
 
 	async function addMusic() {
-		const tracks = music ? [music] : FolderService.getMusicList(folder!);
-
 		if (music) {
 			await QueueService.add(music);
-		} else {
-			await QueueService.resetAndAddList(tracks);
+			const title = music.title ?? music.filename ?? MusicConfig.defaultTitle;
+			const artist = music.artist ?? MusicConfig.defaultArtist;
+			ToastService.info(`Added music to queue: ${title} ${MusicConfig.separatorAlbum} ${artist}`);
+		} else if (folder) {
+			await TauriLibraryAPI.collectionAddToQueue({
+				type: CollectionType.Folder,
+				path: folder.path
+			});
+			const folderName = folder.path.split(FolderService.PATH_SEPARATOR).pop();
+			ToastService.info(`Added folder to queue: ${folderName}`);
 		}
-
-		const title = music?.title ?? music?.filename ?? MusicConfig.defaultTitle;
-		const artist = music?.artist ?? MusicConfig.defaultArtist;
-		ToastService.info(`Added music to queue: ${title} ${MusicConfig.separatorAlbum} ${artist}`);
 	}
 
 	async function selectFolder() {
