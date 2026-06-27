@@ -228,7 +228,7 @@ pub mod bass_android {
                     u64,
                     Option<unsafe extern "C" fn(u32, u32, u32, *mut std::ffi::c_void)>,
                     *mut std::ffi::c_void,
-                )>(b"BASS_ChannelSetSync")
+                ) -> u32>(b"BASS_ChannelSetSync")
                 .map_err(|e| format!("Failed to load BASS_ChannelSetSync: {}", e))?;
 
             // Load BASSMIX functions
