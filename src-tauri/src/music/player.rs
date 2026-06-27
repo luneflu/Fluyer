@@ -988,7 +988,7 @@ impl MusicPlayer {
         Self::play_pause_inner(&self.bass_mixer, &self.current_stream, play);
     }
 
-    fn play_pause_inner(bass_mixer: &Arc<AtomicU32>, _current_stream: &Arc<AtomicU32>, play: bool) {
+    fn play_pause_inner(bass_mixer: &Arc<AtomicU32>, current_stream: &Arc<AtomicU32>, play: bool) {
         let bm = bass_mixer.load(Ordering::SeqCst);
 
         #[cfg(desktop)]
@@ -1260,8 +1260,8 @@ impl MusicPlayer {
         state: &Arc<Mutex<PlayerState>>,
         temp_wav_path: &Arc<Mutex<Option<PathBuf>>>,
         music: MusicMetadata,
-        _index: usize,
-        _total_count: usize,
+        index: usize,
+        total_count: usize,
     ) -> bool {
         let bm = bass_mixer.load(Ordering::SeqCst);
 

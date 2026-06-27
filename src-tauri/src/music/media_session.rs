@@ -1,6 +1,7 @@
 #![allow(unused_variables)]
 
 use crate::music::metadata::MusicMetadata;
+use crate::state::app_handle;
 
 #[cfg(target_os = "android")]
 use tauri_plugin_fluyer::FluyerExt;
@@ -14,8 +15,10 @@ impl MediaSession {
             use crate::state::app_handle;
             crate::info!("Initializing Android Media Control");
             let _ = app_handle().fluyer().init_media_control(|event| {
+                use tauri::Manager;
+
                 crate::info!("Media Control Action: {}", event.action);
-                let handle = app_handle();
+                let handle: &tauri::AppHandle<_> = app_handle();
                 let state = handle.state::<crate::state::AppState>();
                 if event.action.starts_with("seek:") {
                     if let Ok(pos) = event.action[5..].parse::<u64>() {
@@ -26,7 +29,7 @@ impl MediaSession {
                 } else if event.action == "next" {
                     state.music_player.play_next(true);
                 } else {
-                    state.music_player.send_command(event.action);
+                    crate::warn!("Unknown media session command: {}", event.action);
                 }
             });
         }
