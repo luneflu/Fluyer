@@ -26,15 +26,15 @@ tauri-plugin-dialog = "2"
 tauri-plugin-os = "2"
 tauri-plugin-prevent-default = "5"
 tauri-plugin-fluyer = { path = "./tauri-plugin-fluyer" }
-regex = "1.11.1"
+regex = "1.12"
 tauri-plugin-decorum = "1.1.1"
 image = "0.25.10"
 lazy_static = "1.5.0"
 dotenvy = "0.15.7"
 dotenvy_macro = "0.15.7"
-rusqlite = { version = "0.39.0", features = ["bundled"] }
+rusqlite = { version = "0.40", features = ["bundled"] }
 chrono = "0.4.41"
-rusqlite_migration = "2.5"
+rusqlite_migration = "2.6"
 tokio = { version = "1.52.3", features = ["process", "sync"] }
 state = "0.6.0"
 serde_json = "1"
@@ -54,7 +54,7 @@ tauri-plugin-opener = "2"
 femtovg = { version = "0.23", features = ["wgpu", "image-loading"] }
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
-reqwest = { version = "0.13.1", default-features = false, features = ["json", "rustls"] }
+reqwest = { version = "0.13.4", default-features = false, features = ["json", "rustls"] }
 
 [target.'cfg(target_os = "android")'.dependencies]
 libloading = "0.8"
