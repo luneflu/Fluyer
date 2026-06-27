@@ -15,10 +15,10 @@ name = "fluyer_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.5.6", features = [] }
+tauri-build = { version = "2.6.3", features = [] }
 
 [dependencies]
-tauri = { version = "2.11.0", features = [] }
+tauri = { version = "2.11.3", features = [] }
 serde = { version = "1", features = ["derive"] }
 walkdir = "2.5.0"
 tauri-plugin-store = "2"
@@ -49,12 +49,16 @@ tauri-plugin-fs = "2"
 tauri-plugin-device-info = "1.0.0"
 fast_image_resize = { version = "6.0.0", features = ["image"] }
 tauri-plugin-opener = "2"
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
 reqwest = { version = "0.13.4", default-features = false, features = ["json", "rustls"] }
 
 [target.'cfg(not(target_os = "linux"))'.dependencies]
 femtovg = { version = "0.25", features = ["wgpu", "image-loading"] }
 
 [target.'cfg(target_os = "android")'.dependencies]
+# FIXME: Use the latest older version that doesn't need any rustls configuration
+reqwest = { version = "0.12.12", default-features = false, features = ["json", "rustls-tls"] }
 libloading = "0.9"
 jni = "0.21"
 ndk = "0.9"
