@@ -215,11 +215,9 @@ pub fn setup_wgpu(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>
     #[cfg(target_os = "macos")]
     let backends = Backends::METAL;
 
-    let instance = wgpu::Instance::new(&InstanceDescriptor {
+    let instance = wgpu::Instance::new(InstanceDescriptor {
         backends,
-        flags: InstanceFlags::default(),
-        memory_budget_thresholds: wgpu::MemoryBudgetThresholds::default(),
-        backend_options: BackendOptions::default(),
+        ..InstanceDescriptor::new_without_display_handle()
     });
 
     #[cfg(not(target_os = "android"))]
@@ -434,9 +432,9 @@ pub fn start_render_loop(app_handle: tauri::AppHandle) {
             };
 
             let frame = match surface.get_current_texture() {
-                Ok(f) => f,
-                Err(e) => {
-                    crate::warn!("Failed to get current texture: {e}");
+                wgpu::CurrentSurfaceTexture::Success(f) => f,
+                _ => {
+                    crate::warn!("Failed to get current texture");
                     drop(state_guard);
                     drop(bg_state);
                     std::thread::sleep(std::time::Duration::from_millis(1000));
