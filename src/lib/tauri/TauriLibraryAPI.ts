@@ -69,12 +69,10 @@ const TauriLibraryAPI = {
 	getAlbumFirstByIndex: async (
 		index: number,
 		search: string,
-		sortAsc: boolean
 	): Promise<MusicData | null> => {
 		return invoke<MusicData | null>(TauriCommands.LIBRARY_ALBUM_GET_FIRST_BY_INDEX, {
 			index,
 			search,
-			sortAsc
 		});
 	},
 

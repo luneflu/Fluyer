@@ -32,7 +32,6 @@ export function useAlbumItem(
 		TauriLibraryAPI.getAlbumFirstByIndex(
 			albumIndex,
 			filterStore.search,
-			filterBarStore.sortAsc
 		).then((m) => {
 			if (m) music = m;
 		});

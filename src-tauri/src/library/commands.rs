@@ -132,13 +132,9 @@ pub fn library_album_get_first_by_index(
     lib: State<'_, SharedLibraryState>,
     index: usize,
     search: String,
-    sort_asc: bool,
 ) -> Option<MusicMetadata> {
     let guard = lib.0.read().unwrap();
     let mut albums = guard.filtered_albums(&search);
-    if !sort_asc {
-        albums.reverse();
-    }
     albums.get(index).and_then(|tracks| tracks.first().cloned())
 }
 
