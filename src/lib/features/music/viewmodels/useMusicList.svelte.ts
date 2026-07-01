@@ -72,6 +72,10 @@ const data = $derived.by(() => {
 	if (isFolderMode) {
 		let folders = folderStore.list;
 		if (!filterBarStore.sortAsc) folders = [...folders].reverse();
+
+		if(!folderStore.currentFolder){
+			return folders;
+		}
 		return [...musicIndices, ...folders];
 	}
 
