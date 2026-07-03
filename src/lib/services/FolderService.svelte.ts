@@ -29,11 +29,15 @@ const FolderService = {
 
 					folders.sort((a, b) => a.path.localeCompare(b.path, undefined, { sensitivity: 'base' }));
 
+					// Note: Yeah... Maybe implement this later cuz race condition with the LibraryService
+					// I think it's a feature cuz users should be shown with empty folders :)
 					// Pre-filter folders to only those containing music
-					const validPaths = await TauriLibraryAPI.filterFoldersWithMusic(
-						folders.map((f) => f.path)
-					);
-					folderStore.list = validPaths.map((path) => ({ path }));
+					// const validPaths = await TauriLibraryAPI.filterFoldersWithMusic(
+					// 	folders.map((f) => f.path)
+					// );
+					// folderStore.list = validPaths.map((path) => ({ path }));
+
+					folderStore.list = folders;
 				})()
 		);
 	},
