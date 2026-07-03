@@ -1,5 +1,7 @@
 import { type FolderData, type MusicData, MusicListType } from '../types';
 import filterStore from '$lib/stores/filter.svelte';
+import filterBarStore from '$lib/stores/filterBar.svelte';
+import playlistStore from '$lib/stores/playlist.svelte';
 import MetadataService from '$lib/services/MetadataService.svelte';
 import folderStore from '$lib/stores/folder.svelte';
 import FolderService from '$lib/services/FolderService.svelte';
@@ -13,7 +15,8 @@ import { COVER_ART_DEBOUNCE_DELAY, CoverArtSize } from '$lib/services/CoverArtSe
 import TauriLibraryAPI, { CollectionType, type FolderInfo } from '$lib/tauri/TauriLibraryAPI';
 
 export function useMusicItem(
-	getMusic: () => MusicData | undefined,
+	getMusicIndex: () => number | undefined,
+	getMusicProp: () => MusicData | undefined,
 	getFolder: () => FolderData | undefined,
 	getVisible: () => boolean = () => true
 ) {
@@ -21,8 +24,58 @@ export function useMusicItem(
 	let currentBlobUrl: string | null = null;
 	let folderInfo = $state<FolderInfo | null>(null);
 
-	const music = $derived(getMusic());
+	const musicIndex = $derived(getMusicIndex());
+	const musicProp = $derived(getMusicProp());
 	const folder = $derived(getFolder());
+	const visible = $derived(getVisible());
+
+	let resolvedMusic = $state<MusicData | undefined>(musicProp);
+
+	$effect(() => {
+		if (musicProp !== undefined) {
+			resolvedMusic = musicProp;
+		}
+	});
+
+	$effect(() => {
+		if (musicIndex === undefined || !visible) return;
+
+		const isFolderMode = musicStore.listType === MusicListType.Folder;
+		const isPlaylistMode = musicStore.listType === MusicListType.Playlist;
+
+		const filter = {
+			search: filterStore.search,
+			sortAsc: filterBarStore.sortAsc,
+			albumName: filterStore.album?.name,
+			folderPath: isFolderMode && folderStore.currentFolder ? folderStore.currentFolder.path : undefined,
+			playlistPaths:
+				isPlaylistMode && playlistStore.selectedPlaylist
+					? playlistStore.selectedPlaylist.paths
+					: undefined
+		};
+
+		TauriLibraryAPI.getMusicByIndex(musicIndex, filter).then((m) => {
+			if (m) resolvedMusic = m;
+		});
+	});
+
+	const music = $derived(resolvedMusic);
+
+	const isSelectedForPlaylist = $derived(
+		resolvedMusic ? playlistStore.selectedPaths.includes(resolvedMusic.path) : false
+	);
+
+	function togglePlaylistSelection() {
+		if (!resolvedMusic) return;
+		const idx = playlistStore.selectedPaths.indexOf(resolvedMusic.path);
+		if (idx >= 0) {
+			playlistStore.selectedPaths = playlistStore.selectedPaths.filter(
+				(p) => p !== resolvedMusic!.path
+			);
+		} else {
+			playlistStore.selectedPaths = [...playlistStore.selectedPaths, resolvedMusic.path];
+		}
+	}
 
 	// Use $effect with cleanup to cancel pending requests when component unmounts
 	$effect(() => {
@@ -182,6 +235,13 @@ export function useMusicItem(
 		get smallLabel() {
 			return smallLabel;
 		},
+		get resolvedMusic() {
+			return resolvedMusic;
+		},
+		get isSelectedForPlaylist() {
+			return isSelectedForPlaylist;
+		},
+		togglePlaylistSelection,
 		addMusicAndPlay,
 		addMusic,
 		selectFolder

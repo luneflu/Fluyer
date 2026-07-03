@@ -1,15 +1,9 @@
 <script lang="ts">
-	import { type MusicData, type FolderData } from '../types';
+	import { type MusicData, type FolderData } from './types';
 	import { useMusicItem } from '../viewmodels/useMusicItem.svelte';
 	import Icon from '$lib/ui/icon/Icon.svelte';
 	import { IconType } from '$lib/ui/icon/types';
 	import playlistStore from '$lib/stores/playlist.svelte';
-	import TauriLibraryAPI from '$lib/tauri/TauriLibraryAPI';
-	import filterStore from '$lib/stores/filter.svelte';
-	import filterBarStore from '$lib/stores/filterBar.svelte';
-	import musicStore from '$lib/stores/music.svelte';
-	import { MusicListType } from '../types';
-	import folderStore from '$lib/stores/folder.svelte';
 
 	interface Props {
 		musicIndex?: number;
@@ -20,52 +14,12 @@
 
 	let { musicIndex, music: musicProp, folder, visible = true }: Props = $props();
 
-	// Resolved music: either passed directly or fetched from Rust by index
-	let resolvedMusic = $state<MusicData | undefined>(musicProp);
-
-	$effect(() => {
-		if (musicIndex === undefined || !visible) return;
-
-		const isFolderMode = musicStore.listType === MusicListType.Folder;
-		const isPlaylistMode = musicStore.listType === MusicListType.Playlist;
-
-		const filter = {
-			search: filterStore.search,
-			sortAsc: filterBarStore.sortAsc,
-			albumName: filterStore.album?.name,
-			folderPath: isFolderMode ? folderStore.currentFolder?.path : undefined,
-			playlistPaths:
-				isPlaylistMode && playlistStore.selectedPlaylist
-					? playlistStore.selectedPlaylist.paths
-					: undefined
-		};
-
-		TauriLibraryAPI.getMusicByIndex(musicIndex, filter).then((m) => {
-			if (m) resolvedMusic = m;
-		});
-	});
-
 	const vm = useMusicItem(
-		() => resolvedMusic,
+		() => musicIndex,
+		() => musicProp,
 		() => folder,
 		() => visible
 	);
-
-	const isSelectedForPlaylist = $derived(
-		resolvedMusic ? playlistStore.selectedPaths.includes(resolvedMusic.path) : false
-	);
-
-	function togglePlaylistSelection() {
-		if (!resolvedMusic) return;
-		const idx = playlistStore.selectedPaths.indexOf(resolvedMusic.path);
-		if (idx >= 0) {
-			playlistStore.selectedPaths = playlistStore.selectedPaths.filter(
-				(p) => p !== resolvedMusic!.path
-			);
-		} else {
-			playlistStore.selectedPaths = [...playlistStore.selectedPaths, resolvedMusic.path];
-		}
-	}
 </script>
 
 <div class="group relative w-full text-sm md:text-base">
@@ -120,11 +74,11 @@
 	</div>
 
 	<div class="absolute left-0 top-0 w-full py-2">
-		{#if playlistStore.isCreating && resolvedMusic}
+		{#if playlistStore.isCreating && vm.resolvedMusic}
 			<div class="grid w-full grid-cols-[max-content_auto_max-content]">
 				<div class="h-12 w-12 md:h-14 md:w-14"></div>
 
-				<div class="cursor-pointer" onclick={togglePlaylistSelection}></div>
+				<div class="cursor-pointer" onclick={vm.togglePlaylistSelection}></div>
 
 				<div class="h-12 w-12 ps-4 md:h-14 md:w-14">
 					<label
@@ -132,8 +86,8 @@
 					>
 						<input
 							type="checkbox"
-							checked={isSelectedForPlaylist}
-							onchange={togglePlaylistSelection}
+							checked={vm.isSelectedForPlaylist}
+							onchange={vm.togglePlaylistSelection}
 							class="h-5 w-5 accent-white"
 						/>
 					</label>
