@@ -7,7 +7,7 @@ const TauriQueueAPI = {
 	},
 	add: (list: MusicData[]) => {
 		return invoke(TauriCommands.MUSIC_QUEUE_ADD, {
-			playlist: list
+			paths: list.map((m) => m.path)
 		});
 	},
 	remove: (index: number) => {
