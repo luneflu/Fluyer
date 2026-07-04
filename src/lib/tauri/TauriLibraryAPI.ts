@@ -19,14 +19,16 @@ export enum CollectionType {
 	Album = 'album',
 	AlbumIndex = 'albumIndex',
 	Folder = 'folder',
-	Playlist = 'playlist'
+	Playlist = 'playlist',
+	All = 'all'
 }
 
 export type CollectionContext =
 	| { type: CollectionType.Album; name: string }
 	| { type: CollectionType.AlbumIndex; index: number; search: string; sortAsc: boolean }
 	| { type: CollectionType.Folder; path: string }
-	| { type: CollectionType.Playlist; paths: string[] };
+	| { type: CollectionType.Playlist; paths: string[] }
+	| { type: CollectionType.All };
 
 export interface FolderInfo {
 	trackCount: number;

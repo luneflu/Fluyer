@@ -37,6 +37,7 @@ pub enum CollectionContext {
     Playlist {
         paths: Vec<String>,
     },
+    All,
 }
 
 #[tauri::command]
@@ -225,6 +226,7 @@ fn resolve_tracks(
                 .cloned()
                 .collect()
         }
+        CollectionContext::All => lib.music_list.clone(),
     }
 }
 
