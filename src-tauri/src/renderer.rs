@@ -4,7 +4,6 @@ use image::RgbaImage;
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
 
-// Common abstract state for managing the animated background transitions and caching.
 pub struct SharedRendererState {
     pub current_image_id: Option<femtovg::ImageId>,
     pub next_image_id: Option<femtovg::ImageId>,
@@ -46,14 +45,12 @@ pub fn init_global_renderer(app: &mut tauri::App) {
     }));
 }
 
-// ── Public API ────────────────────────────────────────────────────────────────
 
 pub fn update_background(img: RgbaImage) {
     if let Some(shared) = app_handle().try_state::<Arc<GlobalRenderer>>() {
         let mut state = shared.bg_state.lock().unwrap();
         state.cached_image = Some(img.clone());
         state.pending_next = Some(img);
-        state.transition_start = Some(std::time::Instant::now());
         state.needs_redraw = true;
 
         #[cfg(not(target_os = "linux"))]
@@ -129,6 +126,7 @@ pub fn draw_background<T: Renderer>(canvas: &mut Canvas<T>, state: &mut SharedRe
             let _ = canvas.delete_image(id);
         }
         state.next_image_id = load_rgba_as_image(canvas, &img);
+        state.transition_start = Some(std::time::Instant::now());
     }
 
     if let Some(img) = state.pending_current.take() {
