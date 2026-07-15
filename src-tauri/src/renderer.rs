@@ -83,8 +83,6 @@ pub fn trigger_redraw() {
     }
 }
 
-// ── Common Canvas Helpers ──────────────────────────────────────────────────────
-
 fn load_rgba_as_image<T: Renderer>(
     canvas: &mut Canvas<T>,
     img: &RgbaImage,

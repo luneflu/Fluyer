@@ -99,7 +99,6 @@ macro_rules! debug {
     };
 }
 
-/// Log a trace message
 macro_rules! trace {
     ($($arg:tt)*) => {
         $crate::logger::_log($crate::logger::Level::Trace, module_path!(), format_args!($($arg)*))
