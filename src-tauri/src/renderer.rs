@@ -45,7 +45,6 @@ pub fn init_global_renderer(app: &mut tauri::App) {
     }));
 }
 
-
 pub fn update_background(img: RgbaImage) {
     if let Some(shared) = app_handle().try_state::<Arc<GlobalRenderer>>() {
         let mut state = shared.bg_state.lock().unwrap();
@@ -87,21 +86,29 @@ fn load_rgba_as_image<T: Renderer>(
     canvas: &mut Canvas<T>,
     img: &RgbaImage,
 ) -> Option<femtovg::ImageId> {
-    use std::io::Cursor;
-    let mut png_bytes = Vec::new();
-    if image::write_buffer_with_format(
-        &mut Cursor::new(&mut png_bytes),
-        img.as_raw(),
-        img.width(),
-        img.height(),
-        image::ColorType::Rgba8,
-        image::ImageFormat::Png,
-    )
-    .is_err()
-    {
-        return None;
+    let dyn_img = image::DynamicImage::ImageRgba8(img.clone());
+    if let Ok(source) = femtovg::ImageSource::try_from(&dyn_img) {
+        canvas.create_image(source, ImageFlags::empty()).ok()
+    } else {
+        None
     }
-    canvas.load_image_mem(&png_bytes, ImageFlags::empty()).ok()
+}
+
+impl SharedRendererState {
+    pub fn tick_transition<T: Renderer>(&mut self, canvas: &mut Canvas<T>) {
+        if let Some(start) = self.transition_start {
+            let elapsed = start.elapsed().as_secs_f32();
+            if elapsed >= 0.75 {
+                // Transition complete: Promote next into current!
+                let old = self.current_image_id.take();
+                if let Some(id) = old {
+                    let _ = canvas.delete_image(id);
+                }
+                self.current_image_id = self.next_image_id.take();
+                self.transition_start = None;
+            }
+        }
+    }
 }
 
 // Common drawing logic for both WGPU and GTK/OpenGL loops.
@@ -135,19 +142,7 @@ pub fn draw_background<T: Renderer>(canvas: &mut Canvas<T>, state: &mut SharedRe
         state.current_image_id = load_rgba_as_image(canvas, &img);
     }
 
-    // Check transition progress
-    if let Some(start) = state.transition_start {
-        let elapsed = start.elapsed().as_secs_f32();
-        if elapsed >= 0.75 {
-            // Transition complete: Promote next into current!
-            let old = state.current_image_id.take();
-            if let Some(id) = old {
-                let _ = canvas.delete_image(id);
-            }
-            state.current_image_id = state.next_image_id.take();
-            state.transition_start = None;
-        }
-    }
+    state.tick_transition(canvas);
 
     let mix = if let Some(start) = state.transition_start {
         (start.elapsed().as_secs_f32() / 0.75).min(1.0)

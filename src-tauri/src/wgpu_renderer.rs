@@ -7,155 +7,162 @@ use tauri::{async_runtime::block_on, Manager};
 use tauri_plugin_device_info::DeviceInfoExt;
 use wgpu::{BackendOptions, Backends, InstanceDescriptor, InstanceFlags};
 
+#[cfg(target_os = "android")]
+fn create_android_surface(
+    instance: &wgpu::Instance,
+    app_handle: &tauri::AppHandle,
+) -> Result<wgpu::Surface<'static>, Box<dyn std::error::Error>> {
+    use jni::objects::{JClass, JObject, JValue};
+    use raw_window_handle::{
+        AndroidDisplayHandle, AndroidNdkWindowHandle, RawDisplayHandle, RawWindowHandle,
+    };
+    use std::ffi::c_void;
+    use std::sync::mpsc;
+    use tauri::Manager;
+
+    let window = app_handle
+        .get_webview_window("main")
+        .ok_or("Failed to get main window")?;
+    let (tx, rx) = mpsc::channel();
+
+    window
+        .with_webview(move |webview| {
+            // jni_handle().exec provides the JNIEnv and Android Context natively
+            webview
+                .jni_handle()
+                .exec(move |env, context, _android_webview| {
+                    let result: Result<usize, String> =
+                        (|| -> Result<usize, Box<dyn std::error::Error>> {
+                            let class_context = env.find_class("android/content/Context")?;
+                            let get_class_loader_method = env.get_method_id(
+                                class_context,
+                                "getClassLoader",
+                                "()Ljava/lang/ClassLoader;",
+                            )?;
+
+                            let class_loader = unsafe {
+                                env.call_method_unchecked(
+                                    context,
+                                    get_class_loader_method,
+                                    jni::signature::ReturnType::Object,
+                                    &[],
+                                )
+                            }?
+                            .l()?;
+
+                            let class_class_loader = env.find_class("java/lang/ClassLoader")?;
+                            let load_class_method = env.get_method_id(
+                                class_class_loader,
+                                "loadClass",
+                                "(Ljava/lang/String;)Ljava/lang/Class;",
+                            )?;
+
+                            let class_name_str =
+                                env.new_string("org.alvindimas05.fluyerplugin.FluyerPlugin")?;
+                            let mut android_surface_obj: JObject = JObject::null();
+
+                            crate::debug!("create_surface: Waiting for surface class load...");
+
+                            loop {
+                                let fluyer_plugin_class_value = unsafe {
+                                    env.call_method_unchecked(
+                                        &class_loader,
+                                        load_class_method,
+                                        jni::signature::ReturnType::Object,
+                                        &[JValue::Object(&class_name_str).as_jni()],
+                                    )
+                                };
+
+                                if let Ok(val) = fluyer_plugin_class_value {
+                                    let fluyer_plugin_class_obj = val.l()?;
+                                    let fluyer_plugin_class: JClass =
+                                        fluyer_plugin_class_obj.into();
+
+                                    let field_id = env.get_static_field_id(
+                                        &fluyer_plugin_class,
+                                        "surface",
+                                        "Landroid/view/Surface;",
+                                    )?;
+
+                                    let surface_obj_res = env.get_static_field_unchecked(
+                                        &fluyer_plugin_class,
+                                        field_id,
+                                        jni::signature::JavaType::Object(
+                                            "Landroid/view/Surface;".to_string(),
+                                        ),
+                                    );
+
+                                    if let Ok(obj_val) = surface_obj_res {
+                                        let obj = obj_val.l()?;
+                                        if !obj.is_null() {
+                                            crate::debug!(
+                                                "create_surface: Found valid surface object"
+                                            );
+                                            android_surface_obj = obj;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                crate::debug!(
+                                    "create_surface: Waiting for surface check iteration..."
+                                );
+                                std::thread::sleep(std::time::Duration::from_millis(100));
+                            }
+
+                            if android_surface_obj.is_null() {
+                                return Err("Timed out waiting for Android Surface".into());
+                            }
+
+                            // Extract NativeWindow inside the JNI block
+                            let native_window = unsafe {
+                                ndk::native_window::NativeWindow::from_surface(
+                                    env.get_native_interface(),
+                                    android_surface_obj.as_raw(),
+                                )
+                            }
+                            .ok_or("Failed to create native window from surface")?;
+
+                            let native_window_ref = native_window.ptr().as_ptr();
+                            std::mem::forget(native_window);
+
+                            Ok(native_window_ref as usize)
+                        })()
+                        .map_err(|e| e.to_string());
+
+                    let _ = tx.send(result);
+                });
+        })
+        .map_err(|e| e.to_string())?;
+
+    // Block until the JNI closure completes and returns the pointer
+    let native_window_ptr = rx
+        .recv()
+        .map_err(|_| "Channel closed before surface could be extracted".to_string())??
+        as *mut c_void;
+
+    let handle = AndroidNdkWindowHandle::new(std::ptr::NonNull::new(native_window_ptr).unwrap());
+    let raw_window_handle = RawWindowHandle::AndroidNdk(handle);
+
+    let display_handle = AndroidDisplayHandle::new();
+    let raw_display_handle = RawDisplayHandle::Android(display_handle);
+
+    unsafe {
+        Ok(
+            instance.create_surface_unsafe(wgpu::SurfaceTargetUnsafe::RawHandle {
+                raw_display_handle: Some(raw_display_handle),
+                raw_window_handle,
+            })?,
+        )
+    }
+}
+
 pub fn create_surface(
     instance: &wgpu::Instance,
     app_handle: &tauri::AppHandle,
 ) -> Result<wgpu::Surface<'static>, Box<dyn std::error::Error>> {
     #[cfg(target_os = "android")]
-    let surface = {
-        use jni::objects::{JClass, JObject, JValue};
-        use raw_window_handle::{
-            AndroidDisplayHandle, AndroidNdkWindowHandle, RawDisplayHandle, RawWindowHandle,
-        };
-        use std::ffi::c_void;
-        use std::sync::mpsc;
-        use tauri::Manager;
-
-        let window = app_handle
-            .get_webview_window("main")
-            .ok_or("Failed to get main window")?;
-        let (tx, rx) = mpsc::channel();
-
-        window
-            .with_webview(move |webview| {
-                // jni_handle().exec provides the JNIEnv and Android Context natively
-                webview
-                    .jni_handle()
-                    .exec(move |env, context, _android_webview| {
-                        let result: Result<usize, String> =
-                            (|| -> Result<usize, Box<dyn std::error::Error>> {
-                                let class_context = env.find_class("android/content/Context")?;
-                                let get_class_loader_method = env.get_method_id(
-                                    class_context,
-                                    "getClassLoader",
-                                    "()Ljava/lang/ClassLoader;",
-                                )?;
-
-                                let class_loader = unsafe {
-                                    env.call_method_unchecked(
-                                        context,
-                                        get_class_loader_method,
-                                        jni::signature::ReturnType::Object,
-                                        &[],
-                                    )
-                                }?
-                                .l()?;
-
-                                let class_class_loader = env.find_class("java/lang/ClassLoader")?;
-                                let load_class_method = env.get_method_id(
-                                    class_class_loader,
-                                    "loadClass",
-                                    "(Ljava/lang/String;)Ljava/lang/Class;",
-                                )?;
-
-                                let class_name_str =
-                                    env.new_string("org.alvindimas05.fluyerplugin.FluyerPlugin")?;
-                                let mut android_surface_obj: JObject = JObject::null();
-
-                                crate::debug!("create_surface: Waiting for surface class load...");
-
-                                loop {
-                                    let fluyer_plugin_class_value = unsafe {
-                                        env.call_method_unchecked(
-                                            &class_loader,
-                                            load_class_method,
-                                            jni::signature::ReturnType::Object,
-                                            &[JValue::Object(&class_name_str).as_jni()],
-                                        )
-                                    };
-
-                                    if let Ok(val) = fluyer_plugin_class_value {
-                                        let fluyer_plugin_class_obj = val.l()?;
-                                        let fluyer_plugin_class: JClass =
-                                            fluyer_plugin_class_obj.into();
-
-                                        let field_id = env.get_static_field_id(
-                                            &fluyer_plugin_class,
-                                            "surface",
-                                            "Landroid/view/Surface;",
-                                        )?;
-
-                                        let surface_obj_res = env.get_static_field_unchecked(
-                                            &fluyer_plugin_class,
-                                            field_id,
-                                            jni::signature::JavaType::Object(
-                                                "Landroid/view/Surface;".to_string(),
-                                            ),
-                                        );
-
-                                        if let Ok(obj_val) = surface_obj_res {
-                                            let obj = obj_val.l()?;
-                                            if !obj.is_null() {
-                                                crate::debug!(
-                                                    "create_surface: Found valid surface object"
-                                                );
-                                                android_surface_obj = obj;
-                                                break;
-                                            }
-                                        }
-                                    }
-
-                                    crate::debug!(
-                                        "create_surface: Waiting for surface check iteration..."
-                                    );
-                                    std::thread::sleep(std::time::Duration::from_millis(100));
-                                }
-
-                                if android_surface_obj.is_null() {
-                                    return Err("Timed out waiting for Android Surface".into());
-                                }
-
-                                // Extract NativeWindow inside the JNI block
-                                let native_window = unsafe {
-                                    ndk::native_window::NativeWindow::from_surface(
-                                        env.get_native_interface(),
-                                        android_surface_obj.as_raw(),
-                                    )
-                                }
-                                .ok_or("Failed to create native window from surface")?;
-
-                                let native_window_ref = native_window.ptr().as_ptr();
-                                std::mem::forget(native_window);
-
-                                Ok(native_window_ref as usize)
-                            })()
-                            .map_err(|e| e.to_string());
-
-                        let _ = tx.send(result);
-                    });
-            })
-            .map_err(|e| e.to_string())?;
-
-        // Block until the JNI closure completes and returns the pointer
-        let native_window_ptr = rx
-            .recv()
-            .map_err(|_| "Channel closed before surface could be extracted".to_string())??
-            as *mut c_void;
-
-        let handle =
-            AndroidNdkWindowHandle::new(std::ptr::NonNull::new(native_window_ptr).unwrap());
-        let raw_window_handle = RawWindowHandle::AndroidNdk(handle);
-
-        let display_handle = AndroidDisplayHandle::new();
-        let raw_display_handle = RawDisplayHandle::Android(display_handle);
-
-        unsafe {
-            instance.create_surface_unsafe(wgpu::SurfaceTargetUnsafe::RawHandle {
-                raw_display_handle: Some(raw_display_handle),
-                raw_window_handle,
-            })?
-        }
-    };
+    let surface = create_android_surface(instance, app_handle)?;
 
     #[cfg(not(target_os = "android"))]
     let surface = {
@@ -183,6 +190,58 @@ pub struct SharedRenderer {
 
 unsafe impl Send for RendererState {}
 unsafe impl Sync for RendererState {}
+
+fn init_wgpu_device(
+    instance: &wgpu::Instance,
+    surface: &wgpu::Surface,
+) -> (wgpu::Device, wgpu::Queue, wgpu::SurfaceConfiguration) {
+    let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+        power_preference: wgpu::PowerPreference::HighPerformance,
+        force_fallback_adapter: false,
+        compatible_surface: Some(surface),
+    }))
+    .expect("Failed to find an appropriate adapter");
+
+    let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor {
+        label: None,
+        required_features: wgpu::Features::empty(),
+        required_limits:
+            wgpu::Limits::downlevel_webgl2_defaults().using_resolution(adapter.limits()),
+        memory_hints: wgpu::MemoryHints::default(),
+        experimental_features: wgpu::ExperimentalFeatures::disabled(),
+        trace: wgpu::Trace::Off,
+    }))
+    .expect("Failed to create device");
+
+    let swapchain_capabilities = surface.get_capabilities(&adapter);
+    let swapchain_format = swapchain_capabilities.formats[0].remove_srgb_suffix();
+
+    let alpha_mode = swapchain_capabilities
+        .alpha_modes
+        .iter()
+        .find(|&&m| m == wgpu::CompositeAlphaMode::PreMultiplied)
+        .or_else(|| {
+            swapchain_capabilities
+                .alpha_modes
+                .iter()
+                .find(|&&m| m == wgpu::CompositeAlphaMode::PostMultiplied)
+        })
+        .copied()
+        .unwrap_or(swapchain_capabilities.alpha_modes[0]);
+
+    let config = wgpu::SurfaceConfiguration {
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        format: swapchain_format,
+        width: 1,
+        height: 1,
+        present_mode: wgpu::PresentMode::Fifo,
+        alpha_mode,
+        view_formats: vec![],
+        desired_maximum_frame_latency: 2,
+    };
+
+    (device, queue, config)
+}
 
 pub fn setup_wgpu(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     crate::debug!("setup_wgpu: Starting femtovg WGPU initialization");
@@ -233,51 +292,10 @@ pub fn setup_wgpu(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>
             }
         };
 
-        let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::HighPerformance,
-            force_fallback_adapter: false,
-            compatible_surface: Some(&surface),
-        }))
-        .expect("Failed to find an appropriate adapter");
+        let (device, queue, mut config) = init_wgpu_device(&instance, &surface);
 
-        let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor {
-            label: None,
-            required_features: wgpu::Features::empty(),
-            required_limits:
-                wgpu::Limits::downlevel_webgl2_defaults().using_resolution(adapter.limits()),
-            memory_hints: wgpu::MemoryHints::default(),
-            experimental_features: wgpu::ExperimentalFeatures::disabled(),
-            trace: wgpu::Trace::Off,
-        }))
-        .expect("Failed to create device");
-
-        let swapchain_capabilities = surface.get_capabilities(&adapter);
-        let swapchain_format = swapchain_capabilities.formats[0].remove_srgb_suffix();
-
-        let alpha_mode = swapchain_capabilities
-            .alpha_modes
-            .iter()
-            .find(|&&m| m == wgpu::CompositeAlphaMode::PreMultiplied)
-            .or_else(|| {
-                swapchain_capabilities
-                    .alpha_modes
-                    .iter()
-                    .find(|&&m| m == wgpu::CompositeAlphaMode::PostMultiplied)
-            })
-            .copied()
-            .unwrap_or(swapchain_capabilities.alpha_modes[0]);
-
-        let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: swapchain_format,
-            width: if size.width > 0 { size.width } else { 1 },
-            height: if size.height > 0 { size.height } else { 1 },
-            present_mode: wgpu::PresentMode::Fifo,
-            alpha_mode,
-            view_formats: vec![],
-            desired_maximum_frame_latency: 2,
-        };
-
+        config.width = if size.width > 0 { size.width } else { 1 };
+        config.height = if size.height > 0 { size.height } else { 1 };
         surface.configure(&device, &config);
 
         // Build femtovg WGPU renderer — takes owned Device + Queue

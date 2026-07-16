@@ -13,12 +13,11 @@ pub struct Color {
     b: u8,
 }
 
-#[tauri::command]
-pub async fn animated_background_update(
+pub fn generate_blurred_background(
     colors: Vec<Color>,
     width: u32,
     height: u32,
-) -> Result<(), String> {
+) -> Result<RgbaImage, String> {
     // Generate Grid
     let scaled_width = (width as f32 * SCALE) as u32;
     let scaled_height = (height as f32 * SCALE) as u32;
@@ -74,11 +73,18 @@ pub async fn animated_background_update(
         libblur::ConvolutionMode::FixedPoint,
         libblur::ThreadingPolicy::Adaptive,
     )
-    .expect("Failed to blur");
-    let blurred = blurred_dyn.to_rgba8();
+    .ok_or_else(|| "Failed to blur".to_string())?;
+    Ok(blurred_dyn.to_rgba8())
+}
 
+#[tauri::command]
+pub async fn animated_background_update(
+    colors: Vec<Color>,
+    width: u32,
+    height: u32,
+) -> Result<(), String> {
+    let blurred = generate_blurred_background(colors, width, height)?;
     crate::renderer::update_background(blurred);
-
     Ok(())
 }
 
