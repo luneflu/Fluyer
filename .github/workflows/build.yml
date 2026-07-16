@@ -65,14 +65,13 @@ jobs:
     permissions: write-all
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - name: Cache node dependencies
-        uses: actions/cache@v4
+      - uses: pnpm/action-setup@v4
         with:
-          path: node_modules
-          key: ${{ runner.os }}-${{ runner.arch }}-node-${{ hashFiles('**/bun.lockb') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-node-
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -112,14 +111,13 @@ jobs:
     permissions: write-all
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - name: Cache node dependencies
-        uses: actions/cache@v4
+      - uses: pnpm/action-setup@v4
         with:
-          path: node_modules
-          key: ${{ runner.os }}-${{ runner.arch }}-node-${{ hashFiles('**/bun.lockb') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-node-
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -164,14 +162,13 @@ jobs:
     permissions: write-all
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - name: Cache node dependencies
-        uses: actions/cache@v4
+      - uses: pnpm/action-setup@v4
         with:
-          path: node_modules
-          key: ${{ runner.os }}-${{ runner.arch }}-node-${{ hashFiles('**/bun.lockb') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-node-
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -216,14 +213,13 @@ jobs:
     permissions: write-all
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - name: Cache node dependencies
-        uses: actions/cache@v4
+      - uses: pnpm/action-setup@v4
         with:
-          path: node_modules
-          key: ${{ runner.os }}-${{ runner.arch }}-node-${{ hashFiles('**/bun.lockb') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-node-
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -262,14 +258,13 @@ jobs:
     permissions: write-all
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - name: Cache node dependencies
-        uses: actions/cache@v4
+      - uses: pnpm/action-setup@v4
         with:
-          path: node_modules
-          key: ${{ runner.os }}-${{ runner.arch }}-node-${{ hashFiles('**/bun.lockb') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-node-
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -325,14 +320,13 @@ jobs:
     permissions: write-all
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - name: Cache node dependencies
-        uses: actions/cache@v4
+      - uses: pnpm/action-setup@v4
         with:
-          path: node_modules
-          key: ${{ runner.os }}-${{ runner.arch }}-node-${{ hashFiles('**/bun.lockb') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-node-
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -388,14 +382,13 @@ jobs:
     permissions: write-all
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - name: Cache node dependencies
-        uses: actions/cache@v4
+      - uses: pnpm/action-setup@v4
         with:
-          path: node_modules
-          key: ${{ runner.os }}-${{ runner.arch }}-node-${{ hashFiles('**/bun.lockb') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-node-
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -451,7 +444,13 @@ jobs:
     permissions: write-all
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -506,13 +505,21 @@ jobs:
     permissions: write-all
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
       - name: Generate latest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APP_VERSION: ${{ needs.prepare.outputs.version }}
           GITHUB_REPO: ${{ github.repository }}
-        run: bun run scripts/generate-updater-json.ts
+        run: |
+          pnpm i
+          pnpm tsx scripts/generate-updater-json.ts
       - name: Publish latest.json
         uses: ncipollo/release-action@v1
         with:

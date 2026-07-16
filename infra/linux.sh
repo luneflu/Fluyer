@@ -6,8 +6,8 @@ echo "deb http://apt.fruit.je/debian trixie mpv" | sudo tee /etc/apt/sources.lis
 sudo apt-get update
 sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf librust-alsa-sys-dev libmpv-dev lld
 
-bun i
-bun run init
+pnpm i
+pnpm run init
 
 export NO_STRIP=true
-bun tauri build
+pnpm tauri build

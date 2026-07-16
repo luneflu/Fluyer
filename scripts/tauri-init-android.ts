@@ -23,7 +23,7 @@ function parseArgs(): Arch {
 	const args = process.argv.slice(2);
 
 	if (args.includes('--help') || args.includes('-h')) {
-		console.log(`Usage: bun android:init [--arch <architecture>]
+		console.log(`Usage: pnpm android:init [--arch <architecture>]
 
 Options:
   --arch, -a    Target architecture (default: arm64-v8a)
@@ -32,10 +32,10 @@ Options:
   --help, -h    Show this help message
 
 Examples:
-  bun android:init
-  bun android:init --arch arm64-v8a
-  bun android:init -a aarch64
-  bun android:init -a x86_64
+  pnpm android:init
+  pnpm android:init --arch arm64-v8a
+  pnpm android:init -a aarch64
+  pnpm android:init -a x86_64
 `);
 		process.exit(0);
 	}

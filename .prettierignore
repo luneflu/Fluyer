@@ -5,7 +5,7 @@ src-tauri/target
 .svelte-kit
 pnpm-lock.yaml
 package-lock.json
-bun.lockb
+pnpm-lock.yaml
 
 src-tauri/tauri-plugin-fluyer/target
 src-tauri/tauri-plugin-fluyer/permissions

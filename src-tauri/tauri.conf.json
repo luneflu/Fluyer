@@ -4,9 +4,9 @@
 	"version": "1.2.0",
 	"identifier": "org.alvindimas05.fluyer",
 	"build": {
-		"beforeDevCommand": "bun run dev",
+		"beforeDevCommand": "pnpm run dev",
 		"devUrl": "http://localhost:1420",
-		"beforeBuildCommand": "bun run build",
+		"beforeBuildCommand": "pnpm run build",
 		"frontendDist": "../build"
 	},
 	"app": {
