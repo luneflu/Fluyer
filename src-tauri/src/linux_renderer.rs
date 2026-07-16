@@ -89,7 +89,7 @@ fn on_resize(_gl_area: &gtk::GLArea, width: i32, height: i32, shared: Arc<Shared
     }
 }
 
-fn on_tick(widget: &gtk::Widget, _clock: &gtk::gdk::FrameClock) -> gtk::glib::ControlFlow {
+fn on_tick(widget: &gtk::GLArea, _clock: &gtk::gdk::FrameClock) -> gtk::glib::ControlFlow {
     let mut redraw = false;
     if let Some(global) =
         crate::state::app_handle().try_state::<Arc<crate::renderer::GlobalRenderer>>()
@@ -115,7 +115,7 @@ fn on_unrealize(gl_area: &gtk::GLArea, shared: Arc<SharedLinuxRenderer>) {
     state.canvas = None;
 }
 
-fn inject_gtk_overlay(gtk_window: &gtk::Window, overlay: &gtk::Overlay, gl_area: &gtk::GLArea) {
+fn inject_gtk_overlay(gtk_window: &gtk::ApplicationWindow, overlay: &gtk::Overlay, gl_area: &gtk::GLArea) {
     if let Some(child) = gtk_window.child() {
         gtk_window.remove(&child);
         overlay.add(gl_area);
