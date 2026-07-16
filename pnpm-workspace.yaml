@@ -1,3 +1,7 @@
+packages:
+  - "."
+  - "src-tauri/tauri-plugin-fluyer"
+
 allowBuilds:
   '@parcel/watcher': false
   esbuild: false
