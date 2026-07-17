@@ -67,6 +67,7 @@ export const TauriCommands = {
 	LYRIC_GET: 'lyric_get',
 	ANIMATED_BACKGROUND_UPDATE: 'animated_background_update',
 	ANIMATED_BACKGROUND_RESTORE: 'animated_background_restore',
+	ANIMATED_BACKGROUND_TRANSITION_COMPLETE: 'animated_background_transition_complete',
 
 	DEVELOPER_LOG_SAVE: 'developer_log_save',
 	DEVELOPER_MPV_LOG_SAVE: 'developer_mpv_log_save',

@@ -16,6 +16,7 @@
 	import type { Unsubscriber } from 'svelte/store';
 	import ColorConvert, { type RGB } from 'color-convert';
 	import { Color } from 'three';
+	import { TauriCommands } from '$lib/constants/TauriCommands';
 
 	interface Color {
 		r: number;
@@ -32,6 +33,8 @@
 	let lastRenderedHeight = 0;
 
 	let unlistenFocus: Unsubscriber;
+	let unlistenTransition: Unsubscriber;
+	let libraryInitialized = false;
 
 	async function getColors(): Promise<Color[] | null> {
 		if (!currentCoverArt) return null;
@@ -112,10 +115,11 @@
 		if (!isInitialized) {
 			isInitialized = true;
 			// Note: Why? To prevent updateBackground from being called multiple times
-			// Since the effects references multiple stores
-			setTimeout(() => (canUpdate = true), 1000);
+			// Since effects references multiple stores
+			setTimeout(() => {
+				canUpdate = true;
+			}, 1000);
 
-			LibraryService.initialize();
 			console.log('AnimatedBackground is initialized (WGPU)');
 		}
 	}
@@ -163,10 +167,17 @@
 	onMount(async () => {
 		updateBackground(true);
 		if (isAndroid()) unlistenFocus = await listen('tauri://focus', restoreBackground);
+		unlistenTransition = await listen(TauriCommands.ANIMATED_BACKGROUND_TRANSITION_COMPLETE, () => {
+			if (!libraryInitialized) {
+				libraryInitialized = true;
+				LibraryService.initialize();
+			}
+		});
 	});
 
 	onDestroy(() => {
 		if (unlistenFocus) unlistenFocus();
+		if (unlistenTransition) unlistenTransition();
 	});
 </script>
 

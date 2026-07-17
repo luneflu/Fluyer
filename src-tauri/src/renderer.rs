@@ -2,7 +2,7 @@ use crate::state::app_handle;
 use femtovg::{renderer::Renderer, Canvas, Color, ImageFlags, Paint, Path};
 use image::RgbaImage;
 use std::sync::{Arc, Mutex};
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 pub struct SharedRendererState {
     pub current_image_id: Option<femtovg::ImageId>,
@@ -106,6 +106,14 @@ impl SharedRendererState {
                 }
                 self.current_image_id = self.next_image_id.take();
                 self.transition_start = None;
+
+                // Emit an event indicating the transition is complete
+                if let Some(app) = crate::state::try_app_handle() {
+                    let _ = app.emit(
+                        crate::commands::route::ANIMATED_BACKGROUND_TRANSITION_COMPLETE,
+                        (),
+                    );
+                }
             }
         }
     }
