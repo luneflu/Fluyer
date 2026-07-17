@@ -155,7 +155,6 @@
 
 	$effect(() => {
 		musicStore.currentIndex;
-		musicStore.isLibraryLoaded;
 		console.log('Updating background from effect');
 		updateBackground();
 	});
