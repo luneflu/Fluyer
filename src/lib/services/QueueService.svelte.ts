@@ -79,6 +79,7 @@ const QueueService = {
 		await TauriMusicAPI.clear();
 		musicStore.queueCount = 0;
 		musicStore.currentIndex = -1;
+		musicStore.currentMusic = undefined;
 	},
 
 	refreshCount: async () => {
