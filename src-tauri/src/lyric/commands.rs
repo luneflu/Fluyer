@@ -18,10 +18,11 @@ fn has_synced_timestamps(lyrics: &str) -> bool {
 /// Get lyrics for a track - returns synced lyrics text
 /// Priority: .lrc file (synced) → embedded metadata (synced) → cached → LrcLib API
 #[tauri::command]
-pub async fn lyric_get(query: LyricQuery) -> Option<String> {
+pub async fn lyric_get(query: LyricQuery) -> Result<String, String> {
     if query.title.is_empty() {
-        crate::warn!("No title provided for lyric search");
-        return None;
+        let err = "No title provided for lyric search".to_string();
+        crate::warn!("{}", err);
+        return Err(err);
     }
 
     // 1. Try .lrc file first (highest priority) - only if synced
@@ -29,7 +30,7 @@ pub async fn lyric_get(query: LyricQuery) -> Option<String> {
     if let Ok(lyrics) = fs::read_to_string(&lrc_path) {
         if has_synced_timestamps(&lyrics) {
             crate::info!("Loaded synced lyrics from .lrc file: {:?}", lrc_path);
-            return Some(lyrics);
+            return Ok(lyrics);
         }
         crate::info!("Skipping .lrc file (no timestamps): {:?}", lrc_path);
     }
@@ -38,7 +39,7 @@ pub async fn lyric_get(query: LyricQuery) -> Option<String> {
     if let Some(lyrics) = MusicMetadata::get_embedded_lyrics_from_path(&query.path) {
         if has_synced_timestamps(&lyrics) {
             crate::info!("Loaded synced embedded lyrics from: {}", query.path);
-            return Some(lyrics);
+            return Ok(lyrics);
         }
         crate::info!("Skipping embedded lyrics (no timestamps): {}", query.path);
     }
@@ -53,15 +54,17 @@ pub async fn lyric_get(query: LyricQuery) -> Option<String> {
             LyricRequestStatus::Loaded => {
                 // Already fetched, return from cache
                 if let Ok(lyrics) = fs::read_to_string(&cache_path) {
-                    return Some(lyrics);
+                    return Ok(lyrics);
                 }
-                crate::warn!("Lyrics cache file not found: {}", cache_key);
-                return None;
+                let err = format!("Lyrics cache file not found: {}", cache_key);
+                crate::warn!("{}", err);
+                return Err(err);
             }
             LyricRequestStatus::Failed => {
                 // Previous attempt failed
-                crate::warn!("Lyrics fetch previously failed: {}", cache_key);
-                return None;
+                let err = format!("Lyrics fetch previously failed: {}", cache_key);
+                crate::warn!("{}", err);
+                return Err(err);
             }
             LyricRequestStatus::Pending => {
                 // Another request is in progress, wait for it
@@ -69,14 +72,16 @@ pub async fn lyric_get(query: LyricQuery) -> Option<String> {
                 match status {
                     LyricRequestStatus::Loaded => {
                         if let Ok(lyrics) = fs::read_to_string(&cache_path) {
-                            return Some(lyrics);
+                            return Ok(lyrics);
                         }
-                        crate::warn!("Lyrics cache file not found: {}", cache_key);
-                        return None;
+                        let err = format!("Lyrics cache file not found: {}", cache_key);
+                        crate::warn!("{}", err);
+                        return Err(err);
                     }
                     _ => {
-                        crate::warn!("Lyrics fetch failed: {}", cache_key);
-                        return None;
+                        let err = format!("Lyrics fetch failed: {}", cache_key);
+                        crate::warn!("{}", err);
+                        return Err(err);
                     }
                 }
             }
@@ -87,7 +92,7 @@ pub async fn lyric_get(query: LyricQuery) -> Option<String> {
     // Try cache first
     if let Ok(lyrics) = fs::read_to_string(&cache_path) {
         queue::set_status(cache_key.clone(), LyricRequestStatus::Loaded);
-        return Some(lyrics);
+        return Ok(lyrics);
     }
 
     // Mark as pending before starting the fetch
@@ -96,12 +101,13 @@ pub async fn lyric_get(query: LyricQuery) -> Option<String> {
     // Request from API
     let lyrics = request::request_lyrics(query).await;
 
-    if lyrics.is_none() {
+    if let Some(lyrics) = lyrics {
+        queue::set_status(cache_key.clone(), LyricRequestStatus::Loaded);
+        Ok(lyrics)
+    } else {
         queue::set_status(cache_key.clone(), LyricRequestStatus::Failed);
-        crate::warn!("Failed to get lyrics for: {}", cache_key);
-        return None;
+        let err = format!("Failed to get lyrics for: {}", cache_key);
+        crate::warn!("{}", err);
+        Err(err)
     }
-
-    queue::set_status(cache_key.clone(), LyricRequestStatus::Loaded);
-    lyrics
 }
