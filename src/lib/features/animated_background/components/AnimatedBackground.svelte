@@ -98,12 +98,12 @@
 		let currentWidth = window.innerWidth;
 		let currentHeight = window.innerHeight;
 
-		if(!isInitialized){
+		if (!isInitialized) {
 			const screenSize = await getCurrentWindow().innerSize();
+			const dpr = window.devicePixelRatio || 1;
 
-			currentWidth = screenSize.width;
-			currentHeight = screenSize.height;
-			console.log(screenSize);
+			currentWidth = screenSize.width / dpr;
+			currentHeight = screenSize.height / dpr;
 		}
 
 		if (currentCoverArt !== null && !MetadataService.isDefaultCoverArt(currentCoverArt)) {
