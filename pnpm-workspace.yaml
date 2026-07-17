@@ -5,3 +5,6 @@ packages:
 allowBuilds:
   '@parcel/watcher': false
   esbuild: false
+
+minimumReleaseAgeExclude:
+  - vite@8.1.5
