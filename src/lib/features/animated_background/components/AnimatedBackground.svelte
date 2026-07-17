@@ -167,7 +167,7 @@
 	onMount(async () => {
 		updateBackground(true);
 		if (isAndroid()) unlistenFocus = await listen('tauri://focus', restoreBackground);
-		unlistenTransition = await listen(TauriCommands.ANIMATED_BACKGROUND_TRANSITION_COMPLETE, () => {
+		unlistenTransition = await TauriBackgroundAPI.listenTransitionComplete(() => {
 			if (!libraryInitialized) {
 				libraryInitialized = true;
 				LibraryService.initialize();
