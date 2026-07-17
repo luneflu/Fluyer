@@ -29,8 +29,8 @@
 <Sidebar type={SidebarType.Left}>
 	<p class="px-3 py-2 text-[1.2rem] font-semibold md:text-[1.5rem]">Menu</p>
 
-	<MenuButton label="Play Screen" icon={IconType.Fullscreen} onclick={gotoPlayPage} />
 	<MenuButton label="Play All" icon={IconType.Play} onclick={playAllMusic} />
+	<MenuButton label="Play Screen" icon={IconType.Fullscreen} onclick={gotoPlayPage} />
 	<!--{#if isDesktop() && !$settingBitPerfectMode}-->
 	<!--    <MenuButton label="Equalizer" icon={IconType.Equalizer}-->
 	<!--              onclick={() => UIController.toggleEqualizer(true)}/>-->
