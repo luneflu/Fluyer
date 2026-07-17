@@ -501,6 +501,7 @@ jobs:
 
   publish-updater:
     needs: prepare
+    if: ${{ inputs.release_build }}
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
