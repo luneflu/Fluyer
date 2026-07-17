@@ -29,10 +29,7 @@ export function useAlbumItem(
 		const isVisible = getVisible();
 		if (!isVisible) return;
 
-		TauriLibraryAPI.getAlbumFirstByIndex(
-			albumIndex,
-			filterStore.search,
-		).then((m) => {
+		TauriLibraryAPI.getAlbumFirstByIndex(albumIndex, filterStore.search).then((m) => {
 			if (m) music = m;
 		});
 	});

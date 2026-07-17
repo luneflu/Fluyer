@@ -47,7 +47,8 @@ export function useMusicItem(
 			search: filterStore.search,
 			sortAsc: filterBarStore.sortAsc,
 			albumName: filterStore.album?.name,
-			folderPath: isFolderMode && folderStore.currentFolder ? folderStore.currentFolder.path : undefined,
+			folderPath:
+				isFolderMode && folderStore.currentFolder ? folderStore.currentFolder.path : undefined,
 			playlistPaths:
 				isPlaylistMode && playlistStore.selectedPlaylist
 					? playlistStore.selectedPlaylist.paths

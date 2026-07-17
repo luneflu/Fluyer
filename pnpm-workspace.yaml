@@ -1,6 +1,6 @@
 packages:
-  - "."
-  - "src-tauri/tauri-plugin-fluyer"
+  - '.'
+  - 'src-tauri/tauri-plugin-fluyer'
 
 allowBuilds:
   '@parcel/watcher': false

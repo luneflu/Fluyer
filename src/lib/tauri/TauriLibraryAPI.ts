@@ -68,13 +68,10 @@ const TauriLibraryAPI = {
 		});
 	},
 
-	getAlbumFirstByIndex: async (
-		index: number,
-		search: string,
-	): Promise<MusicData | null> => {
+	getAlbumFirstByIndex: async (index: number, search: string): Promise<MusicData | null> => {
 		return invoke<MusicData | null>(TauriCommands.LIBRARY_ALBUM_GET_FIRST_BY_INDEX, {
 			index,
-			search,
+			search
 		});
 	},
 

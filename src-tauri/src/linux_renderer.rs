@@ -115,7 +115,11 @@ fn on_unrealize(gl_area: &gtk::GLArea, shared: Arc<SharedLinuxRenderer>) {
     state.canvas = None;
 }
 
-fn inject_gtk_overlay(gtk_window: &gtk::ApplicationWindow, overlay: &gtk::Overlay, gl_area: &gtk::GLArea) {
+fn inject_gtk_overlay(
+    gtk_window: &gtk::ApplicationWindow,
+    overlay: &gtk::Overlay,
+    gl_area: &gtk::GLArea,
+) {
     if let Some(child) = gtk_window.child() {
         gtk_window.remove(&child);
         overlay.add(gl_area);
