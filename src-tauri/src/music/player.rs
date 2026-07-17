@@ -76,44 +76,49 @@ extern "C" fn end_sync_callback(
     let st = Arc::clone(&sync_data.state);
     let twp = Arc::clone(&sync_data.temp_wav_path);
 
-    cs_arc.store(0, Ordering::SeqCst);
+    let old_stream = cs_arc.load(Ordering::SeqCst);
     crate::info!("Track ended, playing next");
 
-        tauri::async_runtime::spawn_blocking(move || {
-            let next_index = {
-                let state = match st.lock() {
-                    Ok(s) => s,
-                    Err(e) => {
-                        crate::error!("Failed to lock player state: {}", e);
-                        return;
-                    }
-                };
-                match (state.current_index, state.repeat_mode) {
-                    (Some(current), RepeatMode::One) => Some(current),
-                    (Some(current), _) => {
-                        if let Some(ref seq) = state.shuffle_sequence {
-                            if let Some(pos) = seq.iter().position(|&x| x == current) {
-                                if pos + 1 < seq.len() {
-                                    Some(seq[pos + 1])
-                                } else if state.repeat_mode == RepeatMode::All {
-                                    Some(seq[0])
-                                } else {
-                                    None
-                                }
+    tauri::async_runtime::spawn_blocking(move || {
+        let current_now = cs_arc.load(Ordering::SeqCst);
+        if old_stream == 0 || current_now != old_stream {
+            return;
+        }
+
+        let next_index = {
+            let state = match st.lock() {
+                Ok(s) => s,
+                Err(e) => {
+                    crate::error!("Failed to lock player state: {}", e);
+                    return;
+                }
+            };
+            match (state.current_index, state.repeat_mode) {
+                (Some(current), RepeatMode::One) => Some(current),
+                (Some(current), _) => {
+                    if let Some(ref seq) = state.shuffle_sequence {
+                        if let Some(pos) = seq.iter().position(|&x| x == current) {
+                            if pos + 1 < seq.len() {
+                                Some(seq[pos + 1])
+                            } else if state.repeat_mode == RepeatMode::All {
+                                Some(seq[0])
                             } else {
                                 None
                             }
-                        } else if current + 1 < state.track.len() {
-                            Some(current + 1)
-                        } else if state.repeat_mode == RepeatMode::All {
-                            Some(0)
                         } else {
                             None
                         }
+                    } else if current + 1 < state.track.len() {
+                        Some(current + 1)
+                    } else if state.repeat_mode == RepeatMode::All {
+                        Some(0)
+                    } else {
+                        None
                     }
-                    _ => None,
                 }
-            };
+                _ => None,
+            }
+        };
 
         if let Some(index) = next_index {
             let (music, total_count) = {
@@ -127,23 +132,18 @@ extern "C" fn end_sync_callback(
                 (state.track[index].metadata.clone(), state.track.len())
             };
 
-            let cs2 = cs_arc.load(Ordering::SeqCst);
             #[cfg(desktop)]
             unsafe {
-                if cs2 != 0 {
-                    BASS_Mixer_ChannelRemove(cs2);
-                    BASS_StreamFree(cs2);
-                    cs_arc.store(0, Ordering::SeqCst);
-                }
+                BASS_Mixer_ChannelRemove(old_stream);
+                BASS_StreamFree(old_stream);
+                cs_arc.store(0, Ordering::SeqCst);
             }
             #[cfg(target_os = "android")]
             if let Some(bass) = bass_android::get_bass() {
                 unsafe {
-                    if cs2 != 0 {
-                        (bass.bass_mixer_channel_remove)(cs2);
-                        (bass.bass_stream_free)(cs2);
-                        cs_arc.store(0, Ordering::SeqCst);
-                    }
+                    (bass.bass_mixer_channel_remove)(old_stream);
+                    (bass.bass_stream_free)(old_stream);
+                    cs_arc.store(0, Ordering::SeqCst);
                 }
             }
 
@@ -154,6 +154,18 @@ extern "C" fn end_sync_callback(
                 MusicPlayer::emit_sync_inner(&bm, &cs_arc, &st, true);
             }
         } else {
+            // Queue is at last track
+            // Wait for the tail of the current track to finish playing
+            // from the mixer's output buffer (default BASS buffer is 500ms).
+            // This prevents the end of the last track from being abruptly cut off.
+            std::thread::sleep(std::time::Duration::from_millis(500));
+
+            // Verify the user hasn't started playing something else during the sleep
+            let current_after_sleep = cs_arc.load(Ordering::SeqCst);
+            if current_after_sleep != old_stream {
+                return;
+            }
+
             let first = {
                 let state = match st.lock() {
                     Ok(s) => s,
@@ -170,6 +182,21 @@ extern "C" fn end_sync_callback(
             };
 
             if let Some((music, total_count)) = first {
+                #[cfg(desktop)]
+                unsafe {
+                    BASS_Mixer_ChannelRemove(old_stream);
+                    BASS_StreamFree(old_stream);
+                    cs_arc.store(0, Ordering::SeqCst);
+                }
+                #[cfg(target_os = "android")]
+                if let Some(bass) = bass_android::get_bass() {
+                    unsafe {
+                        (bass.bass_mixer_channel_remove)(old_stream);
+                        (bass.bass_stream_free)(old_stream);
+                        cs_arc.store(0, Ordering::SeqCst);
+                    }
+                }
+
                 if MusicPlayer::load_music_inner(&bm, &cs_arc, &st, &twp, music, 0, total_count) {
                     let bm_val = bm.load(Ordering::SeqCst);
                     #[cfg(desktop)]
@@ -414,8 +441,8 @@ impl MusicPlayer {
     }
 
     pub fn shuffle_track(&self) {
-        use rand::seq::SliceRandom;
         use rand::rng;
+        use rand::seq::SliceRandom;
 
         if let Ok(mut state) = self.state.lock() {
             if state.shuffle_sequence.is_some() {
@@ -599,14 +626,14 @@ impl MusicPlayer {
             for music in track {
                 state.track.push(TrackItem { metadata: music });
             }
-            
+
             let end_len = state.track.len();
-            
+
             // Append to shuffle sequence if it exists
             if let Some(ref mut seq) = state.shuffle_sequence {
                 let mut new_indices: Vec<usize> = (start_len..end_len).collect();
-                use rand::seq::SliceRandom;
                 use rand::rng;
+                use rand::seq::SliceRandom;
                 let mut r = rng();
                 new_indices.shuffle(&mut r);
                 seq.extend(new_indices);
@@ -645,7 +672,7 @@ impl MusicPlayer {
             if current == index {
                 state.current_index = None;
                 state.track.remove(index);
-                
+
                 if let Some(ref mut seq) = state.shuffle_sequence {
                     seq.retain(|&x| x != index);
                     for x in seq.iter_mut() {
