@@ -66,12 +66,12 @@ export function useAlbumItem(
 
 	async function setFilterAlbum() {
 		if (!music) return;
-		const tracks = await TauriLibraryAPI.getAlbumByIndex(
+		const duration = await TauriLibraryAPI.getAlbumDurationByIndex(
 			albumIndex,
 			filterStore.search,
 			filterBarStore.sortAsc
 		);
-		if (!tracks) return;
+		if (duration === null) return;
 
 		const isAlbumType = musicStore.listType === MusicListType.Album;
 		musicStore.listType = MusicListType.All;
@@ -79,10 +79,7 @@ export function useAlbumItem(
 			name: music.album,
 			artist: music.albumArtist ?? music.artist,
 			year: MetadataService.getYearFromDate(music.date),
-			duration: ProgressService.formatDuration(
-				tracks.map((m) => m.duration).reduce((a, b) => a + b, 0)
-			),
-			tracks
+			duration: ProgressService.formatDuration(duration)
 		} as AlbumData;
 		if (isAlbumType) setTimeout(() => (musicStore.albumsUi.scrollIndex = index), 500);
 	}

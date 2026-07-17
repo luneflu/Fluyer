@@ -21,7 +21,6 @@ export interface AlbumData {
 	artist: string;
 	year: string;
 	duration: string;
-	tracks: MusicData[];
 }
 
 export interface FolderData {

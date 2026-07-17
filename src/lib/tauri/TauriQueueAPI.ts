@@ -5,11 +5,6 @@ const TauriQueueAPI = {
 	goTo: (index: number) => {
 		return invoke(TauriCommands.MUSIC_QUEUE_GOTO, { index });
 	},
-	add: (list: MusicData[]) => {
-		return invoke(TauriCommands.MUSIC_QUEUE_ADD, {
-			paths: list.map((m) => m.path)
-		});
-	},
 	remove: (index: number) => {
 		return invoke(TauriCommands.MUSIC_QUEUE_REMOVE, {
 			index

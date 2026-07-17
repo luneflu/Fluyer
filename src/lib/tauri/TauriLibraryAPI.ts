@@ -20,6 +20,7 @@ export enum CollectionType {
 	AlbumIndex = 'albumIndex',
 	Folder = 'folder',
 	Playlist = 'playlist',
+	MusicIndex = 'musicIndex',
 	All = 'all'
 }
 
@@ -28,6 +29,7 @@ export type CollectionContext =
 	| { type: CollectionType.AlbumIndex; index: number; search: string; sortAsc: boolean }
 	| { type: CollectionType.Folder; path: string }
 	| { type: CollectionType.Playlist; paths: string[] }
+	| { type: CollectionType.MusicIndex; index: number; filter: MusicFilter }
 	| { type: CollectionType.All };
 
 export interface FolderInfo {
@@ -56,12 +58,12 @@ const TauriLibraryAPI = {
 		return invoke<number>(TauriCommands.LIBRARY_ALBUM_COUNT_GET, { search, sortAsc });
 	},
 
-	getAlbumByIndex: async (
+	getAlbumDurationByIndex: async (
 		index: number,
 		search: string,
 		sortAsc: boolean
-	): Promise<MusicData[] | null> => {
-		return invoke<MusicData[] | null>(TauriCommands.LIBRARY_ALBUM_GET_BY_INDEX, {
+	): Promise<number | null> => {
+		return invoke<number | null>(TauriCommands.LIBRARY_ALBUM_DURATION_GET_BY_INDEX, {
 			index,
 			search,
 			sortAsc

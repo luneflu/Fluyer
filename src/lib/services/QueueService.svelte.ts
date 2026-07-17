@@ -54,29 +54,9 @@ const playlistMoveQueue = new PlaylistMoveQueue();
  * `musicStore.queueCount` (and `currentIndex`) based on Tauri sync events.
  */
 const QueueService = {
-	add: (music: MusicData) => {
-		return QueueService.addList([music]);
-	},
-
 	remove: async (index: number) => {
 		await TauriQueueAPI.remove(index);
 		// currentIndex adjustment is handled by the music_player_sync event
-	},
-
-	addList: async (list: MusicData[]) => {
-		await TauriQueueAPI.add(list);
-		// queueCount will be updated via sync event; bump optimistically
-		musicStore.queueCount += list.length;
-	},
-
-	resetAndAdd: (music: MusicData) => {
-		return QueueService.resetAndAddList([music]);
-	},
-
-	resetAndAddList: async (list: MusicData[]) => {
-		await TauriMusicAPI.clear();
-		await TauriQueueAPI.add(list);
-		musicStore.queueCount = list.length;
 	},
 
 	goTo: (index: number) => {

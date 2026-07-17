@@ -92,9 +92,8 @@ function itemClass(inViewport: boolean, hiddenBySidebar: boolean, extraClass = '
 }
 
 function itemStyle(hiddenBySidebar: boolean): string {
-	return `width: ${state.itemWidth}px; animation-duration: 500ms; ${
-		hiddenBySidebar ? 'pointer-events: none; opacity: 0;' : 'opacity: 1;'
-	}`;
+	return `width: ${state.itemWidth}px; animation-duration: 500ms; ${hiddenBySidebar ? 'pointer-events: none; opacity: 0;' : 'opacity: 1;'
+		}`;
 }
 
 function updateItemWidth() {
@@ -387,7 +386,7 @@ export function useAlbumList() {
 			}
 		});
 		return {
-			destroy() {}
+			destroy() { }
 		};
 	}
 

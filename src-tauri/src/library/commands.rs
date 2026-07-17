@@ -37,6 +37,10 @@ pub enum CollectionContext {
     Playlist {
         paths: Vec<String>,
     },
+    MusicIndex {
+        index: usize,
+        filter: MusicFilter,
+    },
     All,
 }
 
@@ -114,18 +118,23 @@ pub fn library_album_count_get(
 }
 
 #[tauri::command]
-pub fn library_album_get_by_index(
+pub fn library_album_duration_get_by_index(
     lib: State<'_, SharedLibraryState>,
     index: usize,
     search: String,
     sort_asc: bool,
-) -> Option<Vec<MusicMetadata>> {
+) -> Option<f64> {
     let guard = lib.0.read().unwrap();
     let mut albums = guard.filtered_albums(&search);
     if !sort_asc {
         albums.reverse();
     }
-    albums.get(index).map(|tracks| (*tracks).clone())
+    albums.get(index).map(|tracks| {
+        tracks
+            .iter()
+            .filter_map(|m| m.duration.map(|d| d as f64))
+            .sum()
+    })
 }
 
 #[tauri::command]
@@ -225,6 +234,18 @@ fn resolve_tracks(
                 .filter(|m| set.contains(m.path.as_str()))
                 .cloned()
                 .collect()
+        }
+        CollectionContext::MusicIndex { index, filter } => {
+            let mut items = lib.filtered_music(
+                &filter.search,
+                filter.album_name.as_deref(),
+                filter.folder_path.as_deref(),
+                filter.playlist_paths.as_deref(),
+            );
+            if !filter.sort_asc {
+                items.reverse();
+            }
+            items.get(*index).map(|v| vec![(*v).clone()]).unwrap_or_default()
         }
         CollectionContext::All => lib.music_list.clone(),
     }

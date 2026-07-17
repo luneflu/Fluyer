@@ -167,7 +167,26 @@ export function useMusicItem(
 
 	async function addMusicAndPlay() {
 		if (music) {
-			await QueueService.resetAndAdd(music);
+			const isFolderMode = musicStore.listType === MusicListType.Folder;
+			const isPlaylistMode = musicStore.listType === MusicListType.Playlist;
+
+			const filter = {
+				search: filterStore.search,
+				sortAsc: filterBarStore.sortAsc,
+				albumName: filterStore.album?.name,
+				folderPath:
+					isFolderMode && folderStore.currentFolder ? folderStore.currentFolder.path : undefined,
+				playlistPaths:
+					isPlaylistMode && playlistStore.selectedPlaylist
+						? playlistStore.selectedPlaylist.paths
+						: undefined
+			};
+			await TauriLibraryAPI.collectionAddAndPlay({
+				type: CollectionType.MusicIndex,
+				index: musicIndex!,
+				filter
+			});
+			musicStore.queueCount = 1;
 			MusicPlayerService.play();
 		} else if (folder) {
 			await TauriLibraryAPI.collectionAddAndPlay({
@@ -179,7 +198,26 @@ export function useMusicItem(
 
 	async function addMusic() {
 		if (music) {
-			await QueueService.add(music);
+			const isFolderMode = musicStore.listType === MusicListType.Folder;
+			const isPlaylistMode = musicStore.listType === MusicListType.Playlist;
+
+			const filter = {
+				search: filterStore.search,
+				sortAsc: filterBarStore.sortAsc,
+				albumName: filterStore.album?.name,
+				folderPath:
+					isFolderMode && folderStore.currentFolder ? folderStore.currentFolder.path : undefined,
+				playlistPaths:
+					isPlaylistMode && playlistStore.selectedPlaylist
+						? playlistStore.selectedPlaylist.paths
+						: undefined
+			};
+			await TauriLibraryAPI.collectionAddToQueue({
+				type: CollectionType.MusicIndex,
+				index: musicIndex!,
+				filter
+			});
+			musicStore.queueCount++;
 			const title = music.title ?? music.filename ?? MusicConfig.defaultTitle;
 			const artist = music.artist ?? MusicConfig.defaultArtist;
 			ToastService.info(`Added music to queue: ${title} ${MusicConfig.separatorAlbum} ${artist}`);
