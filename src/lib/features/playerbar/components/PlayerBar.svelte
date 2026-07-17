@@ -111,7 +111,7 @@
 						</button>
 					{/if}
 					{#if settingStore.ui.showShuffleButton}
-						<button class="w-6" onclick={vm.handleButtonShuffle}>
+						<button class="w-6 {musicStore.isShuffled ? 'text-primary' : 'opacity-60'}" onclick={vm.handleButtonShuffle}>
 							<Icon type={IconType.Shuffle} />
 						</button>
 					{/if}

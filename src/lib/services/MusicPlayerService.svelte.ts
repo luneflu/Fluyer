@@ -99,6 +99,7 @@ const MusicPlayerService = {
 
 			musicStore.isPlaying = e.payload.isPlaying;
 			musicStore.repeatMode = e.payload.repeatMode;
+			musicStore.isShuffled = e.payload.isShuffled;
 
 			if (e.payload.isPlaying) {
 				ProgressService.stop();

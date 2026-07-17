@@ -35,6 +35,7 @@ pub struct MusicPlayerSync {
     current_position: Option<f64>,
     is_playing: bool,
     repeat_mode: RepeatMode,
+    is_shuffled: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -42,6 +43,7 @@ struct PlayerState {
     track: Vec<TrackItem>,
     current_index: Option<usize>,
     repeat_mode: RepeatMode,
+    shuffle_sequence: Option<Vec<usize>>,
 }
 
 pub struct MusicPlayer {
@@ -77,22 +79,41 @@ extern "C" fn end_sync_callback(
     cs_arc.store(0, Ordering::SeqCst);
     crate::info!("Track ended, playing next");
 
-    tauri::async_runtime::spawn_blocking(move || {
-        let next_index = {
-            let state = match st.lock() {
-                Ok(s) => s,
-                Err(e) => {
-                    crate::error!("Failed to lock player state: {}", e);
-                    return;
+        tauri::async_runtime::spawn_blocking(move || {
+            let next_index = {
+                let state = match st.lock() {
+                    Ok(s) => s,
+                    Err(e) => {
+                        crate::error!("Failed to lock player state: {}", e);
+                        return;
+                    }
+                };
+                match (state.current_index, state.repeat_mode) {
+                    (Some(current), RepeatMode::One) => Some(current),
+                    (Some(current), _) => {
+                        if let Some(ref seq) = state.shuffle_sequence {
+                            if let Some(pos) = seq.iter().position(|&x| x == current) {
+                                if pos + 1 < seq.len() {
+                                    Some(seq[pos + 1])
+                                } else if state.repeat_mode == RepeatMode::All {
+                                    Some(seq[0])
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        } else if current + 1 < state.track.len() {
+                            Some(current + 1)
+                        } else if state.repeat_mode == RepeatMode::All {
+                            Some(0)
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
                 }
             };
-            match (state.current_index, state.repeat_mode) {
-                (Some(current), RepeatMode::One) => Some(current),
-                (Some(current), _) if current + 1 < state.track.len() => Some(current + 1),
-                (Some(_), RepeatMode::All) => Some(0),
-                _ => None,
-            }
-        };
 
         if let Some(index) = next_index {
             let (music, total_count) = {
@@ -206,6 +227,7 @@ impl MusicPlayer {
                 track: Vec::new(),
                 current_index: None,
                 repeat_mode: RepeatMode::None,
+                shuffle_sequence: None,
             })),
             temp_wav_path: Arc::new(Mutex::new(None)),
         };
@@ -392,28 +414,25 @@ impl MusicPlayer {
     }
 
     pub fn shuffle_track(&self) {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-        use std::time::SystemTime;
+        use rand::seq::SliceRandom;
+        use rand::rng;
 
-        let seed = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .map(|d| d.subsec_nanos())
-            .unwrap_or(42);
-
-        let mut rng = seed as usize;
         if let Ok(mut state) = self.state.lock() {
-            let len = state.track.len();
-            for i in (1..len).rev() {
-                let mut h = DefaultHasher::new();
-                (rng ^ i).hash(&mut h);
-                rng = h.finish() as usize;
-                let j = rng % (i + 1);
-                state.track.swap(i, j);
+            if state.shuffle_sequence.is_some() {
+                // Disable shuffle
+                state.shuffle_sequence = None;
+            } else {
+                // Enable shuffle
+                let len = state.track.len();
+                if len > 0 {
+                    let mut seq: Vec<usize> = (0..len).collect();
+                    let mut r = rng();
+                    seq.shuffle(&mut r);
+                    state.shuffle_sequence = Some(seq);
+                }
             }
-            state.current_index = if len > 0 { Some(0) } else { None };
         }
-        self.goto_track(0);
+        self.emit_sync(false);
     }
 
     pub fn set_repeat_mode(&self, mode: RepeatMode) {
@@ -544,22 +563,24 @@ impl MusicPlayer {
             }
         };
 
-        let (index, repeat_mode) = self
+        let (index, repeat_mode, is_shuffled) = self
             .state
             .lock()
             .map(|s| {
                 (
                     s.current_index.map(|i| i as i64).unwrap_or(-1),
                     s.repeat_mode,
+                    s.shuffle_sequence.is_some(),
                 )
             })
-            .unwrap_or((-1, RepeatMode::None));
+            .unwrap_or((-1, RepeatMode::None, false));
 
         MusicPlayerSync {
             index,
             current_position,
             is_playing,
             repeat_mode,
+            is_shuffled,
         }
     }
 
@@ -574,8 +595,21 @@ impl MusicPlayer {
                 }
             };
             was_empty = state.track.is_empty();
+            let start_len = state.track.len();
             for music in track {
                 state.track.push(TrackItem { metadata: music });
+            }
+            
+            let end_len = state.track.len();
+            
+            // Append to shuffle sequence if it exists
+            if let Some(ref mut seq) = state.shuffle_sequence {
+                let mut new_indices: Vec<usize> = (start_len..end_len).collect();
+                use rand::seq::SliceRandom;
+                use rand::rng;
+                let mut r = rng();
+                new_indices.shuffle(&mut r);
+                seq.extend(new_indices);
             }
         }
 
@@ -609,12 +643,19 @@ impl MusicPlayer {
 
         if let Some(current) = state.current_index {
             if current == index {
+                state.current_index = None;
+                state.track.remove(index);
+                
+                if let Some(ref mut seq) = state.shuffle_sequence {
+                    seq.retain(|&x| x != index);
+                    for x in seq.iter_mut() {
+                        if *x > index {
+                            *x -= 1;
+                        }
+                    }
+                }
                 drop(state);
                 self.stop_current_stream();
-                if let Ok(mut state) = self.state.lock() {
-                    state.current_index = None;
-                    state.track.remove(index);
-                }
                 return;
             }
         }
@@ -624,6 +665,16 @@ impl MusicPlayer {
         if let Some(current) = state.current_index {
             if index < current {
                 state.current_index = Some(current - 1);
+            }
+        }
+
+        // Update shuffle sequence
+        if let Some(ref mut seq) = state.shuffle_sequence {
+            seq.retain(|&x| x != index);
+            for x in seq.iter_mut() {
+                if *x > index {
+                    *x -= 1;
+                }
             }
         }
 
@@ -694,9 +745,27 @@ impl MusicPlayer {
                 };
                 match (state.current_index, state.repeat_mode) {
                     (Some(current), RepeatMode::One) if !from_user => Some(current),
-                    (Some(current), _) if current + 1 < state.track.len() => Some(current + 1),
-                    (Some(_), RepeatMode::All) => Some(0),
-                    (Some(_), _) if from_user => Some(0),
+                    (Some(current), _) => {
+                        if let Some(ref seq) = state.shuffle_sequence {
+                            if let Some(pos) = seq.iter().position(|&x| x == current) {
+                                if pos + 1 < seq.len() {
+                                    Some(seq[pos + 1])
+                                } else if state.repeat_mode == RepeatMode::All || from_user {
+                                    Some(seq[0])
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        } else if current + 1 < state.track.len() {
+                            Some(current + 1)
+                        } else if state.repeat_mode == RepeatMode::All || from_user {
+                            Some(0)
+                        } else {
+                            None
+                        }
+                    }
                     _ => None,
                 }
             };
@@ -852,8 +921,27 @@ impl MusicPlayer {
                     }
                 };
                 match state.current_index {
-                    Some(current) if current > 0 => Some(current - 1),
-                    Some(_) if !state.track.is_empty() => Some(state.track.len() - 1),
+                    Some(current) => {
+                        if let Some(ref seq) = state.shuffle_sequence {
+                            if let Some(pos) = seq.iter().position(|&x| x == current) {
+                                if pos > 0 {
+                                    Some(seq[pos - 1])
+                                } else if !seq.is_empty() {
+                                    Some(seq[seq.len() - 1])
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        } else if current > 0 {
+                            Some(current - 1)
+                        } else if !state.track.is_empty() {
+                            Some(state.track.len() - 1)
+                        } else {
+                            None
+                        }
+                    }
                     _ => None,
                 }
             };
@@ -918,6 +1006,19 @@ impl MusicPlayer {
                 } else {
                     current
                 });
+            }
+
+            // Update shuffle sequence
+            if let Some(ref mut seq) = state.shuffle_sequence {
+                for x in seq.iter_mut() {
+                    if *x == from {
+                        *x = to;
+                    } else if from < *x && to >= *x {
+                        *x -= 1;
+                    } else if from > *x && to <= *x {
+                        *x += 1;
+                    }
+                }
             }
         }
         self.emit_sync(false);
@@ -1068,6 +1169,7 @@ impl MusicPlayer {
         if let Ok(mut state) = self.state.lock() {
             state.track.clear();
             state.current_index = None;
+            state.shuffle_sequence = None;
         }
     }
 
@@ -1173,15 +1275,16 @@ impl MusicPlayer {
             }
         };
 
-        let (index, repeat_mode) = state
+        let (index, repeat_mode, is_shuffled) = state
             .lock()
             .map(|s| {
                 (
                     s.current_index.map(|i| i as i64).unwrap_or(-1),
                     s.repeat_mode,
+                    s.shuffle_sequence.is_some(),
                 )
             })
-            .unwrap_or((-1, RepeatMode::None));
+            .unwrap_or((-1, RepeatMode::None, false));
 
         app_handle()
             .emit(
@@ -1191,6 +1294,7 @@ impl MusicPlayer {
                     current_position,
                     is_playing,
                     repeat_mode,
+                    is_shuffled,
                 },
             )
             .unwrap();

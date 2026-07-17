@@ -14,6 +14,7 @@ const musicStore = $state({
 	currentIndex: -1,
 	queueCount: 0,
 	repeatMode: RepeatMode.None,
+	isShuffled: false,
 
 	// Progress
 	progressValue: 0,

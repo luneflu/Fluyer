@@ -285,32 +285,16 @@ pub fn library_collection_shuffle_and_play(
     state: State<'_, AppState>,
     context: CollectionContext,
 ) {
-    let mut tracks = {
+    let tracks = {
         let guard = lib.0.read().unwrap();
         resolve_tracks(&guard, &context)
     };
 
-    // Fisher-Yates shuffle
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    use std::time::SystemTime;
-
-    let seed = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .map(|d| d.subsec_nanos())
-        .unwrap_or(42);
-
-    let mut rng = seed as usize;
-    for i in (1..tracks.len()).rev() {
-        let mut h = DefaultHasher::new();
-        (rng ^ i).hash(&mut h);
-        rng = h.finish() as usize;
-        let j = rng % (i + 1);
-        tracks.swap(i, j);
-    }
-
     state.music_player.clear();
     state.music_player.add_track(tracks);
+    
+    // Enable shuffle mode explicitly for this context
+    state.music_player.shuffle_track();
     state.music_player.play();
 }
 
