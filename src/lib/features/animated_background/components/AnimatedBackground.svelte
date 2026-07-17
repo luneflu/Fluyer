@@ -154,7 +154,7 @@
 		});
 
 	$effect(() => {
-		musicStore.currentIndex;
+		musicStore.currentMusic;
 		console.log('Updating background from effect');
 		updateBackground();
 	});
