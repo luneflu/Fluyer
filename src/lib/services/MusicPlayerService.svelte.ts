@@ -80,13 +80,17 @@ const MusicPlayerService = {
 			console.log('Received music player sync event:', e.payload);
 
 			if (e.payload.index > -1) {
-				if (musicStore.currentIndex !== e.payload.index || !musicStore.currentMusic) {
-					const musicData = await TauriLibraryAPI.getQueueByIndex(e.payload.index);
+				const musicData = await TauriLibraryAPI.getQueueByIndex(e.payload.index);
+				
+				if (!musicStore.currentMusic || musicStore.currentMusic.path !== musicData?.path) {
 					if (musicData) {
 						musicStore.currentIndex = e.payload.index;
 						musicStore.currentMusic = musicData;
 					}
+				} else if (musicStore.currentIndex !== e.payload.index) {
+					musicStore.currentIndex = e.payload.index;
 				}
+
 				if (musicStore.currentMusic) {
 					musicStore.progressValue =
 						(e.payload.currentPosition / musicStore.currentMusic.duration) * MusicConfig.max;
