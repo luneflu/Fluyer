@@ -81,11 +81,11 @@ const MusicPlayerService = {
 
 			if (e.payload.index > -1) {
 				if (musicStore.currentIndex !== e.payload.index || !musicStore.currentMusic) {
-					musicStore.currentIndex = e.payload.index;
-				}
-				const musicData = await TauriLibraryAPI.getQueueByIndex(e.payload.index);
-				if (musicData) {
-					musicStore.currentMusic = musicData;
+					const musicData = await TauriLibraryAPI.getQueueByIndex(e.payload.index);
+					if (musicData) {
+						musicStore.currentIndex = e.payload.index;
+						musicStore.currentMusic = musicData;
+					}
 				}
 				if (musicStore.currentMusic) {
 					musicStore.progressValue =
