@@ -15,8 +15,7 @@
 	import { listen } from '@tauri-apps/api/event';
 	import type { Unsubscriber } from 'svelte/store';
 	import ColorConvert, { type RGB } from 'color-convert';
-	import { Color } from 'three';
-	import { TauriCommands } from '$lib/constants/TauriCommands';
+	import { getCurrentWindow } from '@tauri-apps/api/window';
 
 	interface Color {
 		r: number;
@@ -96,8 +95,16 @@
 
 		const newCoverArt = await MetadataService.getMusicCoverArt(musicStore.currentMusic);
 
-		const currentWidth = window.innerWidth;
-		const currentHeight = window.innerHeight;
+		let currentWidth = window.innerWidth;
+		let currentHeight = window.innerHeight;
+
+		if(!isInitialized){
+			const screenSize = await getCurrentWindow().innerSize();
+
+			currentWidth = screenSize.width;
+			currentHeight = screenSize.height;
+			console.log(screenSize);
+		}
 
 		if (currentCoverArt !== null && !MetadataService.isDefaultCoverArt(currentCoverArt)) {
 			URL.revokeObjectURL(currentCoverArt);
