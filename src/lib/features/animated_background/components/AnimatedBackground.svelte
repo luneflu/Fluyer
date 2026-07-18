@@ -74,7 +74,6 @@
 			}
 			return ColorConvert.hsl.rgb(h, s, l);
 		});
-		console.log(balancedColors);
 
 		return balancedColors.map((color) => ({
 			r: color[0],
