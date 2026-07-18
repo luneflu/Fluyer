@@ -34,6 +34,8 @@ impl MediaSession {
                         state.music_player.play_previous();
                     } else if event.action == "next" {
                         state.music_player.play_next(true);
+                    } else if event.action == "stop" {
+                        state.music_player.pause();
                     } else {
                         crate::warn!("Unknown media session command: {}", event.action);
                     }

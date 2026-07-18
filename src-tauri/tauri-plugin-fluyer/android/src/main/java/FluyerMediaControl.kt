@@ -24,6 +24,7 @@ class FluyerMediaControl(private val context: Context, private val onAction: (St
     private val handler = Handler(Looper.getMainLooper())
     private var isFirst = false
     private var isLast = false
+    private var isStopped = false
 
     init {
         createNotificationChannel()
@@ -56,6 +57,14 @@ class FluyerMediaControl(private val context: Context, private val onAction: (St
                         onAction("seek:$pos")
                         Log.d(LOG_TAG, "MediaSession onSeekTo called: $pos")
                     }
+
+                    override fun onStop() {
+                        onAction("stop")
+                        isStopped = true
+                        notificationManager.cancel(1)
+                        Log.d(LOG_TAG, "MediaSession onStop called")
+                        updatePlaybackState(PlaybackStateCompat.STATE_STOPPED, getCurrentPosition())
+                    }
                 }
         )
 
@@ -76,8 +85,7 @@ class FluyerMediaControl(private val context: Context, private val onAction: (St
                     MediaControlReceiver.ACTION_NEXT ->
                             mediaSession.controller?.transportControls?.skipToNext()
                     MediaControlReceiver.ACTION_STOP -> {
-                        mediaSession.controller?.transportControls?.stop()
-                        release()
+                        mediaSession.controller.transportControls.stop()
                     }
                 }
             }
@@ -143,6 +151,7 @@ class FluyerMediaControl(private val context: Context, private val onAction: (St
             isFirst: Boolean,
             isLast: Boolean
     ) {
+        isStopped = false
         val builder =
                 MediaMetadataCompat.Builder()
                         .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
@@ -204,6 +213,10 @@ class FluyerMediaControl(private val context: Context, private val onAction: (St
                 if (isPlaying) PlaybackStateCompat.STATE_PLAYING
                 else PlaybackStateCompat.STATE_PAUSED
 
+        if (isPlaying) {
+            isStopped = false
+        }
+
         Log.d(LOG_TAG, "updateState called: isPlaying=$isPlaying, position=$position")
 
         val playbackState =
@@ -221,12 +234,14 @@ class FluyerMediaControl(private val context: Context, private val onAction: (St
                         .build()
         mediaSession.setPlaybackState(playbackState)
 
-        // Update notification in-place (no cancel needed, notify with same ID updates smoothly)
-        val metadata = mediaSession.controller.metadata
-        if (metadata != null) {
-            val title = metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE) ?: ""
-            val artist = metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST) ?: ""
-            showNotification(title, artist, lastArtworkPath, isPlaying)
+        if (!isStopped) {
+            // Update notification in-place (no cancel needed, notify with same ID updates smoothly)
+            val metadata = mediaSession.controller.metadata
+            if (metadata != null) {
+                val title = metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE) ?: ""
+                val artist = metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST) ?: ""
+                showNotification(title, artist, lastArtworkPath, isPlaying)
+            }
         }
     }
 
@@ -251,7 +266,7 @@ class FluyerMediaControl(private val context: Context, private val onAction: (St
                 .setSmallIcon(android.R.drawable.ic_media_play) // TODO: Use app icon
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setDeleteIntent(createPendingIntent(MediaControlReceiver.ACTION_STOP))
-                .setOngoing(isPlaying)
+                .setOngoing(false)
 
         val compactActionIndices = mutableListOf<Int>()
         var currentIndex = 0
