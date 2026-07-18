@@ -15,7 +15,7 @@
 	import { listen } from '@tauri-apps/api/event';
 	import type { Unsubscriber } from 'svelte/store';
 	import ColorConvert, { type RGB } from 'color-convert';
-	import { getCurrentWindow } from '@tauri-apps/api/window';
+	import { currentMonitor } from '@tauri-apps/api/window';
 
 	interface Color {
 		r: number;
@@ -99,11 +99,11 @@
 		let currentHeight = window.innerHeight;
 
 		if (!isInitialized) {
-			const screenSize = await getCurrentWindow().innerSize();
+			const monitor = await currentMonitor();
 			const dpr = window.devicePixelRatio || 1;
 
-			currentWidth = screenSize.width / dpr;
-			currentHeight = screenSize.height / dpr;
+			currentWidth = monitor?.size.width ?? 0 / dpr;
+			currentHeight = monitor?.size.height ?? 0 / dpr;
 		}
 
 		if (currentCoverArt !== null && !MetadataService.isDefaultCoverArt(currentCoverArt)) {
