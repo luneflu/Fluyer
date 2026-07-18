@@ -463,10 +463,16 @@ impl MusicPlayer {
     }
 
     pub fn set_repeat_mode(&self, mode: RepeatMode) {
-        if let Ok(mut state) = self.state.lock() {
+        let (current_idx, count) = if let Ok(mut state) = self.state.lock() {
             state.repeat_mode = mode;
-        }
+            (state.current_index, state.track.len())
+        } else {
+            (None, 0)
+        };
         self.emit_sync(false);
+
+        #[cfg(target_os = "android")]
+        self.update_android_media_boundaries(current_idx, count);
     }
 
     pub fn set_pos(&self, position: u64) {
@@ -1713,13 +1719,15 @@ impl MusicPlayer {
     fn update_android_media_boundaries(&self, current_index: Option<usize>, total_count: usize) {
         if let Some(index) = current_index {
             if total_count > 0 {
-                let is_first = index == 0;
-                let is_last = index == total_count - 1;
-
                 if let Ok(state) = self.state.lock() {
                     if index < state.track.len() {
                         let music = state.track[index].metadata.clone();
                         let is_playing = self.current_stream.load(Ordering::SeqCst) != 0;
+                        
+                        let (is_first, is_last) = match state.repeat_mode {
+                            RepeatMode::All | RepeatMode::One => (false, false),
+                            _ => (index == 0, index == total_count - 1),
+                        };
                         drop(state);
 
                         tauri::async_runtime::spawn(async move {
