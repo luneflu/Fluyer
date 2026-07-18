@@ -74,6 +74,7 @@
 			}
 			return ColorConvert.hsl.rgb(h, s, l);
 		});
+		console.log(balancedColors);
 
 		return balancedColors.map((color) => ({
 			r: color[0],
@@ -100,10 +101,10 @@
 
 		if (!isInitialized) {
 			const monitor = await currentMonitor();
-			const dpr = window.devicePixelRatio || 1;
+			const dpr = monitor?.scaleFactor ?? 1;
 
-			currentWidth = monitor?.size.width ?? 0 / dpr;
-			currentHeight = monitor?.size.height ?? 0 / dpr;
+			currentWidth = (monitor?.size.width ?? 0) / dpr;
+			currentHeight = (monitor?.size.height ?? 0) / dpr;
 		}
 
 		if (currentCoverArt !== null && !MetadataService.isDefaultCoverArt(currentCoverArt)) {
