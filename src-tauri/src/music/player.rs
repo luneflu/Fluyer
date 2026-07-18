@@ -46,6 +46,48 @@ struct PlayerState {
     shuffle_sequence: Option<Vec<usize>>,
 }
 
+impl PlayerState {
+    fn get_next_index(&mut self, from_user: bool) -> Option<usize> {
+        match (self.current_index, self.repeat_mode) {
+            (Some(current), RepeatMode::One) if !from_user => Some(current),
+            (Some(current), _) => {
+                if let Some(ref mut seq) = self.shuffle_sequence {
+                    if let Some(pos) = seq.iter().position(|&x| x == current) {
+                        if pos + 1 < seq.len() {
+                            Some(seq[pos + 1])
+                        } else if self.repeat_mode == RepeatMode::All || from_user {
+                            use rand::rng;
+                            use rand::seq::SliceRandom;
+                            let mut r = rng();
+                            let mut new_seq: Vec<usize> = (0..self.track.len()).collect();
+                            new_seq.shuffle(&mut r);
+
+                            let last_track = seq[pos];
+                            if new_seq.len() > 1 && new_seq[0] == last_track {
+                                new_seq.swap(0, 1);
+                            }
+
+                            *seq = new_seq;
+                            Some(seq[0])
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                } else if current + 1 < self.track.len() {
+                    Some(current + 1)
+                } else if self.repeat_mode == RepeatMode::All || from_user {
+                    Some(0)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+}
+
 pub struct MusicPlayer {
     bass_mixer: Arc<AtomicU32>,
     current_stream: Arc<AtomicU32>,
@@ -86,38 +128,14 @@ extern "C" fn end_sync_callback(
         }
 
         let next_index = {
-            let state = match st.lock() {
+            let mut state = match st.lock() {
                 Ok(s) => s,
                 Err(e) => {
                     crate::error!("Failed to lock player state: {}", e);
                     return;
                 }
             };
-            match (state.current_index, state.repeat_mode) {
-                (Some(current), RepeatMode::One) => Some(current),
-                (Some(current), _) => {
-                    if let Some(ref seq) = state.shuffle_sequence {
-                        if let Some(pos) = seq.iter().position(|&x| x == current) {
-                            if pos + 1 < seq.len() {
-                                Some(seq[pos + 1])
-                            } else if state.repeat_mode == RepeatMode::All {
-                                Some(seq[0])
-                            } else {
-                                None
-                            }
-                        } else {
-                            None
-                        }
-                    } else if current + 1 < state.track.len() {
-                        Some(current + 1)
-                    } else if state.repeat_mode == RepeatMode::All {
-                        Some(0)
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            }
+            state.get_next_index(false)
         };
 
         if let Some(index) = next_index {
@@ -452,10 +470,22 @@ impl MusicPlayer {
                 // Enable shuffle
                 let len = state.track.len();
                 if len > 0 {
-                    let mut seq: Vec<usize> = (0..len).collect();
                     let mut r = rng();
-                    seq.shuffle(&mut r);
-                    state.shuffle_sequence = Some(seq);
+                    let mut new_seq = Vec::with_capacity(len);
+                    if let Some(current) = state.current_index {
+                        let mut before: Vec<usize> = (0..current).collect();
+                        let mut after: Vec<usize> = ((current + 1)..len).collect();
+                        before.shuffle(&mut r);
+                        after.shuffle(&mut r);
+                        new_seq.extend(before);
+                        new_seq.push(current);
+                        new_seq.extend(after);
+                    } else {
+                        let mut seq: Vec<usize> = (0..len).collect();
+                        seq.shuffle(&mut r);
+                        new_seq = seq;
+                    }
+                    state.shuffle_sequence = Some(new_seq);
                 }
             }
         }
@@ -769,38 +799,14 @@ impl MusicPlayer {
 
         tauri::async_runtime::spawn_blocking(move || {
             let next_index = {
-                let state = match state_arc.lock() {
+                let mut state = match state_arc.lock() {
                     Ok(s) => s,
                     Err(e) => {
                         crate::error!("Failed to lock player state: {}", e);
                         return;
                     }
                 };
-                match (state.current_index, state.repeat_mode) {
-                    (Some(current), RepeatMode::One) if !from_user => Some(current),
-                    (Some(current), _) => {
-                        if let Some(ref seq) = state.shuffle_sequence {
-                            if let Some(pos) = seq.iter().position(|&x| x == current) {
-                                if pos + 1 < seq.len() {
-                                    Some(seq[pos + 1])
-                                } else if state.repeat_mode == RepeatMode::All || from_user {
-                                    Some(seq[0])
-                                } else {
-                                    None
-                                }
-                            } else {
-                                None
-                            }
-                        } else if current + 1 < state.track.len() {
-                            Some(current + 1)
-                        } else if state.repeat_mode == RepeatMode::All || from_user {
-                            Some(0)
-                        } else {
-                            None
-                        }
-                    }
-                    _ => None,
-                }
+                state.get_next_index(from_user)
             };
 
             if let Some(index) = next_index {
@@ -1723,7 +1729,7 @@ impl MusicPlayer {
                     if index < state.track.len() {
                         let music = state.track[index].metadata.clone();
                         let is_playing = self.current_stream.load(Ordering::SeqCst) != 0;
-                        
+
                         let (is_first, is_last) = match state.repeat_mode {
                             RepeatMode::All | RepeatMode::One => (false, false),
                             _ => (index == 0, index == total_count - 1),
