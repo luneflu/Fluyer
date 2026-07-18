@@ -242,60 +242,68 @@ class FluyerMediaControl(private val context: Context, private val onAction: (St
         val mediaMetadata = controller.metadata
 
         val builder =
-                NotificationCompat.Builder(context, channelId)
-                        .setContentTitle(title)
-                        .setContentText(artist)
-                        .setSubText(
-                                mediaMetadata?.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)
-                        )
-                        .setSmallIcon(android.R.drawable.ic_media_play) // TODO: Use app icon
-                        .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                        .setDeleteIntent(createPendingIntent(MediaControlReceiver.ACTION_STOP))
-                        .setStyle(
-                                androidx.media.app.NotificationCompat.MediaStyle()
-                                        .setMediaSession(mediaSession.sessionToken)
-                                        .setShowActionsInCompactView(0, 1, 2)
-                        )
-                        .setOngoing(isPlaying)
+            NotificationCompat.Builder(context, channelId)
+                .setContentTitle(title)
+                .setContentText(artist)
+                .setSubText(
+                    mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)
+                )
+                .setSmallIcon(android.R.drawable.ic_media_play) // TODO: Use app icon
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setDeleteIntent(createPendingIntent(MediaControlReceiver.ACTION_STOP))
+                .setOngoing(isPlaying)
+
+        val compactActionIndices = mutableListOf<Int>()
+        var currentIndex = 0
 
         // Actions
         if (!isFirst) {
             builder.addAction(
-                    NotificationCompat.Action(
-                            android.R.drawable.ic_media_previous,
-                            "Previous",
-                            createPendingIntent(MediaControlReceiver.ACTION_PREVIOUS)
-                    )
+                NotificationCompat.Action(
+                    android.R.drawable.ic_media_previous,
+                    "Previous",
+                    createPendingIntent(MediaControlReceiver.ACTION_PREVIOUS)
+                )
             )
+            compactActionIndices.add(currentIndex++)
         }
 
         if (isPlaying) {
             builder.addAction(
-                    NotificationCompat.Action(
-                            android.R.drawable.ic_media_pause,
-                            "Pause",
-                            createPendingIntent(MediaControlReceiver.ACTION_PAUSE)
-                    )
+                NotificationCompat.Action(
+                    android.R.drawable.ic_media_pause,
+                    "Pause",
+                    createPendingIntent(MediaControlReceiver.ACTION_PAUSE)
+                )
             )
+            compactActionIndices.add(currentIndex++)
         } else {
             builder.addAction(
-                    NotificationCompat.Action(
-                            android.R.drawable.ic_media_play,
-                            "Play",
-                            createPendingIntent(MediaControlReceiver.ACTION_PLAY)
-                    )
+                NotificationCompat.Action(
+                    android.R.drawable.ic_media_play,
+                    "Play",
+                    createPendingIntent(MediaControlReceiver.ACTION_PLAY)
+                )
             )
+            compactActionIndices.add(currentIndex++)
         }
 
         if (!isLast) {
             builder.addAction(
-                    NotificationCompat.Action(
-                            android.R.drawable.ic_media_next,
-                            "Next",
-                            createPendingIntent(MediaControlReceiver.ACTION_NEXT)
-                    )
+                NotificationCompat.Action(
+                    android.R.drawable.ic_media_next,
+                    "Next",
+                    createPendingIntent(MediaControlReceiver.ACTION_NEXT)
+                )
             )
+            compactActionIndices.add(currentIndex++)
         }
+
+        builder.setStyle(
+            androidx.media.app.NotificationCompat.MediaStyle()
+                .setMediaSession(mediaSession.sessionToken)
+                .setShowActionsInCompactView(*compactActionIndices.toIntArray())
+        )
 
         // Large Icon (Artwork)
         if (artworkPath != null) {
