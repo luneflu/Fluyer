@@ -13,6 +13,7 @@ const musicStore = $state({
 	isPlaying: false,
 	currentIndex: -1,
 	queueCount: 0,
+	queueRevision: 0,
 	repeatMode: RepeatMode.None,
 	isShuffled: false,
 

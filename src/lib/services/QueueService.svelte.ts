@@ -56,6 +56,7 @@ const playlistMoveQueue = new PlaylistMoveQueue();
 const QueueService = {
 	remove: async (index: number) => {
 		await TauriQueueAPI.remove(index);
+		musicStore.queueRevision++;
 		// currentIndex adjustment is handled by the music_player_sync event
 	},
 
@@ -68,11 +69,13 @@ const QueueService = {
 
 		return playlistMoveQueue.add(async () => {
 			await TauriQueueAPI.moveTo(from, to);
+			musicStore.queueRevision++;
 		});
 	},
 
 	shuffleQueue: async () => {
 		await invoke<void>(TauriCommands.MUSIC_QUEUE_SHUFFLE);
+		musicStore.queueRevision++;
 	},
 
 	clear: async () => {
@@ -80,10 +83,15 @@ const QueueService = {
 		musicStore.queueCount = 0;
 		musicStore.currentIndex = -1;
 		musicStore.currentMusic = undefined;
+		musicStore.queueRevision++;
 	},
 
 	refreshCount: async () => {
-		musicStore.queueCount = await TauriLibraryAPI.getQueueCount();
+		const newCount = await TauriLibraryAPI.getQueueCount();
+		if (musicStore.queueCount !== newCount) {
+			musicStore.queueCount = newCount;
+			musicStore.queueRevision++;
+		}
 	}
 };
 

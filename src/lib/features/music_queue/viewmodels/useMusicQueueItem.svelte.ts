@@ -18,6 +18,7 @@ export function useMusicQueueItem(getIndex: () => number, getVisible: () => bool
 
 	$effect(() => {
 		const isVisible = visible;
+		const revision = musicStore.queueRevision; // track queue revision
 		if (!isVisible) return;
 
 		TauriLibraryAPI.getQueueByIndex(index).then((m) => {
