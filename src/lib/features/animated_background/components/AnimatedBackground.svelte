@@ -101,7 +101,7 @@
 
 		if (!isInitialized) {
 			const monitor = await currentMonitor();
-			const dpr = monitor?.scaleFactor ?? 1;
+			const dpr = window.devicePixelRatio;
 
 			currentWidth = (monitor?.size.width ?? 0) / dpr;
 			currentHeight = (monitor?.size.height ?? 0) / dpr;
