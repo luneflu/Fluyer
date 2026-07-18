@@ -15,22 +15,29 @@ impl MediaSession {
             use crate::state::app_handle;
             crate::info!("Initializing Android Media Control");
             let _ = app_handle().fluyer().init_media_control(|event| {
-                use tauri::Manager;
+                std::thread::spawn(move || {
+                    use tauri::Manager;
 
-                crate::info!("Media Control Action: {}", event.action);
-                let handle: &tauri::AppHandle<_> = app_handle();
-                let state = handle.state::<crate::state::AppState>();
-                if event.action.starts_with("seek:") {
-                    if let Ok(pos) = event.action[5..].parse::<u64>() {
-                        state.music_player.set_pos(pos);
+                    crate::info!("Media Control Action: {}", event.action);
+                    let handle: &tauri::AppHandle<_> = app_handle();
+                    let state = handle.state::<crate::state::AppState>();
+
+                    if event.action == "play" {
+                        state.music_player.play();
+                    } else if event.action == "pause" {
+                        state.music_player.pause();
+                    } else if event.action.starts_with("seek:") {
+                        if let Ok(pos) = event.action[5..].parse::<u64>() {
+                            state.music_player.set_pos(pos);
+                        }
+                    } else if event.action == "previous" {
+                        state.music_player.play_previous();
+                    } else if event.action == "next" {
+                        state.music_player.play_next(true);
+                    } else {
+                        crate::warn!("Unknown media session command: {}", event.action);
                     }
-                } else if event.action == "previous" {
-                    state.music_player.play_previous();
-                } else if event.action == "next" {
-                    state.music_player.play_next(true);
-                } else {
-                    crate::warn!("Unknown media session command: {}", event.action);
-                }
+                });
             });
         }
 
