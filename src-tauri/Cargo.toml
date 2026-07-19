@@ -49,6 +49,7 @@ tauri-plugin-fs = "2"
 tauri-plugin-device-info = "1.0.0"
 fast_image_resize = { version = "6.0.0", features = ["image"] }
 tauri-plugin-opener = "2"
+base64 = "0.22.1"
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
 reqwest = { version = "0.13.4", default-features = false, features = ["json", "rustls"] }

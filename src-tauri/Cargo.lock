@@ -1690,6 +1690,7 @@ dependencies = [
 name = "fluyer"
 version = "1.2.0"
 dependencies = [
+ "base64 0.22.1",
  "bytemuck",
  "chrono",
  "dotenvy",

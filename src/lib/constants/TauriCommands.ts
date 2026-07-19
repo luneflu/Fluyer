@@ -72,5 +72,7 @@ export const TauriCommands = {
 	DEVELOPER_LOG_SAVE: 'developer_log_save',
 	DEVELOPER_MPV_LOG_SAVE: 'developer_mpv_log_save',
 
+	SCREENSHOT_SAVE: 'screenshot_save',
+
 	UPDATE_CHECK: 'update_check'
 };

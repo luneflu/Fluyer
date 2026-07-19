@@ -13,6 +13,7 @@ mod lyric;
 mod music;
 mod playlist;
 pub mod renderer;
+pub mod screenshot;
 mod sidebar;
 mod system;
 mod utils;

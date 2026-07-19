@@ -41,6 +41,9 @@ importers:
       '@tauri-apps/plugin-updater':
         specifier: ~2.10.1
         version: 2.10.1
+      '@zumer/snapdom':
+        specifier: ^2.16.0
+        version: 2.16.0
       animate.css:
         specifier: ^4.1.1
         version: 4.1.1
@@ -1329,6 +1332,9 @@ packages:
 
   '@webgpu/types@0.1.71':
     resolution: {integrity: sha512-mMy8/ODcKhab808co15eW+yN+HgXoQxRQHTiBV9Mrvl1r0ufnid7YOcI+gi4eUWSWl9ezD6TW2KXccrL8HCh2A==}
+
+  '@zumer/snapdom@2.16.0':
+    resolution: {integrity: sha512-ZfN3o6kcxb+jDhYe/JHFZf3g4UfDv3MGyTiK/sWvFU+vYlxa2KZVLZH7DxhKkobwGp66KMhRnXTqIKmaSgM50Q==}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -3359,6 +3365,8 @@ snapshots:
     optional: true
 
   '@webgpu/types@0.1.71': {}
+
+  '@zumer/snapdom@2.16.0': {}
 
   acorn-jsx@5.3.2(acorn@8.17.0):
     dependencies:
