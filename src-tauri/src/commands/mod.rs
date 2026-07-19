@@ -84,4 +84,6 @@ pub const COMMAND_HANDLERS: fn(tauri::ipc::Invoke) -> bool = tauri::generate_han
     crate::playlist::commands::playlist_delete,
     crate::playlist::commands::playlist_image_upload,
     crate::playlist::commands::playlist_image_read,
+    // Screenshot
+    crate::screenshot::commands::screenshot_save,
 ];
