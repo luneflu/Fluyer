@@ -1488,26 +1488,29 @@ impl MusicPlayer {
             Self::setup_sync(stream, bass_mixer, current_stream, state, temp_wav_path);
             crate::info!("Successfully loaded: {}", music.path);
 
-                    let (is_first, is_last) = if let Ok(s) = state.lock() {
-                        match s.repeat_mode {
-                            RepeatMode::All | RepeatMode::One => (false, false),
-                            _ => (index == 0, index == total_count - 1),
-                        }
-                    } else {
-                        (index == 0, index == total_count - 1)
-                    };
+            let (is_first, is_last) = if let Ok(s) = state.lock() {
+                match s.repeat_mode {
+                    RepeatMode::All | RepeatMode::One => (false, false),
+                    _ => (index == 0, index == total_count - 1),
+                }
+            } else {
+                (index == 0, index == total_count - 1)
+            };
 
-                    #[cfg(target_os = "android")]
-                    {
-                        let music_clone = music.clone();
-                        tauri::async_runtime::spawn(async move {
-                            crate::music::media_session::MediaSession::update_metadata(
-                                &music_clone, true, is_first, is_last,
-                            );
-                        });
-                    }
+            #[cfg(target_os = "android")]
+            {
+                let music_clone = music.clone();
+                tauri::async_runtime::spawn(async move {
+                    crate::music::media_session::MediaSession::update_metadata(
+                        &music_clone,
+                        true,
+                        is_first,
+                        is_last,
+                    );
+                });
+            }
 
-                    return true;
+            return true;
         }
 
         #[cfg(target_os = "android")]
@@ -1606,7 +1609,10 @@ impl MusicPlayer {
                     let music_clone = music.clone();
                     tauri::async_runtime::spawn(async move {
                         crate::music::media_session::MediaSession::update_metadata(
-                            &music_clone, true, is_first, is_last,
+                            &music_clone,
+                            true,
+                            is_first,
+                            is_last,
                         );
                     });
 

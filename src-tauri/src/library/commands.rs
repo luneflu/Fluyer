@@ -245,7 +245,10 @@ fn resolve_tracks(
             if !filter.sort_asc {
                 items.reverse();
             }
-            items.get(*index).map(|v| vec![(*v).clone()]).unwrap_or_default()
+            items
+                .get(*index)
+                .map(|v| vec![(*v).clone()])
+                .unwrap_or_default()
         }
         CollectionContext::All => lib.music_list.clone(),
     }
@@ -292,7 +295,7 @@ pub fn library_collection_shuffle_and_play(
 
     state.music_player.clear();
     state.music_player.add_track(tracks);
-    
+
     // Enable shuffle mode explicitly for this context
     state.music_player.shuffle_track();
     state.music_player.play();

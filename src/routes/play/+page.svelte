@@ -177,7 +177,9 @@
 				<div class="flex justify-start">
 					{#if settingStore.ui.showShuffleButton}
 						<button
-							class="mx-2 w-7 md-mdpi:w-[34px] lg-mdpi:w-8 md-hdpi:w-8 {musicStore.isShuffled ? 'text-primary' : 'opacity-60'}"
+							class="mx-2 w-7 md-mdpi:w-[34px] lg-mdpi:w-8 md-hdpi:w-8 {musicStore.isShuffled
+								? 'text-primary'
+								: 'opacity-60'}"
 							onclick={vm.handleButtonShuffle}
 						>
 							<Icon type={IconType.Shuffle} />

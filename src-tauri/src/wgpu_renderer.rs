@@ -255,9 +255,7 @@ pub fn setup_wgpu(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>
     let window = app_handle.get_webview_window("main").unwrap();
 
     let size = if let Ok(Some(monitor)) = window.current_monitor() {
-        monitor
-            .size()
-            .to_logical(monitor.scale_factor())
+        monitor.size().to_logical(monitor.scale_factor())
     } else {
         tauri::LogicalSize::new(0, 0)
     };

@@ -15,7 +15,7 @@ const TauriBackgroundAPI = {
 	},
 	listenTransitionComplete(callback: () => void) {
 		return listen(TauriCommands.ANIMATED_BACKGROUND_TRANSITION_COMPLETE, callback);
-	},
+	}
 };
 
 export default TauriBackgroundAPI;

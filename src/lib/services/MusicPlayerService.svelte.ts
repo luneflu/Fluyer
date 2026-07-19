@@ -81,7 +81,7 @@ const MusicPlayerService = {
 
 			if (e.payload.index > -1) {
 				const musicData = await TauriLibraryAPI.getQueueByIndex(e.payload.index);
-				
+
 				if (!musicStore.currentMusic || musicStore.currentMusic.path !== musicData?.path) {
 					if (musicData) {
 						musicStore.currentIndex = e.payload.index;
