@@ -108,7 +108,7 @@ const PersistentStoreService = {
 			),
 			showVolume: makeBinding(
 				'ui-play-show-volume',
-				true,
+				false,
 				(value) => (settingStore.ui.play.showVolume = value)
 			)
 		}
