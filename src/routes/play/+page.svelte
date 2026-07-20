@@ -82,7 +82,7 @@
 	>
 		<View
 			class="sm-mdpi:w-[90%] h-fit w-full rounded-xl
-            px-4 py-5 hover:px-5 hover:py-7
+            px-4 py-5 {isMobile() ? '' : 'hover:px-5 hover:py-7'}
             md:mt-4 md-mdpi:w-[85%] lg-mdpi:w-[80%] xl-mdpi:w-[75%] 2xl-mdpi:w-[70%] 3xl-mdpi:w-[65%]
             md-hdpi:w-[90%] lg-hdpi:w-[80%] xl-hdpi:w-[70%] 2xl-hdpi:w-[65%]
             md-xhdpi:w-[80%] lg-xhdpi:w-[70%] 2xl-xhdpi:w-[65%]"
