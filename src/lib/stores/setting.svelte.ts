@@ -11,7 +11,7 @@ const settingStore = $state({
 		showShuffleButton: true,
 		play: {
 			showBackButton: true,
-			showVolume: true
+			showVolume: false
 		}
 	},
 
