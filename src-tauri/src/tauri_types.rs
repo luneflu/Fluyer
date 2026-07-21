@@ -1,8 +1,7 @@
-// src-tauri/src/tauri_types.rs
-#[cfg(feature = "cef")]
+#[cfg(target_os = "linux")]
 pub type Runtime = tauri::Cef;
 
-#[cfg(not(feature = "cef"))]
+#[cfg(not(target_os = "linux"))]
 pub type Runtime = tauri::Wry;
 
 // Generic Tauri Type Aliases
