@@ -1,4 +1,11 @@
 {
+	"app": {
+		"windows": [
+			{
+				"transparent": false
+			}
+		]
+	},
 	"bundle": {
 		"externalBin": [],
 		"linux": {

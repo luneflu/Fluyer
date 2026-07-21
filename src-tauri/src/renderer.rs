@@ -37,7 +37,7 @@ pub struct GlobalRenderer {
     pub cond: std::sync::Condvar,
 }
 
-pub fn init_global_renderer(app: &mut tauri::App) {
+pub fn init_global_renderer(app: &mut crate::tauri_types::App) {
     app.manage(Arc::new(GlobalRenderer {
         bg_state: Mutex::new(SharedRendererState::default()),
         #[cfg(not(target_os = "linux"))]

@@ -1,4 +1,4 @@
-use tauri::AppHandle;
+use crate::tauri_types::AppHandle;
 
 #[cfg(desktop)]
 use tauri::Emitter;

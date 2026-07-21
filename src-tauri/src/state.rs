@@ -1,7 +1,8 @@
 use crate::library::SharedLibraryState;
 use crate::music::player::MusicPlayer;
 use std::sync::{Arc, OnceLock};
-use tauri::{App, AppHandle, Manager, WebviewWindow, Wry};
+use tauri::Manager;
+use crate::tauri_types::{App, AppHandle, WebviewWindow, Runtime};
 use tauri_plugin_store::{Store, StoreExt};
 
 pub struct AppState {
@@ -26,7 +27,7 @@ static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 static MAIN_WINDOW: OnceLock<WebviewWindow> = OnceLock::new();
 
 static STORE_NAME: &str = "store.json";
-static APP_STORE: OnceLock<Arc<Store<Wry>>> = OnceLock::new();
+static APP_STORE: OnceLock<Arc<Store<Runtime>>> = OnceLock::new();
 
 pub fn app_handle() -> &'static AppHandle {
     APP_HANDLE.get().expect("APP_HANDLE not initialized")
@@ -44,7 +45,7 @@ pub fn set_main_window(window: WebviewWindow) {
     MAIN_WINDOW.set(window).unwrap();
 }
 
-pub fn app_store() -> &'static Arc<Store<Wry>> {
+pub fn app_store() -> &'static Arc<Store<Runtime>> {
     APP_STORE.get().expect("APP_STORE not initialized")
 }
 

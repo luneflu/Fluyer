@@ -2,7 +2,7 @@ pub mod decorum;
 pub mod mobile;
 pub mod route;
 
-pub const COMMAND_HANDLERS: fn(tauri::ipc::Invoke) -> bool = tauri::generate_handler![
+pub const COMMAND_HANDLERS: fn(crate::tauri_types::Invoke) -> bool = tauri::generate_handler![
     // Music commands
     crate::music::commands::music_play,
     crate::music::commands::music_pause,

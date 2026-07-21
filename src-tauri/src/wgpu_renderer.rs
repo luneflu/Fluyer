@@ -10,7 +10,7 @@ use wgpu::{BackendOptions, Backends, InstanceDescriptor, InstanceFlags};
 #[cfg(target_os = "android")]
 fn create_android_surface(
     instance: &wgpu::Instance,
-    app_handle: &tauri::AppHandle,
+    app_handle: &crate::tauri_types::AppHandle,
 ) -> Result<wgpu::Surface<'static>, Box<dyn std::error::Error>> {
     use jni::objects::{JClass, JObject, JValue};
     use raw_window_handle::{
@@ -159,7 +159,7 @@ fn create_android_surface(
 
 pub fn create_surface(
     instance: &wgpu::Instance,
-    app_handle: &tauri::AppHandle,
+    app_handle: &crate::tauri_types::AppHandle,
 ) -> Result<wgpu::Surface<'static>, Box<dyn std::error::Error>> {
     #[cfg(target_os = "android")]
     let surface = create_android_surface(instance, app_handle)?;
@@ -243,7 +243,7 @@ fn init_wgpu_device(
     (device, queue, config)
 }
 
-pub fn setup_wgpu(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+pub fn setup_wgpu(app: &mut crate::tauri_types::App) -> Result<(), Box<dyn std::error::Error>> {
     crate::debug!("setup_wgpu: Starting femtovg WGPU initialization");
 
     let shared = Arc::new(SharedRenderer {
@@ -312,7 +312,7 @@ pub fn setup_wgpu(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>
     Ok(())
 }
 
-pub fn handle_wgpu_resize(app_handle: &tauri::AppHandle, width: u32, height: u32) {
+pub fn handle_wgpu_resize(app_handle: &crate::tauri_types::AppHandle, width: u32, height: u32) {
     if let Some(shared) = app_handle.try_state::<Arc<SharedRenderer>>() {
         let mut state_guard = shared.state.lock().unwrap();
         if let Some(state) = state_guard.as_mut() {
@@ -327,7 +327,7 @@ pub fn handle_wgpu_resize(app_handle: &tauri::AppHandle, width: u32, height: u32
     }
 }
 
-pub fn suspend_wgpu(app_handle: &tauri::AppHandle) {
+pub fn suspend_wgpu(app_handle: &crate::tauri_types::AppHandle) {
     #[cfg(target_os = "android")]
     {
         crate::debug!("Suspending WGPU");
@@ -340,7 +340,7 @@ pub fn suspend_wgpu(app_handle: &tauri::AppHandle) {
     }
 }
 
-pub fn resume_wgpu(app_handle: &tauri::AppHandle) {
+pub fn resume_wgpu(app_handle: &crate::tauri_types::AppHandle) {
     #[cfg(target_os = "android")]
     {
         crate::debug!("Resuming WGPU logic");
@@ -385,7 +385,7 @@ pub fn resume_wgpu(app_handle: &tauri::AppHandle) {
     }
 }
 
-pub fn start_render_loop(app_handle: tauri::AppHandle) {
+pub fn start_render_loop(app_handle: crate::tauri_types::AppHandle) {
     std::thread::spawn(move || {
         let shared = match app_handle.try_state::<Arc<SharedRenderer>>() {
             Some(s) => s,

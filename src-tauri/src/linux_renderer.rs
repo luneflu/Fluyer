@@ -141,7 +141,7 @@ fn inject_gtk_overlay(
     overlay.show_all();
 }
 
-pub fn setup_linux_background(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+pub fn setup_linux_background(app: &mut crate::tauri_types::App) -> Result<(), Box<dyn std::error::Error>> {
     crate::debug!("setup_linux_background: Starting GTK femtovg OpenGL initialization");
 
     let window = app.get_webview_window("main").unwrap();

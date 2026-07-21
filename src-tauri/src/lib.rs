@@ -27,9 +27,11 @@ pub(crate) mod state;
 // Re-export platform module from main
 pub mod platform;
 
+pub mod tauri_types;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let builder = tauri::Builder::default()
+    let builder = tauri::Builder::<tauri_types::Runtime>::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_os::init())

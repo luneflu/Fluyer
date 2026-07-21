@@ -19,7 +19,7 @@ impl MediaSession {
                     use tauri::Manager;
 
                     crate::info!("Media Control Action: {}", event.action);
-                    let handle: &tauri::AppHandle<_> = app_handle();
+                    let handle: &crate::tauri_types::AppHandle = app_handle();
                     let state = handle.state::<crate::state::AppState>();
 
                     if event.action == "play" {

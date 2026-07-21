@@ -1,5 +1,6 @@
 use crate::state::{initialize_store, set_main_window};
-use tauri::{App, Manager};
+use tauri::Manager;
+use crate::tauri_types::{App, WebviewWindow, TauriPlugin};
 
 #[cfg(target_os = "macos")]
 use crate::platform::{TRAFFIC_LIGHTS_INSET_X, TRAFFIC_LIGHTS_INSET_Y};
@@ -43,7 +44,7 @@ pub fn setup_application(app: &mut App) -> Result<(), Box<dyn std::error::Error>
     Ok(())
 }
 
-fn configure_window(window: &tauri::WebviewWindow) {
+fn configure_window(window: &WebviewWindow) {
     #[cfg(any(windows, target_os = "linux"))]
     {
         window.set_decorations(false).unwrap();
@@ -60,7 +61,7 @@ fn configure_window(window: &tauri::WebviewWindow) {
 }
 
 #[cfg(debug_assertions)]
-pub fn prevent_default_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
+pub fn prevent_default_plugin() -> TauriPlugin {
     use tauri_plugin_prevent_default::Flags;
 
     tauri_plugin_prevent_default::Builder::new()
@@ -69,12 +70,12 @@ pub fn prevent_default_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 }
 
 #[cfg(not(debug_assertions))]
-pub fn prevent_default_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
+pub fn prevent_default_plugin() -> TauriPlugin {
     tauri_plugin_prevent_default::init()
 }
 
 #[cfg(desktop)]
-pub fn single_instance_plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
+pub fn single_instance_plugin() -> TauriPlugin {
     tauri_plugin_single_instance::init(|app, _args, _cwd| {
         let _ = app
             .get_webview_window("main")
