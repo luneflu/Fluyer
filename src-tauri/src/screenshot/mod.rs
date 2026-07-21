@@ -1,7 +1,8 @@
 use base64::{engine::general_purpose, Engine as _};
+use tauri::Manager;
 use std::fs::File;
 use std::io::Write;
-use tauri::{AppHandle, Manager};
+use crate::tauri_types::{AppHandle};
 
 #[tauri::command]
 pub async fn screenshot_save(app: AppHandle, base64_data: String) -> Result<(), String> {
