@@ -174,75 +174,24 @@
 		onclick={handleClick}
 	></div>
 
+	<div
+		class="pointer-events-none absolute top-1/2 w-full -translate-y-1/2 rounded-full bg-white opacity-30"
+		style="height: {getProgressHeight()}px;"
+	></div>
+
+	<div
+		class="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 rounded-full bg-white transition-all duration-200 ease-linear"
+		style="height: {getProgressHeight()}px; width: {progressPercentage}%;"
+	></div>
+
 	<input
-		class="progress-bar absolute w-full"
+		class="absolute top-1/2 w-full -translate-y-1/2 cursor-pointer opacity-0"
 		type="range"
-		style="
-                --progress-height: {getProgressHeight()}px;
-                --progress-width: {progressPercentage}%;
-            "
 		bind:value
 		{min}
 		{max}
 		{step}
 		onchange={() => onValueChange?.(value)}
-	/>
-	<input
-		class="progress-bar-end absolute w-full"
-		type="range"
-		style="
-                --progress-height: {getProgressHeight()}px;
-                --progress-width: {progressPercentage}%;
-            "
-		bind:value
-		{min}
-		{max}
-		{step}
+		style="height: {getProgressHeight()}px; z-index: 5;"
 	/>
 </div>
-
-<style lang="scss">
-	.progress-bar-track {
-		background: linear-gradient(
-			to right,
-			white var(--progress-width),
-			transparent var(--progress-width)
-		);
-		&-end {
-			background: linear-gradient(
-				to right,
-				white var(--progress-width),
-				white var(--progress-width)
-			);
-		}
-	}
-
-	.progress-bar {
-		@apply cursor-pointer outline-0;
-		appearance: none;
-		-webkit-appearance: none;
-		background: transparent;
-		transition: linear 0.2s;
-
-		&::-webkit-slider-runnable-track {
-			height: var(--progress-height);
-			@apply rounded-full;
-			@extend .progress-bar-track;
-		}
-
-		&::-webkit-slider-thumb {
-			@apply invisible;
-		}
-
-		&-end {
-			@extend .progress-bar;
-			opacity: 0.3;
-			height: var(--progress-height);
-
-			&::-webkit-slider-runnable-track {
-				@apply rounded-full;
-				@extend .progress-bar-track-end;
-			}
-		}
-	}
-</style>
