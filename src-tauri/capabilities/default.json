@@ -20,11 +20,6 @@
 		"core:window:allow-set-fullscreen",
 		"decorum:allow-show-snap-overlay",
 		"os:default",
-		"fluyer:allow-toast",
-		"fluyer:allow-restart-app",
-		"fluyer:allow-check-permissions",
-		"fluyer:deny-check-permissions",
-		"fs:default",
-		"opener:default"
+		"fs:default"
 	]
 }
