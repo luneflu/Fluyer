@@ -29,6 +29,16 @@ pub mod platform;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Fix Nvidia issue crash on Linux
+    // https://github.com/tauri-apps/tauri/issues/9394
+    #[cfg(target_os = "linux")]
+    if std::path::Path::new("/proc/driver/nvidia/version").exists()
+        && std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none()
+    {
+        unsafe {
+            std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+        }
+    }
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
