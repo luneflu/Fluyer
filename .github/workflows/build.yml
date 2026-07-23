@@ -23,6 +23,10 @@ on:
         description: 'Build linux'
         type: boolean
         default: true
+      build_linux_cef:
+        description: 'Build linux-cef'
+        type: boolean
+        default: true
       build_android_armv7:
         description: 'Build android-armv7'
         type: boolean
@@ -243,6 +247,59 @@ jobs:
         with:
           artifacts: |
             ./src-tauri/target/release/bundle/deb/Fluyer_*_amd64.deb
+          tag: v${{ needs.prepare.outputs.version }}
+          name: Fluyer v${{ needs.prepare.outputs.version }}
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          prerelease: true
+          artifactErrorsFailBuild: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-linux-cef:
+    needs: prepare
+    if: ${{ inputs.build_linux_cef }}
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Swap to CEF configs
+        run: |
+          mv ./src-tauri/tauri.cef.conf.json ./src-tauri/tauri.linux.conf.json
+          mv ./src-tauri/Cargo.cef.toml ./src-tauri/Cargo.toml
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+      - name: Setup Workflow
+        shell: bash
+        run: bash infra/linux.sh
+      - name: Rename CEF deb package
+        run: |
+          mv ./src-tauri/target/release/bundle/deb/fluyer_*_amd64.deb ./src-tauri/target/release/bundle/deb/Fluyer-cef_${{ needs.prepare.outputs.version }}_amd64.deb || \
+          mv ./src-tauri/target/release/bundle/deb/Fluyer_*_amd64.deb ./src-tauri/target/release/bundle/deb/Fluyer-cef_${{ needs.prepare.outputs.version }}_amd64.deb
+      - name: Upload artifact
+        if: ${{ !inputs.release_build }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-cef
+          path: ./src-tauri/target/release/bundle/deb/Fluyer-cef_*_amd64.deb
+      - name: Publish release
+        if: ${{ inputs.release_build }}
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: |
+            ./src-tauri/target/release/bundle/deb/Fluyer-cef_*_amd64.deb
           tag: v${{ needs.prepare.outputs.version }}
           name: Fluyer v${{ needs.prepare.outputs.version }}
           allowUpdates: true
