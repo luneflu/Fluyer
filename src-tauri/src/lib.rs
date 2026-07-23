@@ -6,7 +6,7 @@ mod coverart;
 mod database;
 mod folder;
 pub mod library;
-#[cfg(target_os = "linux")]
+#[cfg(all(target_os = "linux", not(feature = "cef")))]
 mod linux_renderer;
 pub mod logger;
 mod lyric;
@@ -17,6 +17,7 @@ pub mod screenshot;
 mod sidebar;
 mod system;
 mod utils;
+#[cfg(not(target_os = "linux"))]
 mod wgpu_renderer;
 
 // Application modules

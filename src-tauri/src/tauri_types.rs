@@ -1,7 +1,7 @@
-#[cfg(target_os = "linux")]
+#[cfg(all(target_os = "linux", feature = "cef"))]
 pub type Runtime = tauri::Cef;
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(any(not(target_os = "linux"), not(feature = "cef")))]
 pub type Runtime = tauri::Wry;
 
 // Generic Tauri Type Aliases

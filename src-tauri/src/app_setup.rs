@@ -45,6 +45,15 @@ pub fn setup_application(app: &mut App) -> Result<(), Box<dyn std::error::Error>
 }
 
 fn configure_window(window: &WebviewWindow) {
+    #[cfg(any(windows, all(target_os = "linux", not(feature = "cef"))))]
+    {
+        window.set_decorations(false).unwrap();
+        window.set_shadow(false).unwrap();
+    }
+    #[cfg(all(target_os = "linux", feature = "cef"))]
+    {
+        window.set_title("").unwrap();
+    }
 
     #[cfg(target_os = "macos")]
     {
