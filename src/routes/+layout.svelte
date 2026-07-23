@@ -64,7 +64,9 @@
 
 		console.log(`Front-end is initialized. Took ${performance.now() - now} ms`);
 
-		UpdateService.checkForUpdates();
+		if (!appStore.isCefEnabled) {
+			UpdateService.checkForUpdates();
+		}
 	});
 </script>
 
