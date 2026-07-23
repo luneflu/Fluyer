@@ -14,6 +14,7 @@
 	import ConfirmCancelButtons from './ConfirmCancelButtons.svelte';
 	import ListModeSelector from './ListModeSelector.svelte';
 	import AddPlaylistButton from './AddPlaylistButton.svelte';
+	import appStore from '$lib/stores/app.svelte';
 
 	const vm = useFilterBar();
 </script>
@@ -32,7 +33,7 @@
 	<div
 		class="grid gap-x-1 pe-2 ps-3 sm:pe-3 sm:ps-3 md:gap-x-3
 		{isMacos() ? 'ms-[68px]' : ''}
-		{isWindows() || isLinux() ? 'me-[100px] sm:me-0' : ''}
+		{isWindows() || (isLinux() && !appStore.isCefEnabled) ? 'me-[100px] sm:me-0' : ''}
 		{isMobile()
 			? 'grid-cols-[min-content_1fr_min-content_min-content] sm:grid-cols-[min-content_min-content_1fr]'
 			: 'grid-cols-[1fr_min-content_min-content] sm:grid-cols-[min-content_1fr]'}"
@@ -132,7 +133,7 @@
 	<div
 		class="hidden sm:grid sm:ps-3
 		{isMobile() ? '' : 'gap-x-1 sm:grid-cols-[1fr_min-content] md:gap-x-3'}
-		{isLinux() ? 'me-[100px]' : ''}
+		{isLinux() && !appStore.isCefEnabled ? 'me-[100px]' : ''}
 		{isWindows() ? 'me-[120px]' : ''}"
 	>
 		<Input

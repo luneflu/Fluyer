@@ -23,6 +23,8 @@
 	import CreatePlaylistModal from '$lib/features/playlist/components/CreatePlaylistModal.svelte';
 	import PlaylistService from '$lib/services/PlaylistService.svelte';
 	import UpdateService from '$lib/services/UpdateService.svelte';
+	import TauriBackgroundAPI from '$lib/tauri/TauriBackgroundAPI';
+	import appStore from '$lib/stores/app.svelte';
 
 	if (isLinux()) {
 		import('$lib/scss/linux.scss');
@@ -46,7 +48,11 @@
 			MobileService.initialize(),
 			FolderService.initialize(),
 			MetadataService.initialize(),
-			PlaylistService.initialize()
+			PlaylistService.initialize(),
+			(async () => {
+				appStore.isCefEnabled = await TauriBackgroundAPI.isCefEnabled();
+				console.log(appStore.isCefEnabled);
+			})()
 		]);
 
 		if (isDesktop()) {
@@ -70,7 +76,7 @@
 <div class="scrollbar-hidden fixed h-screen w-screen">
 	{@render children?.()}
 </div>
-{#if isDesktop() && page.url.pathname !== PageRoutes.PLAY}
+{#if isDesktop() && page.url.pathname !== PageRoutes.PLAY && !appStore.isCefEnabled}
 	<TitleBar />
 {/if}
 {#if musicStore.isLibraryLoaded}

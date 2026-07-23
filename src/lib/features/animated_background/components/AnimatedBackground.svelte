@@ -16,6 +16,7 @@
 	import type { Unsubscriber } from 'svelte/store';
 	import ColorConvert, { type RGB } from 'color-convert';
 	import { currentMonitor } from '@tauri-apps/api/window';
+	import appStore from '$lib/stores/app.svelte';
 
 	interface Color {
 		r: number;
@@ -44,7 +45,6 @@
 	let glCurrentTexLoc: WebGLUniformLocation | null = null;
 	let glNextTexLoc: WebGLUniformLocation | null = null;
 
-	let isCef = $state(false);
 	let glReady = false;
 	let mountComplete = false;
 
@@ -121,7 +121,11 @@
 		return true;
 	}
 
-	function createGLTexture(width: number, height: number, data: number[] | Uint8Array): WebGLTexture {
+	function createGLTexture(
+		width: number,
+		height: number,
+		data: number[] | Uint8Array
+	): WebGLTexture {
 		const tex = gl.createTexture()!;
 		gl.bindTexture(gl.TEXTURE_2D, tex);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -274,7 +278,7 @@
 		);
 
 		// CEF path: render via WebGL canvas
-		if (isCef && glReady && result) {
+		if (appStore.isCefEnabled && glReady && result) {
 			const [data, texWidth, texHeight] = result;
 
 			if (!glCurrentTex) {
@@ -298,7 +302,9 @@
 
 		if (!isInitialized) {
 			isInitialized = true;
-			setTimeout(() => { canUpdate = true; }, 1000);
+			setTimeout(() => {
+				canUpdate = true;
+			}, 1000);
 			console.log('AnimatedBackground is initialized (WebGL/Native)');
 		}
 	}
@@ -315,7 +321,7 @@
 
 		if (widthDiff >= 0.25 || heightDiff >= 0.25) {
 			console.log('Resized by 25%, updating background');
-			if (isCef && glReady && glCanvas) {
+			if (appStore.isCefEnabled && glReady && glCanvas) {
 				glCanvas.width = window.innerWidth;
 				glCanvas.height = window.innerHeight;
 				renderStill();
@@ -347,7 +353,7 @@
 	async function restoreBackground() {
 		if (!isInitialized) return;
 
-		if (isCef && glReady && glCurrentTex) {
+		if (appStore.isCefEnabled && glReady && glCurrentTex) {
 			// Crossfade back to the cached current texture (copy it into "next")
 			if (glNextTex) gl.deleteTexture(glNextTex);
 			// Re-upload current texture pixels as next (effectively a no-op fade)
@@ -360,9 +366,10 @@
 	}
 
 	onMount(async () => {
-		isCef = await TauriBackgroundAPI.isCefEnabled();
-		if (isCef) {
-			// Let Svelte render the {#if isCef} canvas into the DOM first.
+		// appStore.isCefEnabled is now handled in +layout.svelte on initialization
+		if (appStore.isCefEnabled) {
+			// Let Svelte render the {#if appStore.isCefEnabled} canvas into the DOM first.
+			await tick();
 			await tick();
 			await tick();
 			if (glCanvas) {
@@ -398,7 +405,7 @@
 
 <svelte:window onresize={onWindowResize} />
 
-{#if isCef}
+{#if appStore.isCefEnabled}
 	<canvas
 		bind:this={glCanvas}
 		style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;"
