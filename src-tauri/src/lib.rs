@@ -12,6 +12,7 @@ pub mod logger;
 mod lyric;
 mod music;
 mod playlist;
+#[cfg(not(feature = "cef"))]
 pub mod renderer;
 pub mod screenshot;
 mod sidebar;

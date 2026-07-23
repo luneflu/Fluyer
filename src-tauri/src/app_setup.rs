@@ -18,6 +18,7 @@ pub fn setup_application(app: &mut App) -> Result<(), Box<dyn std::error::Error>
 
     initialize_store(app);
 
+    #[cfg(not(feature = "cef"))]
     crate::renderer::init_global_renderer(app);
 
     #[cfg(not(target_os = "linux"))]
