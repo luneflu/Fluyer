@@ -2,7 +2,14 @@
 	"app": {
 		"windows": [
 			{
-				"transparent": false
+				"title": "Fluyer",
+				"width": 1200,
+				"height": 675,
+				"resizable": true,
+				"titleBarStyle": "Overlay",
+				"transparent": false,
+				"decorations": true,
+				"shadow": false
 			}
 		]
 	},

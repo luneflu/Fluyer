@@ -78,18 +78,46 @@ pub fn generate_blurred_background(
 }
 
 #[tauri::command]
+pub async fn is_cef_enabled() -> Result<bool, String> {
+    #[cfg(feature = "cef")]
+    {
+        Ok(true)
+    }
+    #[cfg(not(feature = "cef"))]
+    {
+        Ok(false)
+    }
+}
+
+#[tauri::command]
 pub async fn animated_background_update(
     colors: Vec<Color>,
     width: u32,
     height: u32,
-) -> Result<(), String> {
+) -> Result<Option<(Vec<u8>, u32, u32)>, String> {
     let blurred = generate_blurred_background(colors, width, height)?;
-    crate::renderer::update_background(blurred);
-    Ok(())
+
+    #[cfg(all(target_os = "linux", feature = "cef"))]
+    {
+        return Ok(Some((
+            blurred.clone().into_raw(),
+            blurred.width(),
+            blurred.height(),
+        )));
+    }
+
+    #[cfg(any(not(target_os = "linux"), not(feature = "cef")))]
+    {
+        crate::renderer::update_background(blurred);
+        Ok(None)
+    }
 }
 
 #[tauri::command]
 pub async fn animated_background_restore() -> Result<(), String> {
-    crate::renderer::restore_background();
+    #[cfg(any(not(target_os = "linux"), not(feature = "cef")))]
+    {
+        crate::renderer::restore_background();
+    }
     Ok(())
 }

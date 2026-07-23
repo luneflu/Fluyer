@@ -1,6 +1,6 @@
 use crate::state::{initialize_store, set_main_window};
+use crate::tauri_types::{App, TauriPlugin, WebviewWindow};
 use tauri::Manager;
-use crate::tauri_types::{App, WebviewWindow, TauriPlugin};
 
 #[cfg(target_os = "macos")]
 use crate::platform::{TRAFFIC_LIGHTS_INSET_X, TRAFFIC_LIGHTS_INSET_Y};
@@ -29,7 +29,7 @@ pub fn setup_application(app: &mut App) -> Result<(), Box<dyn std::error::Error>
         }
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(all(target_os = "linux", not(feature = "cef")))]
     {
         crate::debug!("setup_application: About to call setup_linux_background");
         match crate::linux_renderer::setup_linux_background(app) {
@@ -45,11 +45,6 @@ pub fn setup_application(app: &mut App) -> Result<(), Box<dyn std::error::Error>
 }
 
 fn configure_window(window: &WebviewWindow) {
-    #[cfg(any(windows, target_os = "linux"))]
-    {
-        window.set_decorations(false).unwrap();
-        window.set_shadow(false).unwrap();
-    }
 
     #[cfg(target_os = "macos")]
     {
