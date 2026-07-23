@@ -2,8 +2,6 @@
 	"app": {
 		"windows": [
 			{
-				"width": 1200,
-				"height": 675,
 				"resizable": true,
 				"titleBarStyle": "Overlay",
 				"hiddenTitle": true,

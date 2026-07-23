@@ -45,6 +45,14 @@ pub fn setup_application(app: &mut App) -> Result<(), Box<dyn std::error::Error>
 }
 
 fn configure_window(window: &WebviewWindow) {
+    let size = if let Ok(Some(monitor)) = window.current_monitor() {
+        monitor.size().to_logical(monitor.scale_factor())
+    } else {
+        tauri::LogicalSize::new(0, 0)
+    };
+
+    window.set_size(size).unwrap();
+
     #[cfg(any(windows, all(target_os = "linux", not(feature = "cef"))))]
     {
         window.set_decorations(false).unwrap();
@@ -54,7 +62,6 @@ fn configure_window(window: &WebviewWindow) {
     {
         window.set_title("").unwrap();
     }
-
     #[cfg(target_os = "macos")]
     {
         window.make_transparent().unwrap();
