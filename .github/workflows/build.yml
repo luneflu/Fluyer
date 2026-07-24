@@ -84,6 +84,8 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          shared-key: 'build-windows-x86_64'
+          prefix-key: 'v2-rust'
       - name: Setup Workflow
         shell: bash
         run: bash infra/windows.sh
@@ -130,6 +132,8 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          shared-key: 'build-macos-intel'
+          prefix-key: 'v2-rust'
       - name: Setup Workflow
         shell: bash
         run: bash infra/macos.sh
@@ -181,6 +185,8 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          shared-key: 'build-macos-silicon'
+          prefix-key: 'v2-rust'
       - name: Setup Workflow
         shell: bash
         run: bash infra/macos.sh
@@ -232,6 +238,8 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          shared-key: 'build-linux'
+          prefix-key: 'v2-rust'
       - name: Setup Workflow
         shell: bash
         run: bash infra/linux.sh
@@ -281,6 +289,8 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          shared-key: 'build-linux-cef'
+          prefix-key: 'v2-rust'
       - name: Setup Workflow
         shell: bash
         run: bash infra/linux.sh
@@ -339,6 +349,8 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          shared-key: 'build-android-armv7'
+          prefix-key: 'v2-rust'
       - name: Setup Workflow
         shell: bash
         env:
@@ -401,6 +413,8 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          shared-key: 'build-android-aarch64'
+          prefix-key: 'v2-rust'
       - name: Setup Workflow
         shell: bash
         env:
@@ -463,6 +477,8 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          shared-key: 'build-android-i686'
+          prefix-key: 'v2-rust'
       - name: Setup Workflow
         shell: bash
         env:
@@ -525,6 +541,8 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          shared-key: 'build-android-x86_64'
+          prefix-key: 'v2-rust'
       - name: Setup Workflow
         shell: bash
         env:
