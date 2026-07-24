@@ -59,6 +59,7 @@ libloading = "0.8"
 reqwest = { version = "0.13.4", default-features = false, features = ["json", "rustls"] }
 tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "feat/cef" }
 tauri-plugin-updater = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "feat/cef" }
+tauri-plugin-process = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "feat/cef" }
 
 [profile.dev]
 debug = 0

@@ -49,13 +49,14 @@ pub fn run() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fluyer::init())
         .plugin(tauri_plugin_device_info::init())
+        .plugin(tauri_plugin_fluyer::init())
         .plugin(app_setup::prevent_default_plugin());
 
     #[cfg(desktop)]
     let builder = builder
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .plugin(app_setup::single_instance_plugin());
 
     builder
