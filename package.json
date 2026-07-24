@@ -1,6 +1,6 @@
 {
 	"name": "fluyer",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"description": "",
 	"type": "module",
 	"scripts": {
@@ -10,9 +10,9 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"tauri": "tauri",
-		"init": "pnpm tsx scripts/tauri-init.ts",
-		"android:init": "pnpm tsx scripts/tauri-init-android.ts",
-		"sync-version": "pnpm tsx scripts/sync-version.ts",
+		"init": "tsx scripts/tauri-init.ts",
+		"android:init": "tsx scripts/tauri-init-android.ts",
+		"sync-version": "tsx scripts/sync-version.ts",
 		"format": "PRETTIER_EXPERIMENTAL_CLI=1 prettier --write . --ignore-path .prettierignore && cargo fmt --manifest-path src-tauri/Cargo.toml",
 		"format:check": "PRETTIER_EXPERIMENTAL_CLI=1 prettier --check . --ignore-path .prettierignore && cargo fmt --manifest-path src-tauri/Cargo.toml -- --check",
 		"lint": "eslint .",
