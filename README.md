@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">🦋🎵 Fluyer</h1>
-<p align="center">A Beautiful Cross-Platform Music Player</p>
+<p align="center">A music player capable of playing high-quality music, having beautiful interface, support on various devices, while keeping performance decently optimized</p>
 <p align="center">
   <a href="https://discord.gg/UNZMGGPjpD">
     <img alt="Join our Discord" src="https://img.shields.io/discord/1422926610859950143?style=flat-square&logo=discord&label=Discord&color=5865F2">
