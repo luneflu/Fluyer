@@ -9,7 +9,6 @@
 		"core:default",
 		"store:default",
 		"dialog:default",
-		"process:default",
 		"core:window:allow-close",
 		"core:window:allow-center",
 		"core:window:allow-minimize",
