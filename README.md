@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">🦋🎵 Fluyer</h1>
-<p align="center">A music player capable of playing high-quality music, having beautiful interface, support on various devices, while keeping performance decently optimized</p>
+<p align="center">A high-fidelity music player with a beautiful interface, cross-platform support, and optimized performance.</p>
 <p align="center">
   <a href="https://discord.gg/UNZMGGPjpD">
     <img alt="Join our Discord" src="https://img.shields.io/discord/1422926610859950143?style=flat-square&logo=discord&label=Discord&color=5865F2">
@@ -21,12 +21,9 @@
   </a>
 </p>
 
-> [!NOTE]
-> This project is a slow-paced hobby. I’m building it just for fun :)
-
 ## ❤️ Contributing
 
-PRs and feedback are welcome and this project is made for fun!
+PRs and feedback are welcome. This project is made for fun!
 
 ---
 
