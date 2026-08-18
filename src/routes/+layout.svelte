@@ -39,19 +39,19 @@
 	onMount(async () => {
 		const now = performance.now();
 		await Promise.all([
-			// LogService.initialize(),
-			// ToastService.initialize(),
-			// PersistentStoreService.initialize(),
-			// MusicPlayerService.initialize(),
-			// UIInteractionService.initialize(),
-			// MobileService.initialize(),
-			// FolderService.initialize(),
-			// MetadataService.initialize(),
-			// PlaylistService.initialize(),
-			// (async () => {
-			// 	appStore.isCefEnabled = await TauriBackgroundAPI.isCefEnabled();
-			// 	console.log(appStore.isCefEnabled);
-			// })()
+			LogService.initialize(),
+			ToastService.initialize(),
+			PersistentStoreService.initialize(),
+			MusicPlayerService.initialize(),
+			UIInteractionService.initialize(),
+			MobileService.initialize(),
+			FolderService.initialize(),
+			MetadataService.initialize(),
+			PlaylistService.initialize(),
+			(async () => {
+				appStore.isCefEnabled = await TauriBackgroundAPI.isCefEnabled();
+				console.log(appStore.isCefEnabled);
+			})()
 		]);
 
 		if (isDesktop()) {
@@ -59,13 +59,13 @@
 			if (!(await getCurrentWindow().isMaximized())) await getCurrentWindow().toggleMaximize();
 		}
 
-		// isAppReady = true;
+		isAppReady = true;
 
-		// console.log(`Front-end is initialized. Took ${performance.now() - now} ms`);
+		console.log(`Front-end is initialized. Took ${performance.now() - now} ms`);
 
-		// if (!appStore.isCefEnabled) {
-		// 	UpdateService.checkForUpdates();
-		// }
+		if (!appStore.isCefEnabled) {
+			UpdateService.checkForUpdates();
+		}
 	});
 </script>
 
@@ -77,12 +77,12 @@
 <div class="scrollbar-hidden fixed h-screen w-screen" data-sveltekit-preload-data="off">
 	{@render children?.()}
 </div>
-<!-- {#if isDesktop() && page.url.pathname !== PageRoutes.PLAY && !appStore.isCefEnabled}
+{#if isDesktop() && page.url.pathname !== PageRoutes.PLAY && !appStore.isCefEnabled}
 	<TitleBar />
 {/if}
 {#if musicStore.isLibraryLoaded}
 	{#if [PageRoutes.HOME, PageRoutes.HOME_PRODUCTION].includes(page.url.pathname)}
 		<FilterBar />
 	{/if}
-{/if} -->
-<!-- <CreatePlaylistModal /> -->
+{/if}
+<CreatePlaylistModal />
