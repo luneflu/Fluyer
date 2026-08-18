@@ -51,6 +51,7 @@ const iconRegistryMaterial = {
 	[IconType.Mute]: VolumeOff,
 	[IconType.Remove]: CloseCircleOutline,
 	[IconType.Trash]: Delete,
+	[IconType.TrashRed]: Delete,
 	[IconType.Settings]: Cog,
 	[IconType.Search]: Magnify,
 	[IconType.QueueMusic]: PlaylistPlus,

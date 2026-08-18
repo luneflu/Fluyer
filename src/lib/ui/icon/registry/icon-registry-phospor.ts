@@ -51,6 +51,7 @@ const iconRegistryPhospor = {
 	[IconType.Mute]: SpeakerXIcon,
 	[IconType.Remove]: XCircleIcon,
 	[IconType.Trash]: TrashIcon,
+	[IconType.TrashRed]: TrashIcon,
 	[IconType.Settings]: GearIcon,
 	[IconType.Search]: MagnifyingGlassIcon,
 	[IconType.QueueMusic]: QueueIcon,

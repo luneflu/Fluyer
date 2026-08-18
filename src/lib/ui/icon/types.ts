@@ -17,6 +17,7 @@ export enum IconType {
 	Mute,
 	Remove,
 	Trash,
+	TrashRed,
 	Settings,
 	Search,
 	PlayBack,

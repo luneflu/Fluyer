@@ -51,6 +51,7 @@ const iconRegistryLucide = {
 	[IconType.Mute]: VolumeX,
 	[IconType.Remove]: XCircle,
 	[IconType.Trash]: Trash2,
+	[IconType.TrashRed]: Trash2,
 	[IconType.Settings]: Settings,
 	[IconType.Search]: Search,
 	[IconType.QueueMusic]: ListPlus,

@@ -67,7 +67,7 @@
 					class="flex h-6 w-6 cursor-pointer items-center justify-center rounded"
 					onclick={() => removePath(index)}
 				>
-					<Icon type={IconType.Trash} />
+					<Icon type={IconType.TrashRed} />
 				</button>
 			{/if}
 		</div>

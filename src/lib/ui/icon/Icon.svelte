@@ -26,7 +26,7 @@
 		classes = '';
 
 		switch (type) {
-			case IconType.Trash:
+			case IconType.TrashRed:
 				weight = 'fill';
 				color = 'rgb(255, 150, 150)';
 				break;
