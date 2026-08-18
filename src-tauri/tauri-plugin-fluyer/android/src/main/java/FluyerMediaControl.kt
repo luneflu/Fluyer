@@ -130,10 +130,8 @@ class FluyerMediaControl(private val context: Context, private val onAction: (St
                         .setActions(
                                 PlaybackStateCompat.ACTION_PLAY or
                                         PlaybackStateCompat.ACTION_PAUSE or
-                                        (if (isLast) 0
-                                        else PlaybackStateCompat.ACTION_SKIP_TO_NEXT) or
-                                        (if (isFirst) 0
-                                        else PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS) or
+                                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
+                                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
                                         PlaybackStateCompat.ACTION_SEEK_TO
                         )
                         .setState(state, position, 1.0f, android.os.SystemClock.elapsedRealtime())
@@ -224,10 +222,8 @@ class FluyerMediaControl(private val context: Context, private val onAction: (St
                         .setActions(
                                 PlaybackStateCompat.ACTION_PLAY or
                                         PlaybackStateCompat.ACTION_PAUSE or
-                                        (if (isLast) 0
-                                        else PlaybackStateCompat.ACTION_SKIP_TO_NEXT) or
-                                        (if (isFirst) 0
-                                        else PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS) or
+                                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
+                                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
                                         PlaybackStateCompat.ACTION_SEEK_TO
                         )
                         .setState(state, position, 1.0f, android.os.SystemClock.elapsedRealtime())
@@ -272,16 +268,14 @@ class FluyerMediaControl(private val context: Context, private val onAction: (St
         var currentIndex = 0
 
         // Actions
-        if (!isFirst) {
-            builder.addAction(
-                NotificationCompat.Action(
-                    android.R.drawable.ic_media_previous,
-                    "Previous",
-                    createPendingIntent(MediaControlReceiver.ACTION_PREVIOUS)
-                )
+        builder.addAction(
+            NotificationCompat.Action(
+                android.R.drawable.ic_media_previous,
+                "Previous",
+                createPendingIntent(MediaControlReceiver.ACTION_PREVIOUS)
             )
-            compactActionIndices.add(currentIndex++)
-        }
+        )
+        compactActionIndices.add(currentIndex++)
 
         if (isPlaying) {
             builder.addAction(
@@ -303,16 +297,14 @@ class FluyerMediaControl(private val context: Context, private val onAction: (St
             compactActionIndices.add(currentIndex++)
         }
 
-        if (!isLast) {
-            builder.addAction(
-                NotificationCompat.Action(
-                    android.R.drawable.ic_media_next,
-                    "Next",
-                    createPendingIntent(MediaControlReceiver.ACTION_NEXT)
-                )
+        builder.addAction(
+            NotificationCompat.Action(
+                android.R.drawable.ic_media_next,
+                "Next",
+                createPendingIntent(MediaControlReceiver.ACTION_NEXT)
             )
-            compactActionIndices.add(currentIndex++)
-        }
+        )
+        compactActionIndices.add(currentIndex++)
 
         builder.setStyle(
             androidx.media.app.NotificationCompat.MediaStyle()

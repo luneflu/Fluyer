@@ -55,7 +55,7 @@ impl PlayerState {
                     if let Some(pos) = seq.iter().position(|&x| x == current) {
                         if pos + 1 < seq.len() {
                             Some(seq[pos + 1])
-                        } else if self.repeat_mode == RepeatMode::All || from_user {
+                        } else if self.repeat_mode == RepeatMode::All {
                             use rand::rng;
                             use rand::seq::SliceRandom;
                             let mut r = rng();
@@ -77,7 +77,7 @@ impl PlayerState {
                     }
                 } else if current + 1 < self.track.len() {
                     Some(current + 1)
-                } else if self.repeat_mode == RepeatMode::All || from_user {
+                } else if self.repeat_mode == RepeatMode::All {
                     Some(0)
                 } else {
                     None
@@ -940,6 +940,13 @@ impl MusicPlayer {
                         state.current_index = None;
                     }
                 }
+            } else {
+                // User pressed next at the last track: end playback
+                Self::stop_stream(&bass_mixer, &current_stream, &temp_wav_path);
+                if let Ok(mut state) = state_arc.lock() {
+                    state.current_index = Some(0);
+                }
+                Self::emit_sync_inner(&bass_mixer, &current_stream, &state_arc, false);
             }
         });
     }
@@ -961,7 +968,10 @@ impl MusicPlayer {
                 };
                 match state.current_index {
                     Some(current) => {
-                        if let Some(ref seq) = state.shuffle_sequence {
+                        crate::info!("Current index: {:?}", current);
+                        if current == 0 && state.repeat_mode == RepeatMode::None {
+                            Some(0)
+                        } else if let Some(ref seq) = state.shuffle_sequence {
                             if let Some(pos) = seq.iter().position(|&x| x == current) {
                                 if pos > 0 {
                                     Some(seq[pos - 1])
@@ -985,6 +995,7 @@ impl MusicPlayer {
                 }
             };
 
+            crate::info!("Previous Index: {:?}", prev_index);
             if let Some(index) = prev_index {
                 let (music, total_count) = {
                     let state = match state_arc.lock() {

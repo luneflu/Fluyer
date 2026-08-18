@@ -48,10 +48,7 @@ const MusicPlayerService = {
 		return TauriMusicAPI.next();
 	},
 	previous: async () => {
-		if (musicStore.queueCount === 0) return;
-		const prevIndex =
-			musicStore.currentIndex > 0 ? musicStore.currentIndex - 1 : musicStore.queueCount - 1;
-		return QueueService.goTo(prevIndex);
+		return TauriMusicAPI.previous();
 	},
 	seekByPercentage: async (percentage: number) => {
 		const clamped = Math.min(100, Math.max(0, percentage));
