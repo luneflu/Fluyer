@@ -6,14 +6,17 @@ import QueueService from '$lib/services/QueueService.svelte';
 import { RepeatMode } from '$lib/features/music/types';
 import PersistentStoreService from '$lib/services/PersistentStoreService.svelte';
 import { MusicConfig } from '$lib/constants/MusicConfig';
+import { isDesktop } from '$lib/platform';
 
 const MusicPlayerService = {
 	initialize: async () => {
 		MusicPlayerService.listenSyncEvents();
 		MusicPlayerService.listenVolumeEvents();
 
-		const discordRpcEnabled = await PersistentStoreService.discordRpcEnabled.get();
-		await TauriMusicAPI.setDiscordRpcEnabled(discordRpcEnabled);
+		if(isDesktop()){
+			const discordRpcEnabled = await PersistentStoreService.discordRpcEnabled.get();
+			await TauriMusicAPI.setDiscordRpcEnabled(discordRpcEnabled ?? false);
+		}
 	},
 	play: async () => {
 		if (musicStore.queueCount === 0) {
