@@ -7,7 +7,7 @@ use tokio::sync::{watch, Semaphore};
 
 use crate::state::{app_handle, app_store};
 
-const STORE_KEY_DPI: &str = "music_cover_art_dpi";
+const STORE_KEY_DPI: &str = "music-cover-art-dpi";
 
 static RESIZE_SEMAPHORE: OnceLock<Semaphore> = OnceLock::new();
 static BASE_COVER_SIZE: OnceLock<u32> = OnceLock::new();
