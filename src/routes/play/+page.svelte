@@ -56,10 +56,8 @@
         {vm.lyrics.length > 1 ? 'justify-end' : 'justify-center'}"
 	>
 		<div
-			class="w-full {vm.lyrics.length > 0 && 'ms-auto'}
-            sm-mdpi:w-[90%] md-mdpi:w-[85%] lg-mdpi:w-[80%] xl-mdpi:w-[75%] 2xl-mdpi:w-[70%] 3xl-mdpi:w-[65%]
-            md-hdpi:w-[90%] lg-hdpi:w-[80%] xl-hdpi:w-[70%] 2xl-hdpi:w-[65%]
-            md-xhdpi:w-[80%] lg-xhdpi:w-[70%] 2xl-xhdpi:w-[65%]"
+			class="w-full sm:w-[90%] md:w-[85%] lg:w-[80%] xl:w-[75%] 2xl:w-[70%] 3xl:w-[65%] {vm.lyrics
+				.length > 0 && 'ms-auto'}"
 		>
 			{#await vm.coverArt}
 				<div class="aspect-square w-full"></div>
@@ -81,24 +79,16 @@
 			: 'justify-center'} animate__animated animate__fadeIn"
 	>
 		<View
-			class="sm-mdpi:w-[90%] h-fit w-full rounded-xl
+			class="h-fit w-full rounded-xl
             px-4 py-5 {isMobile() ? '' : 'hover:px-5 hover:py-7'}
-            md:mt-4 md-mdpi:w-[85%] lg-mdpi:w-[80%] xl-mdpi:w-[75%] 2xl-mdpi:w-[70%] 3xl-mdpi:w-[65%]
-            md-hdpi:w-[90%] lg-hdpi:w-[80%] xl-hdpi:w-[70%] 2xl-hdpi:w-[65%]
-            md-xhdpi:w-[80%] lg-xhdpi:w-[70%] 2xl-xhdpi:w-[65%]"
+            sm:w-[90%] md:mt-4 md:w-[85%] lg:w-[80%] xl:w-[75%] 2xl:w-[70%] 3xl:w-[65%]"
 		>
 			<div class="grid w-full grid-cols-[auto,1fr,auto]">
-				<div
-					class="flex w-12 text-xs xl-mdpi:text-[13px] 2xl-mdpi:text-sm
-					lg-hdpi:text-sm lg-xhdpi:text-sm"
-				>
+				<div class="flex w-12 text-xs xl:text-[13px] 2xl:text-sm">
 					<span class="self-end opacity-75">{vm.progressDurationText}</span>
 				</div>
 				<div
-					class="sm-mdpi:text-sm mt-2 overflow-hidden text-center text-sm font-medium
-					opacity-90 md-mdpi:text-[15px] xl-mdpi:text-base
-					md-hdpi:text-base
-					md-xhdpi:text-sm lg-xhdpi:text-base"
+					class="mt-2 overflow-hidden text-center text-sm font-medium opacity-90 sm:text-sm md:text-[15px] xl:text-base"
 				>
 					<!-- Note: Idk why the title scroll doesn't work without sacrificing first element -->
 					<p class="animate-scroll-overflow-text"></p>
@@ -108,11 +98,7 @@
 						{vm.music?.title ?? MusicConfig.defaultTitle}
 					</p>
 				</div>
-				<div
-					class="flex w-12 justify-end
-					text-xs xl-mdpi:text-[13px] 2xl-mdpi:text-sm
-					lg-hdpi:text-sm lg-xhdpi:text-sm"
-				>
+				<div class="flex w-12 justify-end text-xs xl:text-[13px] 2xl:text-sm">
 					<span class="self-end opacity-75">{vm.progressDurationNegativeText}</span>
 				</div>
 			</div>
@@ -134,8 +120,7 @@
 				<div class="flex justify-end">
 					{#if settingStore.ui.showRepeatButton}
 						<button
-							class="mx-2 w-7 md-mdpi:w-[34px] lg-mdpi:w-8 md-hdpi:w-8 {musicStore.repeatMode ===
-							RepeatMode.None
+							class="mx-2 w-7 md:w-[34px] lg:w-8 {musicStore.repeatMode === RepeatMode.None
 								? 'opacity-60'
 								: ''}"
 							onclick={MusicPlayerService.toggleRepeatMode}
@@ -152,13 +137,13 @@
 				</div>
 				<div class="flex justify-end">
 					<button
-						class="sm-mdpi:w-10 w-12 md-mdpi:w-12 lg-mdpi:w-[3.25rem] xl-mdpi:w-14 md-hdpi:w-12"
+						class="w-12 sm:w-10 md:w-12 lg:w-[3.25rem] xl:w-14"
 						onclick={vm.handleButtonPrevious}><Icon type={IconType.Previous} /></button
 					>
 				</div>
 				<div class="flex justify-center">
 					<button
-						class="sm-mdpi:w-10 w-12 md-mdpi:w-12 lg-mdpi:w-[3.25rem] xl-mdpi:w-14 md-hdpi:w-12"
+						class="w-12 sm:w-10 md:w-12 lg:w-[3.25rem] xl:w-14"
 						onclick={vm.handleButtonPlayPause}
 					>
 						{#if musicStore.isPlaying}
@@ -169,15 +154,14 @@
 					</button>
 				</div>
 				<div class="flex justify-start">
-					<button
-						class="sm-mdpi:w-10 w-12 md-mdpi:w-12 lg-mdpi:w-[3.25rem] xl-mdpi:w-14 md-hdpi:w-12"
-						onclick={vm.handleButtonNext}><Icon type={IconType.Next} /></button
+					<button class="w-12 sm:w-10 md:w-12 lg:w-[3.25rem] xl:w-14" onclick={vm.handleButtonNext}
+						><Icon type={IconType.Next} /></button
 					>
 				</div>
 				<div class="flex justify-start">
 					{#if settingStore.ui.showShuffleButton}
 						<button
-							class="mx-2 w-7 md-mdpi:w-[34px] lg-mdpi:w-8 md-hdpi:w-8 {musicStore.isShuffled
+							class="mx-2 w-7 md:w-[34px] lg:w-8 {musicStore.isShuffled
 								? 'text-primary'
 								: 'opacity-60'}"
 							onclick={vm.handleButtonShuffle}
@@ -226,11 +210,9 @@
 			<div class="flex">
 				<div
 					id="lyrics"
-					class="sm-mdpi:text-[1.25rem] h-full w-full text-[1.15rem] font-bold
+					class="h-full w-full text-[1.15rem] font-bold sm:text-[1.25rem]
                     md:my-[40vh]
-					md:w-[55vw] md-mdpi:text-[1.4rem] lg-mdpi:text-[1.5rem] xl-mdpi:text-[1.7rem]
-                    md-hdpi:text-[1.3rem] lg-hdpi:text-[1.45rem] xl-hdpi:text-[1.6rem]
-                    md-xhdpi:text-[1.2rem] lg-xhdpi:text-[1.4rem] xl-xhdpi:text-[1.6rem]"
+					md:w-[55vw] md:text-[1.4rem] lg:text-[1.5rem] xl:text-[1.7rem]"
 					style="padding-bottom: {window.innerWidth < 768
 						? vm.lyricContainerElement?.clientHeight - 60
 						: 0}px"
@@ -239,11 +221,7 @@
 						<div
 							id={vm.selectedLyricIndex === i ? 'selected-lyric' : ''}
 							class={vm.selectedLyricIndex === i
-								? `
-                                    sm-mdpi:text-[1.40rem] py-5 text-[1.30rem]
-                                    md:py-7 md-mdpi:text-[1.55rem] lg-mdpi:text-[1.65rem] xl-mdpi:text-[1.85rem]
-                                    md-hdpi:text-[1.45rem] lg-hdpi:text-[1.60rem] xl-hdpi:text-[1.75rem]
-                                    md-xhdpi:text-[1.35rem] lg-xhdpi:text-[1.55rem] xl-xhdpi:text-[1.75rem]`
+								? 'py-5 text-[1.30rem] sm:text-[1.40rem] md:py-7 md:text-[1.55rem] lg:text-[1.65rem] xl:text-[1.85rem]'
 								: 'py-5 opacity-50 md:py-7 lg:py-10'}
 						>
 							{#if lyric.value.length > 0}

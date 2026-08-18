@@ -19,9 +19,7 @@
 
 <div class="relative">
 	<div class="relative grid grid-cols-[max-content_auto_max-content] px-3 py-2">
-		<div
-			class="h-11 w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 md-hdpi:h-11 md-hdpi:w-11 lg-hdpi:h-12 lg-hdpi:w-12"
-		>
+		<div class="h-12 w-12 md:h-14 md:w-14">
 			{#await vm.coverArt}
 				<div class="aspect-square w-full"></div>
 			{:then image}
@@ -38,21 +36,15 @@
 			<p class="font-medium">{vm.music?.title ?? '...'}</p>
 			<p class="text-opacity-background-80">{vm.music?.artist ?? '...'}</p>
 		</div>
-		<div
-			class="h-11 w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 md-hdpi:h-11 md-hdpi:w-11 lg-hdpi:h-12 lg-hdpi:w-12"
-		></div>
+		<div class="h-12 w-12 md:h-14 md:w-14"></div>
 	</div>
 	{#if vm.isPlaying}
 		<div
 			class="absolute left-0 top-0 z-10 grid w-full grid-cols-[max-content_auto_max-content] px-3 py-2"
 		>
-			<div
-				class="aspect-square h-11 w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 md-hdpi:h-11 md-hdpi:w-11 lg-hdpi:h-12 lg-hdpi:w-12"
-			></div>
+			<div class="aspect-square h-12 w-12 md:h-14 md:w-14"></div>
 			<div></div>
-			<div
-				class="aspect-square h-11 w-11 p-1 md:h-12 md:w-12 lg:h-14 lg:w-14 lg:p-3 md-hdpi:h-11 md-hdpi:w-11 lg-hdpi:h-12 lg-hdpi:w-12"
-			>
+			<div class="aspect-square h-11 w-11 p-1 md:h-12 md:w-12 lg:h-14 lg:w-14 lg:p-3">
 				<div class="animate__animated animate__infinite animate__pulse w-3/4 md:w-full">
 					<Icon type={IconType.Playing} />
 				</div>
@@ -63,7 +55,7 @@
 			class="playlist-item-controls absolute left-0 top-0 z-10 grid w-full grid-cols-[max-content_auto_max-content] px-3 py-2"
 		>
 			<button
-				class="aspect-square h-11 w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 md-hdpi:h-11 md-hdpi:w-11 lg-hdpi:h-12 lg-hdpi:w-12"
+				class="aspect-square h-12 w-12 md:h-14 md:w-14"
 				onclick={vm.goToPlaylist}
 				onpointerdown={(e) => e.stopPropagation()}
 			>
@@ -79,7 +71,7 @@
 			</button>
 			<div class="cursor-grab"></div>
 			<button
-				class="aspect-square h-11 w-11 md:h-12 md:w-12 lg:h-14 lg:w-14 lg:p-1 md-hdpi:h-11 md-hdpi:w-11 lg-hdpi:h-12 lg-hdpi:w-12"
+				class="aspect-square h-12 w-12 md:h-14 md:w-14 lg:p-1"
 				onclick={vm.removePlaylist}
 				onpointerdown={(e) => e.stopPropagation()}
 			>
