@@ -24,7 +24,7 @@
 	class="pointer-events-none fixed left-0 top-0 z-20 grid w-full gap-y-2 pb-3
         {isMacos() ? 'sm:justify-end' : ''}
         {isMacos() ? 'right-0' : 'left-0'}
-        {modalStore.show ? 'opacity-10 blur-sm' : ''} animate__animated animate__slideInDown
+        {modalStore.show ? 'opacity-10 blur-sm' : ''} anim anim-slide-in-down
         transition-opacity duration-300"
 	style="margin-top: {isMobile() ? mobileStore.statusBarHeight : 8}px;
         grid-template-columns: {vm.state.gridSize};"

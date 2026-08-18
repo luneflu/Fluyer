@@ -39,7 +39,7 @@
 	<!--{#if isDesktop()}-->
 	<!--    <Equalizer />-->
 	<!--{/if}-->
-	<MusicQueueList />
+	<!-- <MusicQueueList />
 	<Menu />
 	<div
 		class="grid h-full w-full {gridClass}
@@ -56,5 +56,5 @@
 			<MusicList {tooltipVisible} />
 		{/if}
 		<PlayerBar bind:tooltipVisible />
-	</div>
+	</div> -->
 {/if}

@@ -150,8 +150,8 @@
 <div class="relative {className}" bind:this={container}>
 	{#if showTooltip}
 		<div
-			class="animate__animated animate__faster absolute top-[-2.5rem] w-fit rounded-lg border px-2 py-1 text-sm shadow-xl
-				{tooltipVisible ? 'animate__fadeIn' : 'animate__fadeOut'}"
+			class="anim anim-fast absolute top-[-2.5rem] w-fit rounded-lg border px-2 py-1 text-sm shadow-xl
+				{tooltipVisible ? 'anim-fade-in' : 'anim-fade-out'}"
 			style:left="{tooltipPosition}px"
 			bind:this={tooltip}
 		>

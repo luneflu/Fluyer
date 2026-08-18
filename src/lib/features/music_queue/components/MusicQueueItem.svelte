@@ -25,7 +25,7 @@
 			{:then image}
 				{#if image}
 					<img
-						class="animate__animated animate__fadeIn aspect-square w-full rounded"
+						class="anim anim-fade-in aspect-square w-full rounded"
 						src={image}
 						alt="Album"
 					/>
@@ -45,7 +45,7 @@
 			<div class="aspect-square h-12 w-12 md:h-14 md:w-14"></div>
 			<div></div>
 			<div class="aspect-square h-11 w-11 p-1 md:h-12 md:w-12 lg:h-14 lg:w-14 lg:p-3">
-				<div class="animate__animated animate__infinite animate__pulse w-3/4 md:w-full">
+				<div class="anim anim-loop anim-pulse w-3/4 md:w-full">
 					<Icon type={IconType.Playing} />
 				</div>
 			</div>

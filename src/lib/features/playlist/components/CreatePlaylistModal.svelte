@@ -59,7 +59,7 @@
 		}}
 	>
 		<View
-			class="animate__animated animate__fadeIn mx-3 w-full rounded-xl
+			class="anim anim-fade-in mx-3 w-full rounded-xl
 			p-10 md:w-[30rem]"
 		>
 			<h2 class="text-lg font-semibold text-white">Create Playlist</h2>

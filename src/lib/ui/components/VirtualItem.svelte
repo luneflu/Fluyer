@@ -58,7 +58,7 @@
 	<!-- They also said "This ensures smooth animations while keeping the performance good." -->
 	<!-- If the layout shifts, it wouldn't be smooth. -->
 	<!-- Perhaps I should just implement the conditional rendering first as requested. -->
-	<!-- The parent `div` in MusicList has `animate__animated`. If content is gone, it might look weird. -->
+	<!-- The parent `div` in MusicList has `anim`. If content is gone, it might look weird. -->
 	<!-- Let's try to just render the shell if possible or just nothing. -->
 	<!-- Actually, if `hide` is true, the parent div (in MusicList) has `pointer-events: none` and `shouldHideItem` makes it fade out. -->
 	<!-- So visually it's gone. -->

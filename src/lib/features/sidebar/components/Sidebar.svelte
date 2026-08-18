@@ -214,15 +214,15 @@
 		onmouseleave={onMouseLeave}
 	>
 		<View
-			class="animate__animated pointer-events-auto h-full
+			class="anim pointer-events-auto h-full
 				rounded-lg p-3
 				{isShowing
 				? type === SidebarType.Right
-					? 'animate__fadeInRight'
-					: 'animate__fadeInLeft'
+					? 'anim-fade-in-right'
+					: 'anim-fade-in-left'
 				: type === SidebarType.Right
-					? 'animate__fadeOutRight'
-					: 'animate__fadeOutLeft'}
+					? 'anim-fade-out-right'
+					: 'anim-fade-out-left'}
 				{props.class}
 			"
 			style="

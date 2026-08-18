@@ -21,9 +21,9 @@
 
 {#if shouldShow}
 	<View
-		class="animate__animated mx-3 mb-2 box-border grid-cols-[auto_max-content] rounded-lg
+		class="anim mx-3 mb-2 box-border grid-cols-[auto_max-content] rounded-lg
         px-4 py-2 md:grid
-		{isSidebarVisible ? 'animate__fadeOut' : 'animate__fadeIn'}"
+		{isSidebarVisible ? 'anim-fade-out' : 'anim-fade-in'}"
 		style="animation-duration: {isLinux() ? '350ms' : '500ms'};"
 	>
 		<div class="grid items-center">

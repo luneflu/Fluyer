@@ -25,7 +25,7 @@
 <svelte:window onresize={vm.updatePlayerBarHeight} />
 
 <div
-	class="animate__animated animate__slideInUp w-full px-3 pt-3"
+	class="anim anim-slide-in-up w-full px-3 pt-3"
 	style="padding-bottom: {mobileStore.navigationBarHeight > 12
 		? mobileStore.navigationBarHeight
 		: 12}px;"
@@ -74,7 +74,7 @@
 							<div class="aspect-square w-full"></div>
 						{:then image}
 							<img
-								class="animate__animated animate__fadeIn aspect-square w-full rounded object-cover"
+								class="anim anim-fade-in aspect-square w-full rounded object-cover"
 								src={image}
 								alt="Album"
 							/>

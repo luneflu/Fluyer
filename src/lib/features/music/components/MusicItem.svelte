@@ -29,14 +29,14 @@
 		{:then image}
 			{#if image && !folder}
 				<img
-					class="animate__animated animate__fadeIn relative h-12 w-12 rounded object-cover md:h-14 md:w-14"
+					class="anim anim-fade-in relative h-12 w-12 rounded object-cover md:h-14 md:w-14"
 					src={image}
 					alt="Album"
 				/>
 			{:else if image && folder}
 				<!-- Folder with album art -->
 				<div
-					class="animate__animated animate__fadeIn relative aspect-square h-12 w-12 transition-transform duration-300 group-hover:scale-110 md:h-14 md:w-14"
+					class="anim anim-fade-in relative aspect-square h-12 w-12 transition-transform duration-300 group-hover:scale-110 md:h-14 md:w-14"
 				>
 					<div class="absolute inset-0 opacity-75">
 						<Icon type={IconType.Folder} />

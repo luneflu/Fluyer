@@ -85,8 +85,8 @@ const scrollClass = $derived(
 function itemClass(inViewport: boolean, hiddenBySidebar: boolean, extraClass = ''): string {
 	const animation = inViewport
 		? hiddenBySidebar
-			? 'animate__animated animate__fadeOut'
-			: 'animate__animated animate__fadeIn'
+			? 'anim anim-fade-out'
+			: 'anim anim-fade-in'
 		: '';
 	return [extraClass, animation].filter(Boolean).join(' ');
 }

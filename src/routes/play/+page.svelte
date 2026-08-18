@@ -35,11 +35,11 @@
 	>
 		<button
 			id="btn-back"
-			class="animate__animated w-7 cursor-pointer {vm.hideBackButton
+			class="anim w-7 cursor-pointer {vm.hideBackButton
 				? 'hidden'
 				: vm.isIdle
-					? 'animate__fadeOut'
-					: 'animate__fadeIn'}"
+					? 'anim-fade-out'
+					: 'anim-fade-in'}"
 			onclick={vm.handleBackWithDelay}><Icon type={IconType.PlayBack} /></button
 		>
 	</div>
@@ -63,7 +63,7 @@
 				<div class="aspect-square w-full"></div>
 			{:then image}
 				<img
-					class="animate__animated animate__fadeIn aspect-square w-full rounded-lg object-cover shadow-lg"
+					class="anim anim-fade-in aspect-square w-full rounded-lg object-cover shadow-lg"
 					src={image}
 					alt="Music Album"
 				/>
@@ -76,7 +76,7 @@
 			: 'px-4'} pb-5 pt-2 {isMobile() && 'mb-5'}
         flex md:p-0 md:pb-0 {vm.lyrics.length > 0
 			? 'justify-end'
-			: 'justify-center'} animate__animated animate__fadeIn"
+			: 'justify-center'} anim anim-fade-in"
 	>
 		<View
 			class="h-fit w-full rounded-xl
@@ -199,7 +199,7 @@
 	</div>
 	{#if vm.lyrics.length > 0}
 		<div
-			class="scrollbar-hidden animate__animated animate__faster animate__fadeInUp w-full overflow-y-auto overflow-x-hidden
+			class="scrollbar-hidden anim anim-fast anim-fade-in-up w-full overflow-y-auto overflow-x-hidden
             [mask-image:linear-gradient(to_bottom,rgba(0,0,0,1)_60%,rgba(0,0,0,0))]
             md:col-[2] md:row-[1/span_2]
             md:h-screen md:px-20 md:[mask-image:linear-gradient(to_bottom,rgba(0,0,0,0),rgba(0,0,0,1),rgba(0,0,0,0))] {isMobile()

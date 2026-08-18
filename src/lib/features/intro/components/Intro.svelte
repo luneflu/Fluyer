@@ -7,7 +7,7 @@
 </script>
 
 <div
-	class="animate__animated grid h-full items-center justify-items-center {vm.animatedClasses}"
+	class="anim grid h-full items-center justify-items-center {vm.animatedClasses}"
 	onanimationend={() => vm.onAnimationEnd(vm.animatedClasses)}
 >
 	<div class="grid justify-items-center px-5 text-center lg:px-0">
