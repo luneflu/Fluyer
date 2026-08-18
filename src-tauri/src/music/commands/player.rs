@@ -70,3 +70,9 @@ pub fn music_equalizer(state: State<AppState>, values: Vec<f32>) {
 pub fn music_equalizer_reset(state: State<AppState>) {
     state.music_player.reset_equalizer();
 }
+
+#[cfg(desktop)]
+#[tauri::command]
+pub fn music_discord_rpc_set(enabled: bool) {
+    crate::music::discord_rpc::DiscordRpc::set_enabled(enabled);
+}

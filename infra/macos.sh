@@ -1,5 +1,7 @@
 #!/bin/bash
 cp .env.example .env
+grep -v '^DISCORD_APPLICATION_ID=' .env > .env.tmp && mv .env.tmp .env
+echo "DISCORD_APPLICATION_ID=${DISCORD_APPLICATION_ID:-}" >> .env
 
 pnpm i
 pnpm run init

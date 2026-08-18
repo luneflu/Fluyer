@@ -33,6 +33,9 @@ const TauriMusicAPI = {
 	setVolume: (volume: number) => {
 		return invoke(TauriCommands.MUSIC_VOLUME_SET, { volume });
 	},
+	setDiscordRpcEnabled: (enabled: boolean) => {
+		return invoke(TauriCommands.MUSIC_DISCORD_RPC_SET, { enabled });
+	},
 	listenSync: (callback: (event: { payload: MusicPlayerSync }) => void) => {
 		return listen<MusicPlayerSync>(TauriCommands.MUSIC_PLAYER_SYNC, callback);
 	}

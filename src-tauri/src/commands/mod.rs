@@ -29,6 +29,8 @@ pub const COMMAND_HANDLERS: fn(crate::tauri_types::Invoke) -> bool = tauri::gene
     crate::music::commands::music_equalizer,
     #[cfg(desktop)]
     crate::music::commands::music_equalizer_reset,
+    #[cfg(desktop)]
+    crate::music::commands::music_discord_rpc_set,
     // Folder commands
     crate::folder::commands::folder_items_get,
     crate::folder::commands::folder_first_music_path_get,

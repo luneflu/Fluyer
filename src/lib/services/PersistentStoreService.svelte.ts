@@ -40,6 +40,7 @@ const PersistentStoreService = {
 			PersistentStoreService.swipeGuide.initialize(),
 			PersistentStoreService.equalizer.initialize(),
 			PersistentStoreService.bitPerfectMode.initialize(),
+			PersistentStoreService.discordRpcEnabled.initialize(),
 			PersistentStoreService.volume.initialize()
 		]);
 	},
@@ -85,6 +86,12 @@ const PersistentStoreService = {
 		'bit-perfect-mode',
 		false,
 		(value) => (settingStore.bitPerfectMode = value)
+	),
+
+	discordRpcEnabled: makeBinding(
+		'discord-rpc-enabled',
+		true,
+		(value) => (settingStore.discordRpcEnabled = value)
 	),
 
 	swipeGuide: makeBinding('swipe-guide', true, (value) => (mobileStore.showSwipeGuide = value)),

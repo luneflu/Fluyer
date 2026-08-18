@@ -27,6 +27,7 @@ export const TauriCommands = {
 	MUSIC_CURRENT_DURATION_GET: 'music_current_duration_get',
 	MUSIC_LYRICS_GET: 'music_lyrics_get',
 	MUSIC_BIT_PERFECT_TOGGLE: 'music_bit_perfect_toggle',
+	MUSIC_DISCORD_RPC_SET: 'music_discord_rpc_set',
 
 	// Library (Rust-side state)
 	LIBRARY_LOAD: 'library_load',

@@ -11,6 +11,9 @@ const MusicPlayerService = {
 	initialize: async () => {
 		MusicPlayerService.listenSyncEvents();
 		MusicPlayerService.listenVolumeEvents();
+
+		const discordRpcEnabled = await PersistentStoreService.discordRpcEnabled.get();
+		await TauriMusicAPI.setDiscordRpcEnabled(discordRpcEnabled);
 	},
 	play: async () => {
 		if (musicStore.queueCount === 0) {

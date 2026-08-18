@@ -16,7 +16,8 @@ const settingStore = $state({
 	},
 
 	developerMode: false,
-	bitPerfectMode: false
+	bitPerfectMode: false,
+	discordRpcEnabled: true
 });
 
 export default settingStore;

@@ -7,6 +7,7 @@
 	import SettingUserInteface from '$lib/features/settings/user_interface/SettingUserInterface.svelte';
 	import SettingDeveloper from '$lib/features/settings/developer/SettingDeveloper.svelte';
 	import SettingIconTheme from '$lib/features/settings/icon_theme/SettingIconTheme.svelte';
+	import SettingDiscordRpc from '$lib/features/settings/discord_rpc/SettingDiscordRpc.svelte';
 	import View from '$lib/ui/components/View.svelte';
 	import Button from '$lib/ui/components/Button.svelte';
 	import mobileStore from '$lib/stores/mobile.svelte';
@@ -50,6 +51,7 @@
 				<SettingMusicPaths />
 				<SettingAnimatedBackground />
 				<SettingIconTheme />
+				<SettingDiscordRpc />
 				<SettingUserInteface />
 				<SettingDeveloper />
 			</div>

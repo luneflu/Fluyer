@@ -1210,6 +1210,9 @@ impl MusicPlayer {
             state.current_index = None;
             state.shuffle_sequence = None;
         }
+
+        #[cfg(desktop)]
+        crate::music::discord_rpc::DiscordRpc::clear();
     }
 
     fn stop_current_stream(&self) {
@@ -1337,6 +1340,31 @@ impl MusicPlayer {
                 },
             )
             .unwrap();
+
+        #[cfg(desktop)]
+        {
+            if index >= 0 {
+                if let Ok(state_guard) = state.lock() {
+                    if let Some(track) = state_guard.track.get(index as usize) {
+                        crate::music::discord_rpc::DiscordRpc::update(
+                            crate::music::discord_rpc::ActivityData {
+                                title: track
+                                    .metadata
+                                    .title
+                                    .clone()
+                                    .unwrap_or_else(|| "Unknown Track".to_string()),
+                                artist: track.metadata.artist.clone(),
+                                position_ms: current_position,
+                                duration_ms: track.metadata.duration,
+                                is_playing,
+                            },
+                        );
+                    }
+                }
+            } else {
+                crate::music::discord_rpc::DiscordRpc::clear();
+            }
+        }
     }
 
     /// Load a music file into BASS and add it to the mixer.
@@ -1761,6 +1789,9 @@ impl MusicPlayer {
 
 impl Drop for MusicPlayer {
     fn drop(&mut self) {
+        #[cfg(desktop)]
+        crate::music::discord_rpc::DiscordRpc::shutdown();
+
         let bm = self.bass_mixer.load(Ordering::SeqCst);
 
         #[cfg(desktop)]
