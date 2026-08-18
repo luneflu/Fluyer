@@ -28,13 +28,19 @@ let volumePercentage = $state(musicStore.volume);
 let hideBackButton = $state(false);
 let isIdle = $state(false);
 let timer: NodeJS.Timeout;
+let rafPending = false;
 
 function resetIdleTimer() {
-	isIdle = false;
-	clearTimeout(timer);
-	timer = setTimeout(() => {
-		isIdle = true;
-	}, 3000);
+	if (rafPending) return;
+	rafPending = true;
+	requestAnimationFrame(() => {
+		rafPending = false;
+		if (isIdle) isIdle = false;
+		clearTimeout(timer);
+		timer = setTimeout(() => {
+			isIdle = true;
+		}, 3000);
+	});
 }
 
 function handleBackWithDelay() {
