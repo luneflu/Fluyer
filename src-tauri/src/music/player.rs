@@ -428,7 +428,17 @@ impl MusicPlayer {
     }
 
     pub fn play(&self) {
-        self.play_pause(true);
+        let (has_track, is_ended) = {
+            let state = self.state.lock().unwrap();
+            let is_ended = state.current_index.is_some() && state.current_index == Some(0) && self.current_stream.load(Ordering::SeqCst) == 0;
+            (!state.track.is_empty(), is_ended)
+        };
+
+        if has_track && is_ended {
+             self.goto_track(0);
+        } else {
+             self.play_pause(true);
+        }
     }
 
     pub fn pause(&self) {
