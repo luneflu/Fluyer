@@ -1,5 +1,5 @@
 use crate::logger;
-use crate::state::app_handle;
+use crate::state::{app_handle, app_store};
 use crate::utils::toast::{Toast, ToastType};
 use tauri::Manager;
 use tauri_plugin_fluyer::FluyerExt;
@@ -52,6 +52,8 @@ pub fn developer_mpv_log_save() {
 pub fn developer_clear_data() {
     if let Ok(path) = app_handle().path().app_data_dir() {
         if path.exists() {
+            app_store().clear();
+
             let _ = std::fs::remove_dir_all(&path);
             let _ = std::fs::create_dir_all(&path);
         }
@@ -71,11 +73,6 @@ pub fn developer_clear_cache() {
             let _ = std::fs::create_dir_all(&path);
         }
     }
-    #[cfg(desktop)]
-    app_handle().restart();
-
-    #[cfg(target_os = "android")]
-    app_handle().fluyer().restart_app();
 }
 
 #[derive(serde::Deserialize)]
