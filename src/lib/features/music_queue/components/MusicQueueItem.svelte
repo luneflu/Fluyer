@@ -24,11 +24,7 @@
 				<div class="aspect-square w-full"></div>
 			{:then image}
 				{#if image}
-					<img
-						class="anim anim-fade-in aspect-square w-full rounded"
-						src={image}
-						alt="Album"
-					/>
+					<img class="anim anim-fade-in aspect-square w-full rounded" src={image} alt="Album" />
 				{/if}
 			{/await}
 		</div>

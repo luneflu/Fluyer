@@ -73,10 +73,12 @@ impl MediaSession {
             };
 
             let _ = handle.fluyer().update_media_control(
-                music.title
+                music
+                    .title
                     .clone()
                     .unwrap_or_else(|| MusicMetadata::default_title().to_string()),
-                music.artist
+                music
+                    .artist
                     .clone()
                     .unwrap_or_else(|| MusicMetadata::default_artist().to_string()),
                 music.album.clone().unwrap_or("Unknown".to_string()),

@@ -34,8 +34,8 @@
 				{@const shouldRender = vm.shouldRenderItem(itemKey, index, item)}
 				{@const animationClass = inViewport
 					? hiddenBySidebar
-				? 'anim anim-fade-out'
-					: 'anim anim-fade-in'
+						? 'anim anim-fade-out'
+						: 'anim anim-fade-in'
 					: ''}
 				{@const itemStyle = hiddenBySidebar ? 'pointer-events: none; opacity: 0;' : 'opacity: 1;'}
 				{@const displayStyle = visibleByFilter ? undefined : 'none'}

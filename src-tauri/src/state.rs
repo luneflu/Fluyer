@@ -1,8 +1,8 @@
 use crate::library::SharedLibraryState;
 use crate::music::player::MusicPlayer;
+use crate::tauri_types::{App, AppHandle, Runtime, WebviewWindow};
 use std::sync::{Arc, OnceLock};
 use tauri::Manager;
-use crate::tauri_types::{App, AppHandle, WebviewWindow, Runtime};
 use tauri_plugin_store::{Store, StoreExt};
 
 pub struct AppState {

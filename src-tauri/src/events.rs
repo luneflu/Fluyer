@@ -1,5 +1,5 @@
-use tauri::{Manager, RunEvent, WindowEvent};
 use crate::tauri_types::{AppHandle, Window};
+use tauri::{Manager, RunEvent, WindowEvent};
 
 #[cfg(target_os = "macos")]
 use crate::platform::{TRAFFIC_LIGHTS_INSET_X, TRAFFIC_LIGHTS_INSET_Y};

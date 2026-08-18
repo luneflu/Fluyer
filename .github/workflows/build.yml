@@ -576,7 +576,19 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
   publish-updater:
-    needs: [prepare, build-windows-x86_64, build-macos-intel, build-macos-silicon, build-linux, build-linux-cef, build-android-armv7, build-android-aarch64, build-android-i686, build-android-x86_64]
+    needs:
+      [
+        prepare,
+        build-windows-x86_64,
+        build-macos-intel,
+        build-macos-silicon,
+        build-linux,
+        build-linux-cef,
+        build-android-armv7,
+        build-android-aarch64,
+        build-android-i686,
+        build-android-x86_64
+      ]
     if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') && inputs.release_build
     runs-on: ubuntu-latest
     permissions: write-all

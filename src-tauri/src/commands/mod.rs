@@ -54,9 +54,7 @@ pub const COMMAND_HANDLERS: fn(crate::tauri_types::Invoke) -> bool = tauri::gene
     crate::developer::commands::log_error,
     crate::developer::commands::log_info,
     crate::developer::commands::update_check,
-
     crate::developer::commands::toast,
-
     crate::developer::commands::developer_log_save,
     crate::developer::commands::developer_mpv_log_save,
     crate::developer::commands::developer_clear_data,

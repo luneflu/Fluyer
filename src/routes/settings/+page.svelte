@@ -39,9 +39,7 @@
 				: 24}px;"
 		>
 			<p
-				class="anim mx-5 mb-4 text-2xl font-semibold {hideTitle
-					? 'anim-fade-out'
-					: 'anim-fade-in'}"
+				class="anim mx-5 mb-4 text-2xl font-semibold {hideTitle ? 'anim-fade-out' : 'anim-fade-in'}"
 				style="animation-duration: 500ms; {hideTitle ? 'opacity: 0;' : 'opacity: 1;'}"
 			>
 				Settings

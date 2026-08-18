@@ -4,6 +4,7 @@ mod api;
 pub(crate) mod commands;
 mod coverart;
 mod database;
+mod developer;
 mod folder;
 pub mod library;
 #[cfg(all(target_os = "linux", not(feature = "cef")))]
@@ -16,7 +17,6 @@ mod playlist;
 pub mod renderer;
 pub mod screenshot;
 mod sidebar;
-mod developer;
 mod utils;
 #[cfg(not(target_os = "linux"))]
 mod wgpu_renderer;

@@ -13,7 +13,7 @@ const MusicPlayerService = {
 		MusicPlayerService.listenSyncEvents();
 		MusicPlayerService.listenVolumeEvents();
 
-		if(isDesktop()){
+		if (isDesktop()) {
 			const discordRpcEnabled = await PersistentStoreService.discordRpcEnabled.get();
 			await TauriMusicAPI.setDiscordRpcEnabled(discordRpcEnabled ?? false);
 		}

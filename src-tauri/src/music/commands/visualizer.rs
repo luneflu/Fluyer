@@ -1,6 +1,6 @@
+use crate::tauri_types::AppHandle;
 use tauri::path::BaseDirectory;
 use tauri::Manager;
-use crate::tauri_types::AppHandle;
 
 #[cfg(target_os = "android")]
 use tauri_plugin_fluyer::FluyerExt;
