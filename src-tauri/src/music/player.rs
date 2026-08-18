@@ -1352,7 +1352,7 @@ impl MusicPlayer {
                                     .metadata
                                     .title
                                     .clone()
-                                    .unwrap_or_else(|| "Unknown Track".to_string()),
+                                    .unwrap_or_else(|| MusicMetadata::default_title().to_string()),
                                 artist: track.metadata.artist.clone(),
                                 position_ms: current_position,
                                 duration_ms: track.metadata.duration,

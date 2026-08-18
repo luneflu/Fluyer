@@ -2,6 +2,7 @@ use discord_rich_presence::{
     activity::{Activity, ActivityType, Assets, Timestamps},
     DiscordIpc, DiscordIpcClient,
 };
+use crate::music::metadata::MusicMetadata;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, OnceLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -145,7 +146,7 @@ fn build_activity(data: &ActivityData) -> Activity<'static> {
         .details(data.title.clone());
 
     if data.is_playing {
-        activity = activity.state(data.artist.clone().unwrap_or_else(|| "Unknown Artist".to_string()));
+        activity = activity.state(data.artist.clone().unwrap_or_else(|| MusicMetadata::default_artist().to_string()));
 
         let pos = data.position_ms.unwrap_or(0.0).max(0.0) as i64;
         let start = now - pos;

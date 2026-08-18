@@ -1,4 +1,3 @@
-#[cfg(mobile)]
 use dotenvy_macro::dotenv;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -45,17 +44,13 @@ pub struct MusicMetadata {
     pub extra_tags: Option<HashMap<String, Option<String>>>,
 }
 
-#[cfg(mobile)]
 const DEFAULT_TITLE: &str = dotenv!("VITE_DEFAULT_MUSIC_TITLE");
-#[cfg(mobile)]
 const DEFAULT_ARTIST: &str = dotenv!("VITE_DEFAULT_MUSIC_ARTIST");
 
 impl MusicMetadata {
-    #[cfg(mobile)]
     pub fn default_title() -> &'static str {
         DEFAULT_TITLE
     }
-    #[cfg(mobile)]
     pub fn default_artist() -> &'static str {
         DEFAULT_ARTIST
     }
