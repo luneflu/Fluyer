@@ -7,7 +7,8 @@
 	import settingStore from '$lib/stores/setting.svelte.js';
 	import PersistentStoreService from '$lib/services/PersistentStoreService.svelte.js';
 	import ToastService from '$lib/services/ToastService.svelte.js';
-	import TauriLogAPI from '$lib/tauri/TauriLogAPI';
+	import TauriDeveloperAPI from '$lib/tauri/TauriDeveloperAPI';
+	import { relaunch } from '@tauri-apps/plugin-process';
 
 	function onDeveloperModeChange(
 		e: Event & {
@@ -19,8 +20,16 @@
 		ToastService.info(`Developer mode is ${e.currentTarget.checked ? 'enabled' : 'disabled'}`);
 	}
 
+	async function clearData() {
+		await TauriDeveloperAPI.clearDeveloperData();
+	}
+
+	async function clearCache() {
+		await TauriDeveloperAPI.clearDeveloperCache();
+	}
+
 	async function saveLog() {
-		await TauriLogAPI.saveDeveloperLog();
+		await TauriDeveloperAPI.saveDeveloperLog();
 	}
 </script>
 
@@ -37,6 +46,8 @@
 		<div>Developer Mode</div>
 	</label>
 </SettingInput>
+<SettingButton label="Clear Data" icon={IconType.Trash} onclick={clearData} />
+<SettingButton label="Clear Cache" icon={IconType.Trash} onclick={clearCache} />
 {#if settingStore.developerMode && isDesktop()}
 	<SettingButton label="Save Log" icon={IconType.SaveLog} onclick={saveLog} />
 {/if}

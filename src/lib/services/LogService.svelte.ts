@@ -1,4 +1,4 @@
-import TauriLogAPI from '$lib/tauri/TauriLogAPI';
+import TauriDeveloperAPI from '$lib/tauri/TauriDeveloperAPI';
 import PersistentStoreService from '$lib/services/PersistentStoreService.svelte';
 import ToastService from '$lib/services/ToastService.svelte';
 
@@ -48,7 +48,7 @@ const LogService = {
 		});
 	},
 	listenBackendLog: () => {
-		TauriLogAPI.listenLog((event) => {
+		TauriDeveloperAPI.listenLog((event) => {
 			switch (parseInt(event.payload[0])) {
 				case Level.Error:
 					console.error(event.payload[1]);

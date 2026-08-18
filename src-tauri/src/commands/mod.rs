@@ -51,14 +51,16 @@ pub const COMMAND_HANDLERS: fn(crate::tauri_types::Invoke) -> bool = tauri::gene
     crate::library::commands::library_collection_shuffle_and_play,
     crate::library::commands::library_sync,
     // System/Log commands
-    crate::system::commands::log_error,
-    crate::system::commands::log_info,
-    crate::system::commands::update_check,
-    #[cfg(target_os = "android")]
-    crate::system::commands::toast,
-    // Developer commands
-    crate::system::commands::developer_log_save,
-    crate::system::commands::developer_mpv_log_save,
+    crate::developer::commands::log_error,
+    crate::developer::commands::log_info,
+    crate::developer::commands::update_check,
+
+    crate::developer::commands::toast,
+
+    crate::developer::commands::developer_log_save,
+    crate::developer::commands::developer_mpv_log_save,
+    crate::developer::commands::developer_clear_data,
+    crate::developer::commands::developer_clear_cache,
     // Mobile commands
     #[cfg(target_os = "android")]
     mobile::audio_permission_read_request,

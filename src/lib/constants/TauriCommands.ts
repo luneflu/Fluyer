@@ -72,6 +72,8 @@ export const TauriCommands = {
 	IS_CEF_ENABLED: 'is_cef_enabled',
 	DEVELOPER_LOG_SAVE: 'developer_log_save',
 	DEVELOPER_MPV_LOG_SAVE: 'developer_mpv_log_save',
+	DEVELOPER_CLEAR_DATA: 'developer_clear_data',
+	DEVELOPER_CLEAR_CACHE: 'developer_clear_cache',
 
 	SCREENSHOT_SAVE: 'screenshot_save',
 

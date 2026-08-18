@@ -16,7 +16,7 @@ mod playlist;
 pub mod renderer;
 pub mod screenshot;
 mod sidebar;
-mod system;
+mod developer;
 mod utils;
 #[cfg(not(target_os = "linux"))]
 mod wgpu_renderer;

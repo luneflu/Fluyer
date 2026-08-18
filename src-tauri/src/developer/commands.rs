@@ -2,6 +2,7 @@ use crate::logger;
 use crate::state::app_handle;
 use crate::utils::toast::{Toast, ToastType};
 use tauri::Manager;
+use tauri_plugin_fluyer::FluyerExt;
 
 #[tauri::command]
 pub fn log_error(message: String) {
@@ -13,7 +14,7 @@ pub fn log_info(message: String) {
     crate::info!("{}", message);
 }
 
-#[cfg(target_os = "android")]
+// #[cfg(target_os = "android")]
 #[tauri::command]
 pub fn toast(message: String) {
     Toast::show(message, ToastType::Info);
@@ -46,6 +47,37 @@ pub fn developer_mpv_log_save() {
         ToastType::Info,
     );
 }
+
+#[tauri::command]
+pub fn developer_clear_data() {
+    if let Ok(path) = app_handle().path().app_data_dir() {
+        if path.exists() {
+            let _ = std::fs::remove_dir_all(&path);
+            let _ = std::fs::create_dir_all(&path);
+        }
+    }
+    #[cfg(desktop)]
+    app_handle().restart();
+
+    #[cfg(target_os = "android")]
+    app_handle().fluyer().restart_app();
+}
+
+#[tauri::command]
+pub fn developer_clear_cache() {
+    if let Ok(path) = app_handle().path().app_cache_dir() {
+        if path.exists() {
+            let _ = std::fs::remove_dir_all(&path);
+            let _ = std::fs::create_dir_all(&path);
+        }
+    }
+    #[cfg(desktop)]
+    app_handle().restart();
+
+    #[cfg(target_os = "android")]
+    app_handle().fluyer().restart_app();
+}
+
 #[derive(serde::Deserialize)]
 struct LatestRelease {
     version: String,
