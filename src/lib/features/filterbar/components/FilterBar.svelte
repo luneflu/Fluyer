@@ -134,7 +134,7 @@
 		class="hidden sm:grid sm:ps-3
 		{isMobile() ? 'gap-x-1 sm:grid-cols-[1fr_min-content] sm:pe-3 md:gap-x-3' : ''}
 		{isLinux() && !appStore.isCefEnabled ? 'me-[100px]' : ''}
-		{isWindows() ? 'me-[120px]' : ''}"
+		{isWindows() ? 'me-[130px]' : ''}"
 	>
 		<Input
 			class="pointer-events-auto h-9 rounded p-0"
