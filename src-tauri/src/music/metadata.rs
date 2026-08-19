@@ -68,30 +68,57 @@ impl MusicMetadata {
         cmd
     }
 
+    pub fn ffmpeg_path() -> &'static PathBuf {
+        FFMPEG_PATH.get().expect("initialize_ffmpeg_paths not called")
+    }
+
+    pub fn ffprobe_path() -> &'static PathBuf {
+        FFPROBE_PATH.get().expect("initialize_ffmpeg_paths not called")
+    }
+
     pub fn initialize_ffmpeg_paths() {
+        #[cfg(target_os = "linux")]
         let (ffmpeg_path, ffprobe_path) = {
-            #[cfg(target_os = "linux")]
-            {
-                (
-                    PathBuf::from("/usr/lib/fluyer/ffmpeg"),
-                    PathBuf::from("/usr/lib/fluyer/ffprobe"),
-                )
+            // /usr/lib/fluyer is root-owned and may be read-only, so copy to a
+            // user-writable dir and chmod there or exec fails with os error 13.
+            let src_dir = PathBuf::from("/usr/lib/fluyer");
+            let bin_dir = app_handle()
+                .path()
+                .app_data_dir()
+                .expect("Failed to get app data directory")
+                .join("bin");
+            use std::os::unix::fs::PermissionsExt;
+            for src in ["ffmpeg", "ffprobe"] {
+                let src_path = src_dir.join(src);
+                let dst_path = bin_dir.join(src);
+                let copied = match std::fs::copy(&src_path, &dst_path) {
+                    Ok(_) => {
+                        let mut perms = std::fs::metadata(&dst_path)
+                            .map(|m| m.permissions())
+                            .unwrap_or_else(|_| std::fs::Permissions::from_mode(0o644));
+                        perms.set_mode(0o755);
+                        std::fs::set_permissions(&dst_path, perms).is_ok()
+                    }
+                    Err(e) => {
+                        crate::warn!("Failed to copy {:?} to {:?}: {}", src_path, dst_path, e);
+                        false
+                    }
+                };
+                if copied {
+                    crate::info!("Bundled {} prepared at {:?}", src, dst_path);
+                }
             }
-            #[cfg(not(target_os = "linux"))]
-            {
-                (
-                    app_handle()
-                        .path()
-                        .resource_dir()
-                        .expect("Failed to get resource directory")
-                        .join("libs/ffmpeg/bin/ffmpeg"),
-                    app_handle()
-                        .path()
-                        .resource_dir()
-                        .expect("Failed to get resource directory")
-                        .join("libs/ffmpeg/bin/ffprobe"),
-                )
-            }
+            (bin_dir.join("ffmpeg"), bin_dir.join("ffprobe"))
+        };
+
+        #[cfg(not(target_os = "linux"))]
+        let (ffmpeg_path, ffprobe_path) = {
+            let dir = app_handle()
+                .path()
+                .resource_dir()
+                .expect("Failed to get resource directory")
+                .join("libs/ffmpeg/bin");
+            (dir.join("ffmpeg"), dir.join("ffprobe"))
         };
 
         #[cfg(any(target_os = "macos", target_os = "linux"))]
@@ -248,7 +275,7 @@ impl MusicMetadata {
 
     /// Fallback metadata extraction using FFmpeg
     async fn get_with_ffmpeg(path: String) -> Result<Self, String> {
-        let output = Self::create_command(FFPROBE_PATH.get().unwrap())
+        let output = Self::create_command(Self::ffprobe_path())
             .args(&[
                 "-v",
                 "quiet",
@@ -456,7 +483,7 @@ impl MusicMetadata {
     /// Fallback cover art extraction using FFmpeg
     async fn get_image_with_ffmpeg(path: String) -> Result<Vec<u8>, String> {
         // First check if the file has any video stream (cover art)
-        let probe_output = Self::create_command(FFPROBE_PATH.get().unwrap())
+        let probe_output = Self::create_command(Self::ffprobe_path())
             .args(&[
                 "-v",
                 "quiet",
@@ -478,7 +505,7 @@ impl MusicMetadata {
         }
 
         // Try to copy the embedded image without re-encoding (fastest)
-        let output = Self::create_command(FFMPEG_PATH.get().unwrap())
+        let output = Self::create_command(Self::ffmpeg_path())
             .args(&[
                 "-i",
                 &path,
@@ -500,7 +527,7 @@ impl MusicMetadata {
         }
 
         // If copy fails, try BMP encoder as fallback
-        let output = Self::create_command(FFMPEG_PATH.get().unwrap())
+        let output = Self::create_command(Self::ffmpeg_path())
             .args(&[
                 "-i",
                 &path,

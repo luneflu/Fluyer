@@ -1732,7 +1732,7 @@ impl MusicPlayer {
         let ffmpeg_path = {
             #[cfg(target_os = "linux")]
             {
-                PathBuf::from("/usr/lib/fluyer/ffmpeg")
+                crate::music::metadata::MusicMetadata::ffmpeg_path().to_path_buf()
             }
             #[cfg(not(target_os = "linux"))]
             {

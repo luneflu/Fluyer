@@ -70,7 +70,7 @@ pub async fn music_visualizer_buffer_get(app_handle: AppHandle, path: String) ->
         {
             // Get the bundled ffmpeg path
             let ffmpeg_path = if cfg!(target_os = "linux") && !cfg!(debug_assertions) {
-                PathBuf::from("/usr/lib/fluyer/ffmpeg")
+                crate::music::metadata::MusicMetadata::ffmpeg_path().to_path_buf()
             } else if cfg!(target_os = "windows") {
                 app_handle
                     .path()
