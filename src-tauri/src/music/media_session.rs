@@ -104,7 +104,7 @@ impl MediaSession {
         }
     }
 
-    pub fn update_metadata(
+    pub async fn update_metadata(
         music: &MusicMetadata,
         is_playing: bool,
         is_first: bool,
@@ -149,7 +149,7 @@ impl MediaSession {
             let album = music.album.clone().unwrap_or_else(|| "Unknown".to_string());
             let duration_ms = music.duration.unwrap_or(0) as u64;
 
-            let cover_path = extract_cover_to_cache(&music.path);
+            let cover_path = extract_cover_to_cache(music).await;
 
             crate::music::media_control::update_metadata(
                 &title,
@@ -164,13 +164,24 @@ impl MediaSession {
     }
 }
 
-/// Extract embedded cover art to a cache file, returning the local path.
+/// Extract cover art (embedded or online via coverart) to a cache file, returning the local path.
 #[cfg(desktop)]
-fn extract_cover_to_cache(audio_path: &str) -> Option<String> {
+async fn extract_cover_to_cache(music: &MusicMetadata) -> Option<String> {
     use std::io::Write;
     use tauri::Manager;
 
-    let bytes = MusicMetadata::get_image_with_symphonia(audio_path).ok()?;
+    let bytes = match MusicMetadata::get_image_from_path(music.path.clone()).await {
+        Ok(b) => Some(b),
+        Err(_) => {
+            let query = crate::coverart::types::CoverArtQuery {
+                artist: music.artist.clone().unwrap_or_default(),
+                album: music.album.clone(),
+                title: if music.album.is_some() { None } else { music.title.clone() },
+            };
+            crate::coverart::commands::cover_art_get(query, None).await
+        }
+    }?;
+
     if bytes.is_empty() {
         return None;
     }

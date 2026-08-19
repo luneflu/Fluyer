@@ -1575,13 +1575,14 @@ impl MusicPlayer {
             #[cfg(desktop)]
             {
                 let music_clone = music.clone();
-                std::thread::spawn(move || {
+                tauri::async_runtime::spawn(async move {
                     crate::music::media_session::MediaSession::update_metadata(
                         &music_clone,
                         true,
                         is_first,
                         is_last,
-                    );
+                    )
+                    .await;
                 });
             }
 
@@ -1688,7 +1689,8 @@ impl MusicPlayer {
                             true,
                             is_first,
                             is_last,
-                        );
+                        )
+                        .await;
                     });
 
                     return true;
@@ -1814,7 +1816,8 @@ impl MusicPlayer {
                         tauri::async_runtime::spawn(async move {
                             crate::music::media_session::MediaSession::update_metadata(
                                 &music, is_playing, is_first, is_last,
-                            );
+                            )
+                            .await;
                         });
                     }
                 }
