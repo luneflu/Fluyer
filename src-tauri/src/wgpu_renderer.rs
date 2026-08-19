@@ -314,16 +314,19 @@ pub fn setup_wgpu(app: &mut crate::tauri_types::App) -> Result<(), Box<dyn std::
 
 pub fn handle_wgpu_resize(app_handle: &crate::tauri_types::AppHandle, width: u32, height: u32) {
     if let Some(shared) = app_handle.try_state::<Arc<SharedRenderer>>() {
-        let mut state_guard = shared.state.lock().unwrap();
-        if let Some(state) = state_guard.as_mut() {
-            state.config.width = if width > 0 { width } else { 1 };
-            state.config.height = if height > 0 { height } else { 1 };
-            if let Some(surface) = &state.surface {
-                surface.configure(&state.device, &state.config);
+        {
+            let mut state_guard = shared.state.lock().unwrap();
+            if let Some(state) = state_guard.as_mut() {
+                state.config.width = if width > 0 { width } else { 1 };
+                state.config.height = if height > 0 { height } else { 1 };
+                if let Some(surface) = &state.surface {
+                    surface.configure(&state.device, &state.config);
+                }
+                let (w, h) = (state.config.width, state.config.height);
+                state.canvas.set_size(w, h, 1.0);
             }
-            let (w, h) = (state.config.width, state.config.height);
-            state.canvas.set_size(w, h, 1.0);
         }
+        crate::renderer::trigger_redraw();
     }
 }
 

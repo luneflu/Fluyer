@@ -18,6 +18,10 @@ pub fn handle_window_events(window: &Window, event: &WindowEvent) {
                     .unwrap();
             }
         }
+        WindowEvent::Moved(_) => {
+            #[cfg(not(target_os = "linux"))]
+            crate::renderer::trigger_redraw();
+        }
         WindowEvent::Focused(focused) =>
         {
             #[cfg(not(target_os = "linux"))]
