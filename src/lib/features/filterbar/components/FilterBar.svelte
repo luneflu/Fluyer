@@ -133,8 +133,8 @@
 	<div
 		class="hidden sm:grid sm:ps-3
 		{isMobile() ? 'sm:pe-3' : 'gap-x-1 sm:grid-cols-[1fr_min-content] md:gap-x-3'}
-		{isLinux() && !appStore.isCefEnabled ? 'me-[130px]' : ''}
-		{isWindows() ? 'me-[130px]' : ''}"
+		{isLinux() && !appStore.isCefEnabled ? 'me-[120px]' : ''}
+		{isWindows() ? 'me-[120px]' : ''}"
 	>
 		<Input
 			class="pointer-events-auto h-9 rounded p-0"
