@@ -99,7 +99,7 @@
 					</p>
 				</div>
 				<div class="flex w-12 justify-end text-xs xl:text-[13px] 2xl:text-sm">
-					<span class="self-end opacity-75">{vm.progressDurationNegativeText}</span>
+					<span class="self-end opacity-75">{vm.progressDurationTotalText}</span>
 				</div>
 			</div>
 			<div class="w-full pb-2 pt-4">

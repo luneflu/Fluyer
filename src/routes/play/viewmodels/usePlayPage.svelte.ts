@@ -15,7 +15,7 @@ const music = $derived(musicStore.currentMusic);
 const progressPercentage = $derived.by(() => musicStore.progressPercentage);
 
 let progressDurationText = $state('');
-let progressDurationNegativeText = $state('');
+let progressDurationTotalText = $state('');
 let updateProgressText = $state(true);
 
 let coverArt = $state<Promise<string | null> | null>(null);
@@ -136,11 +136,9 @@ function resetSelectedLyricIndex() {
 function refreshProgressText() {
 	if (!updateProgressText) return;
 	progressDurationText = ProgressService.formatDuration(musicStore.progressDuration);
-	progressDurationNegativeText =
-		'-' +
-		ProgressService.formatDuration(
-			(musicStore.currentMusic?.duration ?? 0) - musicStore.progressDuration
-		);
+	progressDurationTotalText = ProgressService.formatDuration(
+		musicStore.currentMusic?.duration ?? 0
+	);
 }
 
 function handleProgressClick(percentage: number) {
@@ -156,11 +154,9 @@ function handleProgressMove(percentage: number) {
 	progressDurationText = ProgressService.formatDuration(
 		(musicStore.currentMusic?.duration ?? 0) * (percentage / 100)
 	);
-	progressDurationNegativeText =
-		'-' +
-		ProgressService.formatDuration(
-			(musicStore.currentMusic?.duration ?? 0) * ((100 - percentage) / 100)
-		);
+	progressDurationTotalText = ProgressService.formatDuration(
+		musicStore.currentMusic?.duration ?? 0
+	);
 }
 
 function handleProgressLeave() {
@@ -234,8 +230,8 @@ export function usePlayPage() {
 		get progressDurationText() {
 			return progressDurationText;
 		},
-		get progressDurationNegativeText() {
-			return progressDurationNegativeText;
+		get progressDurationTotalText() {
+			return progressDurationTotalText;
 		},
 		get coverArt() {
 			return coverArt;
