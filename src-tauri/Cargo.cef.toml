@@ -53,6 +53,7 @@ tauri-plugin-device-info = "1.0.0"
 fast_image_resize = { version = "6.0.0", features = ["image"] }
 tauri-plugin-opener = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "feat/cef" }
 base64 = "0.22.1"
+discord-rich-presence = "1.1.0"
 tauri = { git = "https://github.com/tauri-apps/tauri", branch = "feat/cef", default-features = false , features = [] }
 gtk = "0.18.2"
 libloading = "0.8"
