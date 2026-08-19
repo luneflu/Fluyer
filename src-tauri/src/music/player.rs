@@ -38,6 +38,19 @@ pub struct MusicPlayerSync {
     is_shuffled: bool,
 }
 
+impl MusicPlayerSync {
+    pub(crate) fn is_playing(&self) -> bool {
+        self.is_playing
+    }
+
+    /// Current playback position in milliseconds.
+    pub(crate) fn position_ms(&self) -> u64 {
+        self.current_position
+            .map(|s| (s * 1000.0) as u64)
+            .unwrap_or(0)
+    }
+}
+
 #[derive(Debug, Clone)]
 struct PlayerState {
     track: Vec<TrackItem>,
@@ -552,20 +565,16 @@ impl MusicPlayer {
                         }
                         (bass.bass_channel_play)(bass_mixer, 1);
                     }
-
-                    let sync_info = self.get_sync_info(false);
-                    crate::debug!(
-                        "Updating media control state after seek: is_playing={}, position={}ms",
-                        sync_info.is_playing,
-                        position
-                    );
-                    crate::music::media_session::MediaSession::set_state(
-                        sync_info.is_playing,
-                        position,
-                    );
                 }
             }
         }
+
+        let sync_info = self.get_sync_info(false);
+        crate::music::media_session::MediaSession::set_state(
+            sync_info.is_playing,
+            position,
+        );
+        self.emit_sync(false);
     }
 
     pub fn get_current_duration(&self) -> f64 {
@@ -1149,6 +1158,8 @@ impl MusicPlayer {
 
     fn play_pause(&self, play: bool) {
         Self::play_pause_inner(&self.bass_mixer, &self.current_stream, play);
+        let pos = self.get_current_duration() as u64;
+        crate::music::media_session::MediaSession::set_state(play, pos);
     }
 
     fn play_pause_inner(bass_mixer: &Arc<AtomicU32>, current_stream: &Arc<AtomicU32>, play: bool) {
@@ -1552,6 +1563,19 @@ impl MusicPlayer {
             {
                 let music_clone = music.clone();
                 tauri::async_runtime::spawn(async move {
+                    crate::music::media_session::MediaSession::update_metadata(
+                        &music_clone,
+                        true,
+                        is_first,
+                        is_last,
+                    );
+                });
+            }
+
+            #[cfg(desktop)]
+            {
+                let music_clone = music.clone();
+                std::thread::spawn(move || {
                     crate::music::media_session::MediaSession::update_metadata(
                         &music_clone,
                         true,

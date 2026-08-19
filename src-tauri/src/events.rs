@@ -44,6 +44,12 @@ pub fn handle_app_events(app_handle: &AppHandle, event: RunEvent) {
             let scale_factor = crate::state::main_window().scale_factor().unwrap_or(1.0);
             crate::music::image_cache::ImageCache::init_base_cover_size(scale_factor);
 
+            #[cfg(desktop)]
+            {
+                crate::info!("Initializing desktop media controls");
+                crate::music::media_session::MediaSession::init();
+            }
+
             #[cfg(target_os = "linux")]
             let _ = crate::sidebar::linux_listen_mouse_leave();
             #[cfg(not(target_os = "linux"))]

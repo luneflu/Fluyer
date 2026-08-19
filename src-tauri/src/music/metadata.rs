@@ -415,7 +415,7 @@ impl MusicMetadata {
     }
 
     /// Extract cover art using Symphonia (pure Rust, fast)
-    fn get_image_with_symphonia(path: &str) -> Result<Vec<u8>, String> {
+    pub fn get_image_with_symphonia(path: &str) -> Result<Vec<u8>, String> {
         let file = File::open(path).map_err(|e| format!("Failed to open file: {}", e))?;
         let mss = MediaSourceStream::new(Box::new(file), Default::default());
 

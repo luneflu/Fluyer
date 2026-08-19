@@ -79,6 +79,7 @@ femtovg = { version = "0.25", features = ["image-loading"] }
 tauri-plugin-single-instance = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+souvlaki = { version = "0.8", default-features = false, features = ["use_zbus"] }
 
 [profile.dev]
 debug = 0

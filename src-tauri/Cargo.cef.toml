@@ -60,6 +60,7 @@ reqwest = { version = "0.13.4", default-features = false, features = ["json", "r
 tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "feat/cef" }
 tauri-plugin-updater = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "feat/cef" }
 tauri-plugin-process = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "feat/cef" }
+souvlaki = { version = "0.8", default-features = false, features = ["use_zbus"] }
 
 [profile.dev]
 debug = 0
