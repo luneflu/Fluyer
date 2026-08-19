@@ -3,6 +3,7 @@ use discord_rich_presence::{
     activity::{Activity, ActivityType, Assets, Timestamps},
     DiscordIpc, DiscordIpcClient,
 };
+use dotenvy_macro::dotenv;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, OnceLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -33,9 +34,11 @@ enum Message {
 }
 
 fn client_id() -> Option<String> {
-    match std::env::var(DISCORD_APP_ID_ENV) {
-        Ok(id) if !id.trim().is_empty() => Some(id),
-        _ => None,
+    let id = dotenv!("DISCORD_APPLICATION_ID");
+    if id.trim().is_empty() {
+        None
+    } else {
+        Some(id.to_string())
     }
 }
 
