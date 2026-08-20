@@ -14,6 +14,7 @@ import { MusicListType } from '$lib/features/music/types';
 import folderStore from '$lib/stores/folder.svelte';
 import playlistStore from '$lib/stores/playlist.svelte';
 import PlaylistService from '$lib/services/PlaylistService.svelte';
+import QueueService from '$lib/services/QueueService.svelte';
 
 const album = $derived(filterStore.album);
 const showBackButton = $derived.by(async () => {
@@ -80,6 +81,7 @@ async function addMusicListAndPlay() {
 
 	await TauriLibraryAPI.collectionAddAndPlay(context);
 	if (!musicStore.isPlaying) MusicPlayerService.play();
+	QueueService.refreshCount();
 }
 
 async function addMusicList() {
@@ -95,6 +97,7 @@ async function addMusicList() {
 				? `${album.name} ${MusicConfig.separatorAlbum} ${album.artist}`
 				: null;
 	ToastService.info(`Added music list to queue: ${toastLabel}`);
+	QueueService.refreshCount();
 }
 
 async function playShuffle() {
@@ -106,6 +109,7 @@ async function playShuffle() {
 	await TauriLibraryAPI.collectionShuffleAndPlay(context);
 
 	ProgressService.start();
+	QueueService.refreshCount();
 }
 
 async function deletePlaylist() {
