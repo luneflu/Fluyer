@@ -1,5 +1,6 @@
 use crate::music::metadata::MusicMetadata;
 use crate::state::{app_handle, main_window};
+use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use std::ffi::CString;
 use std::path::PathBuf;
@@ -54,9 +55,9 @@ impl MusicPlayerSync {
 #[derive(Debug, Clone)]
 struct PlayerState {
     track: Vec<TrackItem>,
+    original_track: Option<Vec<TrackItem>>,
     current_index: Option<usize>,
     repeat_mode: RepeatMode,
-    shuffle_sequence: Option<Vec<usize>>,
 }
 
 impl PlayerState {
@@ -64,31 +65,7 @@ impl PlayerState {
         match (self.current_index, self.repeat_mode) {
             (Some(current), RepeatMode::One) if !from_user => Some(current),
             (Some(current), _) => {
-                if let Some(ref mut seq) = self.shuffle_sequence {
-                    if let Some(pos) = seq.iter().position(|&x| x == current) {
-                        if pos + 1 < seq.len() {
-                            Some(seq[pos + 1])
-                        } else if self.repeat_mode == RepeatMode::All {
-                            use rand::rng;
-                            use rand::seq::SliceRandom;
-                            let mut r = rng();
-                            let mut new_seq: Vec<usize> = (0..self.track.len()).collect();
-                            new_seq.shuffle(&mut r);
-
-                            let last_track = seq[pos];
-                            if new_seq.len() > 1 && new_seq[0] == last_track {
-                                new_seq.swap(0, 1);
-                            }
-
-                            *seq = new_seq;
-                            Some(seq[0])
-                        } else {
-                            None
-                        }
-                    } else {
-                        None
-                    }
-                } else if current + 1 < self.track.len() {
+                if current + 1 < self.track.len() {
                     Some(current + 1)
                 } else if self.repeat_mode == RepeatMode::All {
                     Some(0)
@@ -290,9 +267,9 @@ impl MusicPlayer {
             current_stream: Arc::new(AtomicU32::new(0)),
             state: Arc::new(Mutex::new(PlayerState {
                 track: Vec::new(),
+                original_track: None,
                 current_index: None,
                 repeat_mode: RepeatMode::None,
-                shuffle_sequence: None,
             })),
             temp_wav_path: Arc::new(Mutex::new(None)),
         };
@@ -431,7 +408,11 @@ impl MusicPlayer {
                             }
                         }
 
-                        let mixer = (bass.bass_mixer_stream_create)(44100, 2, BASS_SAMPLE_FLOAT | BASS_MIXER_NONSTOP);
+                        let mixer = (bass.bass_mixer_stream_create)(
+                            44100,
+                            2,
+                            BASS_SAMPLE_FLOAT | BASS_MIXER_NONSTOP,
+                        );
                         if mixer == 0 {
                             crate::error!(
                                 "Failed to create BASS mixer stream, error: {}",
@@ -495,29 +476,38 @@ impl MusicPlayer {
         use rand::seq::SliceRandom;
 
         if let Ok(mut state) = self.state.lock() {
-            if state.shuffle_sequence.is_some() {
-                // Disable shuffle
-                state.shuffle_sequence = None;
+            if state.original_track.is_some() {
+                // Disable shuffle: restore original track list
+                if let Some(original) = state.original_track.take() {
+                    let current_meta = state
+                        .current_index
+                        .and_then(|i| state.track.get(i))
+                        .map(|t| t.metadata.clone());
+
+                    state.track = original;
+
+                    if let Some(meta) = current_meta {
+                        // Restore current index relative to original list
+                        state.current_index =
+                            state.track.iter().position(|t| t.metadata.id == meta.id);
+                    }
+                }
             } else {
                 // Enable shuffle
                 let len = state.track.len();
                 if len > 0 {
+                    state.original_track = Some(state.track.clone());
+
                     let mut r = rng();
-                    let mut new_seq = Vec::with_capacity(len);
                     if let Some(current) = state.current_index {
-                        let mut before: Vec<usize> = (0..current).collect();
-                        let mut after: Vec<usize> = ((current + 1)..len).collect();
-                        before.shuffle(&mut r);
-                        after.shuffle(&mut r);
-                        new_seq.extend(before);
-                        new_seq.push(current);
-                        new_seq.extend(after);
+                        // Extract current item and keep it at index 0 (or original pos)
+                        let current_item = state.track.remove(current);
+                        state.track.shuffle(&mut r);
+                        state.track.insert(0, current_item);
+                        state.current_index = Some(0);
                     } else {
-                        let mut seq: Vec<usize> = (0..len).collect();
-                        seq.shuffle(&mut r);
-                        new_seq = seq;
+                        state.track.shuffle(&mut r);
                     }
-                    state.shuffle_sequence = Some(new_seq);
                 }
             }
         }
@@ -525,16 +515,20 @@ impl MusicPlayer {
     }
 
     pub fn set_repeat_mode(&self, mode: RepeatMode) {
-        let (current_idx, count) = if let Ok(mut state) = self.state.lock() {
+        if let Ok(mut state) = self.state.lock() {
             state.repeat_mode = mode;
-            (state.current_index, state.track.len())
-        } else {
-            (None, 0)
-        };
+        }
         self.emit_sync(false);
 
         #[cfg(target_os = "android")]
-        self.update_android_media_boundaries(current_idx, count);
+        {
+            let (current_idx, count) = if let Ok(state) = self.state.lock() {
+                (state.current_index, state.track.len())
+            } else {
+                (None, 0)
+            };
+            self.update_android_media_boundaries(current_idx, count);
+        }
     }
 
     pub fn set_pos(&self, position: u64) {
@@ -577,10 +571,7 @@ impl MusicPlayer {
         }
 
         let sync_info = self.get_sync_info(false);
-        crate::music::media_session::MediaSession::set_state(
-            sync_info.is_playing,
-            position,
-        );
+        crate::music::media_session::MediaSession::set_state(sync_info.is_playing, position);
         self.emit_sync(false);
     }
 
@@ -661,7 +652,7 @@ impl MusicPlayer {
                 (
                     s.current_index.map(|i| i as i64).unwrap_or(-1),
                     s.repeat_mode,
-                    s.shuffle_sequence.is_some(),
+                    s.original_track.is_some(),
                 )
             })
             .unwrap_or((-1, RepeatMode::None, false));
@@ -686,21 +677,25 @@ impl MusicPlayer {
                 }
             };
             was_empty = state.track.is_empty();
-            let start_len = state.track.len();
+            let mut items = Vec::with_capacity(track.len());
             for music in track {
-                state.track.push(TrackItem { metadata: music });
+                items.push(TrackItem { metadata: music });
             }
 
-            let end_len = state.track.len();
-
-            // Append to shuffle sequence if it exists
-            if let Some(ref mut seq) = state.shuffle_sequence {
-                let mut new_indices: Vec<usize> = (start_len..end_len).collect();
-                use rand::rng;
-                use rand::seq::SliceRandom;
-                let mut r = rng();
-                new_indices.shuffle(&mut r);
-                seq.extend(new_indices);
+            if let Some(ref mut original) = state.original_track {
+                original.extend(items.clone());
+                // In shuffle mode, insert new items right after current track, then shuffle the remainder.
+                let cur_idx = state.current_index.unwrap_or(0);
+                if cur_idx < state.track.len() {
+                    let insert_pos = cur_idx + 1;
+                    state.track.splice(insert_pos..insert_pos, items);
+                    let mut rng = rand::rng();
+                    state.track[insert_pos..].shuffle(&mut rng);
+                } else {
+                    state.track.extend(items);
+                }
+            } else {
+                state.track.extend(items);
             }
         }
 
@@ -732,40 +727,25 @@ impl MusicPlayer {
             return;
         }
 
+        let removed = state.track.remove(index);
+
+        if let Some(ref mut original) = state.original_track {
+            if let Some(orig_idx) = original
+                .iter()
+                .position(|t| t.metadata.id == removed.metadata.id)
+            {
+                original.remove(orig_idx);
+            }
+        }
+
         if let Some(current) = state.current_index {
             if current == index {
                 state.current_index = None;
-                state.track.remove(index);
-
-                if let Some(ref mut seq) = state.shuffle_sequence {
-                    seq.retain(|&x| x != index);
-                    for x in seq.iter_mut() {
-                        if *x > index {
-                            *x -= 1;
-                        }
-                    }
-                }
                 drop(state);
                 self.stop_current_stream();
                 return;
-            }
-        }
-
-        state.track.remove(index);
-
-        if let Some(current) = state.current_index {
-            if index < current {
+            } else if index < current {
                 state.current_index = Some(current - 1);
-            }
-        }
-
-        // Update shuffle sequence
-        if let Some(ref mut seq) = state.shuffle_sequence {
-            seq.retain(|&x| x != index);
-            for x in seq.iter_mut() {
-                if *x > index {
-                    *x -= 1;
-                }
             }
         }
 
@@ -1000,18 +980,6 @@ impl MusicPlayer {
                         crate::info!("Current index: {:?}", current);
                         if current == 0 && state.repeat_mode == RepeatMode::None {
                             Some(0)
-                        } else if let Some(ref seq) = state.shuffle_sequence {
-                            if let Some(pos) = seq.iter().position(|&x| x == current) {
-                                if pos > 0 {
-                                    Some(seq[pos - 1])
-                                } else if !seq.is_empty() {
-                                    Some(seq[seq.len() - 1])
-                                } else {
-                                    None
-                                }
-                            } else {
-                                None
-                            }
                         } else if current > 0 {
                             Some(current - 1)
                         } else if !state.track.is_empty() {
@@ -1073,7 +1041,10 @@ impl MusicPlayer {
             }
 
             let item = state.track.remove(from);
-            state.track.insert(to, item);
+            state.track.insert(to, item.clone());
+
+            // Disable shuffle when user manually reorders
+            state.original_track = None;
 
             if let Some(current) = state.current_index {
                 state.current_index = Some(if current == from {
@@ -1085,19 +1056,6 @@ impl MusicPlayer {
                 } else {
                     current
                 });
-            }
-
-            // Update shuffle sequence
-            if let Some(ref mut seq) = state.shuffle_sequence {
-                for x in seq.iter_mut() {
-                    if *x == from {
-                        *x = to;
-                    } else if from < *x && to >= *x {
-                        *x -= 1;
-                    } else if from > *x && to <= *x {
-                        *x += 1;
-                    }
-                }
             }
         }
         self.emit_sync(false);
@@ -1170,7 +1128,7 @@ impl MusicPlayer {
         crate::music::media_session::MediaSession::set_state(play, pos);
     }
 
-    fn play_pause_inner(bass_mixer: &Arc<AtomicU32>, current_stream: &Arc<AtomicU32>, play: bool) {
+    fn play_pause_inner(bass_mixer: &Arc<AtomicU32>, _current_stream: &Arc<AtomicU32>, play: bool) {
         let bm = bass_mixer.load(Ordering::SeqCst);
 
         #[cfg(desktop)]
@@ -1197,7 +1155,7 @@ impl MusicPlayer {
                     if (bass.bass_channel_play)(bm, 0) == 0 {
                         crate::error!("Failed to play, error: {}", (bass.bass_error_get_code)());
                     } else {
-                        let cs = current_stream.load(Ordering::SeqCst);
+                        let cs = _current_stream.load(Ordering::SeqCst);
                         let pos = {
                             if cs == 0 {
                                 0
@@ -1211,7 +1169,7 @@ impl MusicPlayer {
                 } else if (bass.bass_channel_pause)(bm) == 0 {
                     crate::error!("Failed to pause, error: {}", (bass.bass_error_get_code)());
                 } else {
-                    let cs = current_stream.load(Ordering::SeqCst);
+                    let cs = _current_stream.load(Ordering::SeqCst);
                     let pos = {
                         if cs == 0 {
                             0
@@ -1249,8 +1207,8 @@ impl MusicPlayer {
         self.stop_current_stream();
         if let Ok(mut state) = self.state.lock() {
             state.track.clear();
+            state.original_track = None;
             state.current_index = None;
-            state.shuffle_sequence = None;
         }
 
         #[cfg(desktop)]
@@ -1365,7 +1323,7 @@ impl MusicPlayer {
                 (
                     s.current_index.map(|i| i as i64).unwrap_or(-1),
                     s.repeat_mode,
-                    s.shuffle_sequence.is_some(),
+                    s.original_track.is_some(),
                 )
             })
             .unwrap_or((-1, RepeatMode::None, false));
