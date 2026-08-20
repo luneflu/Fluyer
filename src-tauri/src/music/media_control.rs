@@ -68,8 +68,36 @@ pub fn update_metadata(
 ) {
     // souvlaki cover_url: use file:// URI on all platforms.
     let cover_url: Option<String> = cover_path.map(|p| {
+        #[cfg(target_os = "linux")]
+        let p = {
+            // If we have a cover path on Linux, create a uniquely named symlink or copy
+            // to bypass MPRIS clients aggressive caching.
+            use std::time::{SystemTime, UNIX_EPOCH};
+            use std::fs;
+            use std::path::Path;
+            
+            let path = Path::new(p);
+            if path.exists() {
+                let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
+                let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("jpg");
+                let new_path = std::env::temp_dir().join(format!("fluyer_cover_{}.{}", ts, ext));
+                
+                // Try to copy, ignore errors (fallback to original path)
+                if fs::copy(path, &new_path).is_ok() {
+                    new_path.to_string_lossy().to_string()
+                } else {
+                    p.to_string()
+                }
+            } else {
+                p.to_string()
+            }
+        };
+
+        #[cfg(not(target_os = "linux"))]
+        let p = p.to_string();
+
         if p.starts_with("file://") {
-            p.to_string()
+            p
         } else {
             format!("file://{}", p)
         }
