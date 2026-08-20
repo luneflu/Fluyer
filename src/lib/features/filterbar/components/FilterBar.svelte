@@ -133,7 +133,7 @@
 	<div
 		class="hidden sm:grid sm:ps-3
 		{isMobile() ? 'sm:pe-3' : 'gap-x-1 sm:grid-cols-[1fr_min-content] md:gap-x-3'}
-		{isLinux() && !appStore.isCefEnabled ? 'me-[120px]' : ''}
+		{isLinux() && !appStore.isCefEnabled ? 'me-[100px]' : ''}
 		{isWindows() ? 'me-[120px]' : ''}"
 	>
 		<Input
