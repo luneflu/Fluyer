@@ -12,6 +12,7 @@ pub const BASS_ACTIVE_PAUSED: u32 = 3;
 pub const BASS_POS_BYTE: u32 = 0;
 pub const BASS_ATTRIB_VOL: u32 = 2;
 
+pub const BASS_MIXER_NONSTOP: u32 = 0x20000;
 pub const BASS_SYNC_END: u32 = 2;
 pub const BASS_SYNC_FREE: u32 = 0x10000;
 pub const BASS_SYNC_MIXTIME: u32 = 0x40000000;

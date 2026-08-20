@@ -179,9 +179,16 @@ extern "C" fn end_sync_callback(
             }
 
             if MusicPlayer::load_music_inner(&bm, &cs_arc, &st, &twp, music, index, total_count) {
+                // Update current_index BEFORE resuming the mixer so that if the
+                // new stream's END sync fires immediately (very short track), it
+                // sees the correct index when calling get_next_index.
                 if let Ok(mut state) = st.lock() {
                     state.current_index = Some(index);
                 }
+                // Resume the mixer in case it stopped while the old stream was
+                // removed and the next one was being loaded (buffer drain gap).
+                // No-op when the mixer is still running, so gapless keeps working.
+                MusicPlayer::play_pause_inner(&bm, &cs_arc, true);
                 MusicPlayer::emit_sync_inner(&bm, &cs_arc, &st, true);
             }
         } else {
@@ -379,7 +386,7 @@ impl MusicPlayer {
                 }
             }
 
-            let mixer = BASS_Mixer_StreamCreate(44100, 2, BASS_SAMPLE_FLOAT);
+            let mixer = BASS_Mixer_StreamCreate(44100, 2, BASS_SAMPLE_FLOAT | BASS_MIXER_NONSTOP);
             if mixer == 0 {
                 crate::error!(
                     "Failed to create BASS mixer stream, error: {}",
@@ -424,7 +431,7 @@ impl MusicPlayer {
                             }
                         }
 
-                        let mixer = (bass.bass_mixer_stream_create)(44100, 2, BASS_SAMPLE_FLOAT);
+                        let mixer = (bass.bass_mixer_stream_create)(44100, 2, BASS_SAMPLE_FLOAT | BASS_MIXER_NONSTOP);
                         if mixer == 0 {
                             crate::error!(
                                 "Failed to create BASS mixer stream, error: {}",
@@ -883,6 +890,7 @@ impl MusicPlayer {
                     if let Ok(mut state) = state_arc.lock() {
                         state.current_index = Some(index);
                     }
+                    Self::play_pause_inner(&bass_mixer, &current_stream, true);
                     Self::emit_sync_inner(&bass_mixer, &current_stream, &state_arc, true);
                 }
             } else if !from_user {

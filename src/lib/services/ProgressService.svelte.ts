@@ -1,6 +1,5 @@
 import musicStore from '$lib/stores/music.svelte';
 import { MusicConfig } from '$lib/constants/MusicConfig';
-import MusicPlayerService from '$lib/services/MusicPlayerService.svelte';
 
 const ProgressService = {
 	initialize: () => {},
@@ -15,11 +14,8 @@ const ProgressService = {
 		const updateInterval = (musicStore.currentMusic!.duration / MusicConfig.max) * MusicConfig.step;
 
 		musicStore.progressIntervalId = setInterval(() => {
-			musicStore.progressValue += MusicConfig.step;
-
-			if (musicStore.progressValue >= MusicConfig.max) {
-				console.log('Progress value ended. Stopping...');
-				MusicPlayerService.pause();
+			if (musicStore.progressValue < MusicConfig.max) {
+				musicStore.progressValue += MusicConfig.step;
 			}
 		}, updateInterval);
 	},
