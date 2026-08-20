@@ -363,7 +363,7 @@ impl MusicPlayer {
                 }
             }
 
-            let mixer = BASS_Mixer_StreamCreate(44100, 2, BASS_SAMPLE_FLOAT | BASS_MIXER_NONSTOP);
+            let mixer = BASS_Mixer_StreamCreate(44100, 2, BASS_SAMPLE_FLOAT);
             if mixer == 0 {
                 crate::error!(
                     "Failed to create BASS mixer stream, error: {}",
