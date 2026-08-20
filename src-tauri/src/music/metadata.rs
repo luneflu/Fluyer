@@ -87,9 +87,15 @@ impl MusicMetadata {
                 .app_data_dir()
                 .expect("Failed to get app data directory")
                 .join("bin");
+
+            let _ = std::fs::create_dir_all(&bin_dir);
+
             use std::os::unix::fs::PermissionsExt;
             for src in ["ffmpeg", "ffprobe"] {
                 let src_path = src_dir.join(src);
+                if !src_path.exists() {
+                    continue;
+                }
                 let dst_path = bin_dir.join(src);
                 let copied = match std::fs::copy(&src_path, &dst_path) {
                     Ok(_) => {
