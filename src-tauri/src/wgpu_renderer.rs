@@ -329,7 +329,6 @@ pub fn handle_wgpu_resize(app_handle: &crate::tauri_types::AppHandle, width: u32
                 state.canvas.set_size(w, h, 1.0);
             }
         }
-        crate::renderer::trigger_redraw();
     }
 }
 
