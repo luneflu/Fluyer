@@ -111,6 +111,64 @@ async function syncAndroidTauriProperties(version: string) {
 	console.log(`  tauri.properties      → ${version} (code ${versionCode})`);
 }
 
+async function syncAppleVersions(version: string) {
+	const projectYml = path.join(ROOT, 'src-tauri', 'gen', 'apple', 'project.yml');
+	const pbxproj = path.join(
+		ROOT,
+		'src-tauri',
+		'gen',
+		'apple',
+		'fluyer.xcodeproj',
+		'project.pbxproj'
+	);
+	const infoPlist = path.join(ROOT, 'src-tauri', 'gen', 'apple', 'fluyer_iOS', 'Info.plist');
+
+	let updatedCount = 0;
+
+	try {
+		// 1. project.yml
+		let ymlContent = await fs.readFile(projectYml, 'utf8');
+		const ymlReplaced = ymlContent
+			.replace(/^( {8}CFBundleShortVersionString: ).*/m, `$1${version}`)
+			.replace(/^( {8}CFBundleVersion: ).*/m, `$1${version}`);
+		if (ymlReplaced !== ymlContent) {
+			await fs.writeFile(projectYml, ymlReplaced);
+			updatedCount++;
+		}
+	} catch {}
+
+	try {
+		// 2. project.pbxproj
+		let pbxContent = await fs.readFile(pbxproj, 'utf8');
+		const pbxReplaced = pbxContent.replace(/(MARKETING_VERSION\s*=\s*)[^;]+;/g, `$1${version};`);
+		if (pbxReplaced !== pbxContent) {
+			await fs.writeFile(pbxproj, pbxReplaced);
+			updatedCount++;
+		}
+	} catch {}
+
+	try {
+		// 3. Info.plist
+		let plistContent = await fs.readFile(infoPlist, 'utf8');
+		const plistReplaced = plistContent
+			.replace(
+				/(<key>CFBundleShortVersionString<\/key>\s*<string>)[^<]+(<\/string>)/g,
+				`$1${version}$2`
+			)
+			.replace(/(<key>CFBundleVersion<\/key>\s*<string>)[^<]+(<\/string>)/g, `$1${version}$2`);
+		if (plistReplaced !== plistContent) {
+			await fs.writeFile(infoPlist, plistReplaced);
+			updatedCount++;
+		}
+	} catch {}
+
+	if (updatedCount > 0) {
+		console.log(`  Apple projects        → ${version} (updated ${updatedCount} files)`);
+	} else {
+		console.log(`  Apple projects        already ${version}`);
+	}
+}
+
 // ─── main ────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -137,7 +195,8 @@ async function main() {
 		syncCargoToml(version),
 		syncTauriConf(version),
 		syncEnvViteVersion(version),
-		syncAndroidTauriProperties(version)
+		syncAndroidTauriProperties(version),
+		syncAppleVersions(version)
 	]);
 
 	console.log('\nDone! ✓');
