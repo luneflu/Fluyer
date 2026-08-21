@@ -18,23 +18,14 @@ pub fn handle_window_events(window: &Window, event: &WindowEvent) {
                     .unwrap();
             }
         }
-        WindowEvent::Moved(_) => {
-            #[cfg(not(target_os = "linux"))]
-            crate::renderer::trigger_redraw();
-        }
         WindowEvent::Focused(focused) =>
         {
             #[cfg(not(target_os = "linux"))]
             if *focused {
                 crate::wgpu_renderer::resume_wgpu(window.app_handle());
-                crate::renderer::trigger_redraw();
             } else {
                 crate::wgpu_renderer::suspend_wgpu(window.app_handle());
             }
-        }
-        WindowEvent::ThemeChanged(_) => {
-            #[cfg(not(target_os = "linux"))]
-            crate::renderer::trigger_redraw();
         }
         _ => {}
     }
