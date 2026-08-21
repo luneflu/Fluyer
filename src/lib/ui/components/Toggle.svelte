@@ -102,7 +102,6 @@
                     {selected === option.value ? 'text-white' : 'text-white/60'}
                     hover:text-white/90"
 				onclick={() => handleSelect(option.value, index)}
-				title={option.label}
 			>
 				<div class={props.iconClass} style={props.iconStyle}>
 					<Icon type={option.icon} />
