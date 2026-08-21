@@ -19,7 +19,7 @@ pub async fn screenshot_save(app: AppHandle, base64_data: String) -> Result<(), 
     let mut file = File::create(&file_path).map_err(|e| e.to_string())?;
     file.write_all(&data).map_err(|e| e.to_string())?;
 
-    println!("[Screenshot] Saved to {:?}", file_path);
+    println!("Saved screenshot to {:?}", file_path);
 
     Ok(())
 }

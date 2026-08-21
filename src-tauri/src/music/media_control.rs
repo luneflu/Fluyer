@@ -37,7 +37,7 @@ where
     let mut mc = match MediaControls::new(config) {
         Ok(c) => c,
         Err(e) => {
-            crate::error!("[media_control] Failed to create MediaControls: {:?}", e);
+            crate::error!("Failed to create MediaControls: {:?}", e);
             return;
         }
     };
@@ -50,7 +50,7 @@ where
             handler(action);
         }
     }) {
-        crate::error!("[media_control] Failed to attach handler: {:?}", e);
+        crate::error!("Failed to attach handler: {:?}", e);
     }
 
     if let Ok(mut guard) = controls().lock() {
