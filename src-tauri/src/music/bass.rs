@@ -2,6 +2,7 @@ pub const BASS_PLUGINS: [&str; 6] = [
     "bassflac", "bassopus", "bassape", "bassalac", "basswv", "bass_aac",
 ];
 
+pub const BASS_UNICODE: u32 = 0x80000000;
 pub const BASS_SAMPLE_FLOAT: u32 = 0x100;
 pub const BASS_STREAM_DECODE: u32 = 0x200000;
 pub const BASS_MIXER_NORAMPIN: u32 = 0x800000;

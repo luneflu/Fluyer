@@ -1438,9 +1438,14 @@ impl MusicPlayer {
 
         #[cfg(desktop)]
         unsafe {
-            let path = CString::new(music.path.clone()).unwrap();
-            let stream =
-                BASS_StreamCreateFile(false, path.as_ptr() as *const _, 0, 0, BASS_STREAM_DECODE);
+            let path_wide: Vec<u16> = music.path.encode_utf16().chain(std::iter::once(0)).collect();
+            let stream = BASS_StreamCreateFile(
+                false,
+                path_wide.as_ptr() as *const _,
+                0,
+                0,
+                BASS_STREAM_DECODE | BASS_UNICODE,
+            );
 
             if stream == 0 {
                 let bass_error = BASS_ErrorGetCode();
@@ -1451,13 +1456,13 @@ impl MusicPlayer {
                 );
 
                 if let Some(wav_path) = Self::convert_to_pcm_wav(&music.path) {
-                    let wav_cstring = CString::new(wav_path.to_string_lossy().as_ref()).unwrap();
+                    let wav_wide: Vec<u16> = wav_path.to_string_lossy().encode_utf16().chain(std::iter::once(0)).collect();
                     let wav_stream = BASS_StreamCreateFile(
                         false,
-                        wav_cstring.as_ptr() as *const _,
+                        wav_wide.as_ptr() as *const _,
                         0,
                         0,
-                        BASS_STREAM_DECODE,
+                        BASS_STREAM_DECODE | BASS_UNICODE,
                     );
 
                     if wav_stream != 0 {
@@ -1559,13 +1564,13 @@ impl MusicPlayer {
         {
             if let Some(bass) = bass_android::get_bass() {
                 unsafe {
-                    let path = CString::new(music.path.clone()).unwrap();
+                    let path_wide: Vec<u16> = music.path.encode_utf16().chain(std::iter::once(0)).collect();
                     let stream = (bass.bass_stream_create_file)(
                         false,
-                        path.as_ptr() as *const _,
+                        path_wide.as_ptr() as *const _,
                         0,
                         0,
-                        BASS_STREAM_DECODE,
+                        BASS_STREAM_DECODE | BASS_UNICODE,
                     );
 
                     if stream == 0 {
@@ -1577,13 +1582,13 @@ impl MusicPlayer {
                         );
 
                         if let Some(wav_path) = Self::convert_to_pcm_wav_android(&music.path) {
-                            let wav_cstring = CString::new(wav_path.as_str()).unwrap();
+                            let wav_wide: Vec<u16> = wav_path.encode_utf16().chain(std::iter::once(0)).collect();
                             let wav_stream = (bass.bass_stream_create_file)(
                                 false,
-                                wav_cstring.as_ptr() as *const _,
+                                wav_wide.as_ptr() as *const _,
                                 0,
                                 0,
-                                BASS_STREAM_DECODE,
+                                BASS_STREAM_DECODE | BASS_UNICODE,
                             );
 
                             if wav_stream != 0 {
