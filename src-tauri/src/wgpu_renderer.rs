@@ -262,7 +262,6 @@ pub fn setup_wgpu(app: &mut crate::tauri_types::App) -> Result<(), Box<dyn std::
 
     crate::debug!("setup_wgpu: Window size {}x{}", size.width, size.height);
 
-    
     #[cfg(target_os = "windows")]
     let backends = Backends::DX12;
     #[cfg(any(target_os = "linux", target_os = "android"))]

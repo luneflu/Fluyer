@@ -46,8 +46,8 @@
 		<div>Developer Mode</div>
 	</label>
 </SettingInput>
-	<SettingButton label="Clear Data & Cache" icon={IconType.Trash} onclick={clearData} />
-	<SettingButton label="Clear Cache" icon={IconType.Trash} onclick={clearCache} />
+<SettingButton label="Clear Data & Cache" icon={IconType.Trash} onclick={clearData} />
+<SettingButton label="Clear Cache" icon={IconType.Trash} onclick={clearCache} />
 {#if settingStore.developerMode && isDesktop()}
 	<SettingButton label="Save Log" icon={IconType.SaveLog} onclick={saveLog} />
 {/if}

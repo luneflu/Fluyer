@@ -72,16 +72,19 @@ pub fn update_metadata(
         let p = {
             // If we have a cover path on Linux, create a uniquely named symlink or copy
             // to bypass MPRIS clients aggressive caching.
-            use std::time::{SystemTime, UNIX_EPOCH};
             use std::fs;
             use std::path::Path;
-            
+            use std::time::{SystemTime, UNIX_EPOCH};
+
             let path = Path::new(p);
             if path.exists() {
-                let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
+                let ts = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis();
                 let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("jpg");
                 let new_path = std::env::temp_dir().join(format!("fluyer_cover_{}.{}", ts, ext));
-                
+
                 // Try to copy, ignore errors (fallback to original path)
                 if fs::copy(path, &new_path).is_ok() {
                     new_path.to_string_lossy().to_string()
@@ -137,7 +140,6 @@ pub fn set_playback_state(is_playing: bool, position_ms: u64) {
         }
     }
 }
-
 
 /// Strongly-typed media control actions dispatched from the OS.
 #[derive(Debug, Clone)]
