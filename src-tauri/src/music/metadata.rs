@@ -69,11 +69,15 @@ impl MusicMetadata {
     }
 
     pub fn ffmpeg_path() -> &'static PathBuf {
-        FFMPEG_PATH.get().expect("initialize_ffmpeg_paths not called")
+        FFMPEG_PATH
+            .get()
+            .expect("initialize_ffmpeg_paths not called")
     }
 
     pub fn ffprobe_path() -> &'static PathBuf {
-        FFPROBE_PATH.get().expect("initialize_ffmpeg_paths not called")
+        FFPROBE_PATH
+            .get()
+            .expect("initialize_ffmpeg_paths not called")
     }
 
     pub fn initialize_ffmpeg_paths() {

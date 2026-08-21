@@ -17,7 +17,7 @@
 	);
 </script>
 
-<div class="relative group">
+<div class="group relative">
 	<div class="relative grid grid-cols-[max-content_auto_max-content] px-3 py-2">
 		<div class="h-12 w-12 md:h-14 md:w-14">
 			{#await vm.coverArt}

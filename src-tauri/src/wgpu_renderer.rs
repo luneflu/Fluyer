@@ -262,11 +262,10 @@ pub fn setup_wgpu(app: &mut crate::tauri_types::App) -> Result<(), Box<dyn std::
 
     crate::debug!("setup_wgpu: Window size {}x{}", size.width, size.height);
 
-    
     #[cfg(target_os = "windows")]
     let backends = Backends::DX12;
-    #[cfg(any(target_os = "linux", target_os = "android"))]
-    let backends = Backends::GL;
+    #[cfg(target_os = "android")]
+    let backends = Backends::VULKAN;
     #[cfg(target_os = "macos")]
     let backends = Backends::METAL;
 
@@ -329,7 +328,6 @@ pub fn handle_wgpu_resize(app_handle: &crate::tauri_types::AppHandle, width: u32
                 state.canvas.set_size(w, h, 1.0);
             }
         }
-        crate::renderer::trigger_redraw();
     }
 }
 
@@ -377,7 +375,6 @@ pub fn resume_wgpu(app_handle: &crate::tauri_types::AppHandle) {
                                     surface.configure(&state.device, &state.config);
                                     state.surface = Some(surface);
                                     crate::debug!("Resuming WGPU: Surface recreated");
-                                    crate::renderer::trigger_redraw();
                                 }
                             }
                             Err(e) => {

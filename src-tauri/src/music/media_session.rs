@@ -176,7 +176,11 @@ async fn extract_cover_to_cache(music: &MusicMetadata) -> Option<String> {
             let query = crate::coverart::types::CoverArtQuery {
                 artist: music.artist.clone().unwrap_or_default(),
                 album: music.album.clone(),
-                title: if music.album.is_some() { None } else { music.title.clone() },
+                title: if music.album.is_some() {
+                    None
+                } else {
+                    music.title.clone()
+                },
             };
             crate::coverart::commands::cover_art_get(query, None).await
         }

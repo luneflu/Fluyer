@@ -23,6 +23,7 @@ pub fn handle_window_events(window: &Window, event: &WindowEvent) {
             #[cfg(not(target_os = "linux"))]
             if *focused {
                 crate::wgpu_renderer::resume_wgpu(window.app_handle());
+                crate::renderer::trigger_redraw();
             } else {
                 crate::wgpu_renderer::suspend_wgpu(window.app_handle());
             }
@@ -50,7 +51,6 @@ pub fn handle_app_events(app_handle: &AppHandle, event: RunEvent) {
             #[cfg(not(target_os = "linux"))]
             crate::wgpu_renderer::start_render_loop(app_handle.clone());
         }
-
         RunEvent::WindowEvent {
             label: _,
             event: tauri::WindowEvent::Resized(size),

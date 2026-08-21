@@ -73,6 +73,11 @@ pub fn developer_clear_cache() {
             let _ = std::fs::create_dir_all(&path);
         }
     }
+    #[cfg(desktop)]
+    app_handle().restart();
+
+    #[cfg(target_os = "android")]
+    app_handle().fluyer().restart_app();
 }
 
 #[derive(serde::Deserialize)]
