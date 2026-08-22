@@ -78,7 +78,7 @@ pub fn mobile_android_directory_request() {
         .android_pick_folder(|payload| {
             if let Some(dir) = payload.value {
                 app_handle()
-                    .emit(crate::commands::route::ANDROID_DIRECTORY_REQUEST, dir)
+                    .emit(crate::commands::route::MOBILE_ANDROID_DIRECTORY_REQUEST, dir)
                     .unwrap();
             }
         })

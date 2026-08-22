@@ -10,5 +10,5 @@ pub const SIDEBAR_MOUSE_LEAVE: &str = "sidebar_mouse_leave";
 // pub const MUSIC_HEADSET_CHANGE: &str = "music_headset_change";
 // pub const MUSIC_QUEUE_REMOVE: &str = "music_queue_remove";
 #[cfg(target_os = "android")]
-pub const ANDROID_DIRECTORY_REQUEST: &str = "android_directory_request";
+pub const MOBILE_ANDROID_DIRECTORY_REQUEST: &str = "mobile_android_directory_request";
 pub const LOG: &str = "log";
