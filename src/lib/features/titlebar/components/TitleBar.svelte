@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { isLinux, isWindows } from '$lib/platform';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
-	import TauriBackgroundAPI from '$lib/tauri/TauriBackgroundAPI';
+	import { invoke } from '@tauri-apps/api/core';
+	import { TauriCommands } from '$lib/constants/TauriCommands';
 
 	const LINUX_ICONS = {
 		close: '/icons/linux/window-close-symbolic.svg',
@@ -28,7 +29,7 @@
 
 	let snapOverlayTimer: ReturnType<typeof setTimeout> | null = null;
 	function showSnapOverlay() {
-		currentWindow.setFocus().then(() => invoke('decorum_show_snap_overlay'));
+		currentWindow.setFocus().then(() => invoke(TauriCommands.DECORUM_SHOW_SNAP_OVERLAY));
 	}
 
 	function handleMaximizeMouseEnter() {

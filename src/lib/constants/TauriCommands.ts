@@ -77,5 +77,7 @@ export const TauriCommands = {
 	DEVELOPER_SCREENSHOT_SAVE: 'developer_screenshot_save',
 	DEVELOPER_UPDATE_CHECK: 'developer_update_check',
 
-	RENDERER_TRIGGER_REDRAW: 'renderer_trigger_redraw'
+	RENDERER_TRIGGER_REDRAW: 'renderer_trigger_redraw',
+
+	DECORUM_SHOW_SNAP_OVERLAY: 'decorum_show_snap_overlay'
 } as const;
