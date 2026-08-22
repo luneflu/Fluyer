@@ -196,7 +196,7 @@ fn init_wgpu_device(
     surface: &wgpu::Surface,
 ) -> (wgpu::Device, wgpu::Queue, wgpu::SurfaceConfiguration) {
     let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-        power_preference: wgpu::PowerPreference::HighPerformance,
+        power_preference: wgpu::PowerPreference::LowPower,
         force_fallback_adapter: false,
         compatible_surface: Some(surface),
     }))
@@ -207,7 +207,7 @@ fn init_wgpu_device(
         required_features: wgpu::Features::empty(),
         required_limits:
             wgpu::Limits::downlevel_webgl2_defaults().using_resolution(adapter.limits()),
-        memory_hints: wgpu::MemoryHints::default(),
+        memory_hints: wgpu::MemoryHints::MemoryUsage,
         experimental_features: wgpu::ExperimentalFeatures::disabled(),
         trace: wgpu::Trace::Off,
     }))
@@ -237,7 +237,7 @@ fn init_wgpu_device(
         present_mode: wgpu::PresentMode::Fifo,
         alpha_mode,
         view_formats: vec![],
-        desired_maximum_frame_latency: 2,
+        desired_maximum_frame_latency: 1,
     };
 
     (device, queue, config)
@@ -262,13 +262,23 @@ pub fn setup_wgpu(app: &mut crate::tauri_types::App) -> Result<(), Box<dyn std::
 
     crate::debug!("setup_wgpu: Window size {}x{}", size.width, size.height);
 
-    #[cfg(any(target_os = "windows", target_os = "android"))]
-    let backends = Backends::GL;
+    #[cfg(target_os = "windows")]
+    let backends = Backends::DX12;
+    #[cfg(target_os = "android")]
+    let backends = Backends::VULKAN;
     #[cfg(target_os = "macos")]
     let backends = Backends::METAL;
 
     let instance = wgpu::Instance::new(InstanceDescriptor {
         backends,
+        flags: InstanceFlags::empty(),
+        backend_options: BackendOptions {
+            dx12: wgpu::Dx12BackendOptions {
+                shader_compiler: wgpu::Dx12Compiler::Fxc,
+                ..Default::default()
+            },
+            ..Default::default()
+        },
         ..InstanceDescriptor::new_without_display_handle()
     });
 
@@ -401,7 +411,7 @@ pub fn start_render_loop(app_handle: crate::tauri_types::AppHandle) {
             .get_display_info()
             .unwrap()
             .refresh_rate
-            .unwrap();
+            .unwrap_or(60.0);
 
         let global = match app_handle.try_state::<Arc<crate::renderer::GlobalRenderer>>() {
             Some(g) => g,

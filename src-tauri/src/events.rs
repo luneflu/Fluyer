@@ -29,10 +29,6 @@ pub fn handle_window_events(window: &Window, event: &WindowEvent) {
                 crate::wgpu_renderer::suspend_wgpu(window.app_handle());
             }
         }
-        WindowEvent::Moved(_) => {
-            #[cfg(target_os = "windows")]
-            crate::renderer::renderer_trigger_redraw();
-        }
         _ => {}
     }
 }
@@ -63,8 +59,6 @@ pub fn handle_app_events(app_handle: &AppHandle, event: RunEvent) {
         } => {
             #[cfg(not(target_os = "linux"))]
             crate::wgpu_renderer::handle_wgpu_resize(app_handle, size.width, size.height);
-            #[cfg(target_os = "windows")]
-            crate::renderer::renderer_trigger_redraw();
         }
         RunEvent::Resumed => {
             #[cfg(not(target_os = "linux"))]

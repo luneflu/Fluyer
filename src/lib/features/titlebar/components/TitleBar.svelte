@@ -20,7 +20,6 @@
 		if (e.buttons === 1) {
 			if (e.detail === 2) {
 				currentWindow.toggleMaximize();
-				if (isWindows()) triggerRedraw();
 			} else {
 				currentWindow.startDragging();
 			}
@@ -42,10 +41,6 @@
 		if (snapOverlayTimer != null) clearTimeout(snapOverlayTimer);
 	}
 
-	function triggerRedraw() {
-		setTimeout(TauriBackgroundAPI.triggerRedraw, 50);
-	}
-
 	currentWindow.onResized(async () => {
 		isMaximized = await currentWindow.isMaximized();
 	});
@@ -58,10 +53,7 @@
 		<div class="absolute right-0 top-0 mt-3 pe-3">
 			<button
 				class="tb-button {isWindows() && 'win-button'} {isLinux() && 'linux-button'}"
-				onclick={() => {
-					currentWindow.minimize();
-					if (isWindows()) triggerRedraw();
-				}}
+				onclick={() => currentWindow.minimize()}
 			>
 				{#if isWindows()}
 					&#59681;
@@ -75,10 +67,7 @@
 				class="tb-button {isWindows() && 'win-button'} {isLinux() && 'linux-button'}"
 				onmouseenter={handleMaximizeMouseEnter}
 				onmouseleave={handleMaximizeMouseLeave}
-				onclick={() => {
-					currentWindow.toggleMaximize();
-					if (isWindows()) triggerRedraw();
-				}}
+				onclick={() => currentWindow.toggleMaximize()}
 			>
 				{#if isWindows()}
 					{#if isMaximized}
