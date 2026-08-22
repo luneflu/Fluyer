@@ -262,10 +262,8 @@ pub fn setup_wgpu(app: &mut crate::tauri_types::App) -> Result<(), Box<dyn std::
 
     crate::debug!("setup_wgpu: Window size {}x{}", size.width, size.height);
 
-    #[cfg(target_os = "windows")]
+    #[cfg(any(target_os = "windows", target_os = "android"))]
     let backends = Backends::GL;
-    #[cfg(target_os = "android")]
-    let backends = Backends::VULKAN;
     #[cfg(target_os = "macos")]
     let backends = Backends::METAL;
 
