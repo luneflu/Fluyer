@@ -265,7 +265,7 @@ pub fn setup_wgpu(app: &mut crate::tauri_types::App) -> Result<(), Box<dyn std::
     #[cfg(target_os = "windows")]
     let backends = Backends::DX12;
     #[cfg(target_os = "android")]
-    let backends = Backends::VULKAN;
+    let backends = Backends::GL;
     #[cfg(target_os = "macos")]
     let backends = Backends::METAL;
 
