@@ -45,7 +45,7 @@ pub fn music_volume_set(state: State<AppState>, volume: f32) {
 }
 
 #[tauri::command]
-pub fn music_current_duration_get(state: State<AppState>) -> Option<f64> {
+pub fn music_duration_get(state: State<AppState>) -> Option<f64> {
     Some(state.music_player.get_current_duration())
 }
 

@@ -24,7 +24,7 @@ export class ScreenshotService {
 			// Extract the base64 string from the data URL (format: "data:image/png;base64,...")
 			const base64Data = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
 
-			await invoke(TauriCommands.SCREENSHOT_SAVE, {
+			await invoke(TauriCommands.DEVELOPER_SCREENSHOT_SAVE, {
 				base64Data: base64Data
 			});
 			console.log(`[ScreenshotService] Screenshot successfully saved.`);

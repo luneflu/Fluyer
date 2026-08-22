@@ -19,7 +19,7 @@ pub const COMMAND_HANDLERS: fn(crate::tauri_types::Invoke) -> bool = tauri::gene
     crate::music::commands::music_visualizer_buffer_get,
     crate::music::commands::music_image_get,
     // crate::music::commands::music_default_cover_art_get,
-    crate::music::commands::music_current_duration_get,
+    crate::music::commands::music_duration_get,
     crate::music::commands::music_player_request_sync,
     crate::music::commands::music_lyrics_get,
     crate::music::commands::music_bit_perfect_toggle,
@@ -53,7 +53,7 @@ pub const COMMAND_HANDLERS: fn(crate::tauri_types::Invoke) -> bool = tauri::gene
     // System/Log commands
     crate::developer::commands::log_error,
     crate::developer::commands::log_info,
-    crate::developer::commands::update_check,
+    crate::developer::commands::developer_update_check,
     crate::developer::commands::toast,
     crate::developer::commands::developer_log_save,
     crate::developer::commands::developer_mpv_log_save,
@@ -61,15 +61,15 @@ pub const COMMAND_HANDLERS: fn(crate::tauri_types::Invoke) -> bool = tauri::gene
     crate::developer::commands::developer_clear_cache,
     // Mobile commands
     #[cfg(target_os = "android")]
-    mobile::audio_permission_read_request,
+    mobile::mobile_audio_permission_read_request,
     #[cfg(mobile)]
-    mobile::navigation_bar_height_get,
+    mobile::mobile_navigation_bar_height_get,
     #[cfg(mobile)]
-    mobile::status_bar_height_get,
+    mobile::mobile_status_bar_height_get,
     #[cfg(mobile)]
-    mobile::navigation_bar_visibility_set,
+    mobile::mobile_navigation_bar_visibility_set,
     #[cfg(target_os = "android")]
-    mobile::android_directory_request,
+    mobile::mobile_android_directory_request,
     // Cover art commands
     crate::coverart::commands::cover_art_get,
     // Lyric commands
@@ -80,8 +80,8 @@ pub const COMMAND_HANDLERS: fn(crate::tauri_types::Invoke) -> bool = tauri::gene
     // Animated Background
     crate::animated_background::animated_background_update,
     crate::animated_background::animated_background_restore,
-    crate::animated_background::is_cef_enabled,
-    crate::renderer::trigger_redraw,
+    crate::animated_background::animated_background_is_cef_enabled,
+    crate::renderer::renderer_trigger_redraw,
     // Playlist commands
     crate::playlist::commands::playlist_all_get,
     crate::playlist::commands::playlist_create,
@@ -89,5 +89,5 @@ pub const COMMAND_HANDLERS: fn(crate::tauri_types::Invoke) -> bool = tauri::gene
     crate::playlist::commands::playlist_image_upload,
     crate::playlist::commands::playlist_image_read,
     // Screenshot
-    crate::screenshot::screenshot_save,
+    crate::screenshot::developer_screenshot_save,
 ];

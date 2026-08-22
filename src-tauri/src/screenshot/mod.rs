@@ -5,7 +5,7 @@ use std::io::Write;
 use tauri::Manager;
 
 #[tauri::command]
-pub async fn screenshot_save(app: AppHandle, base64_data: String) -> Result<(), String> {
+pub async fn developer_screenshot_save(app: AppHandle, base64_data: String) -> Result<(), String> {
     // Decode base64 string
     let data = general_purpose::STANDARD
         .decode(&base64_data)

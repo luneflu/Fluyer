@@ -78,7 +78,7 @@ pub fn generate_blurred_background(
 }
 
 #[tauri::command]
-pub async fn is_cef_enabled() -> Result<bool, String> {
+pub async fn animated_background_is_cef_enabled() -> Result<bool, String> {
     #[cfg(feature = "cef")]
     {
         Ok(true)

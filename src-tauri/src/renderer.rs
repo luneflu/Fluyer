@@ -73,7 +73,7 @@ pub fn restore_background() {
 }
 
 #[tauri::command]
-pub fn trigger_redraw() {
+pub fn renderer_trigger_redraw() {
     if let Some(shared) = app_handle().try_state::<Arc<GlobalRenderer>>() {
         let mut state = shared.bg_state.lock().unwrap();
         state.needs_redraw = true;

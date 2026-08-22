@@ -111,7 +111,7 @@ fn is_newer_version(current: &str, latest: &str) -> bool {
 
 /// Check for update using reqwest
 #[tauri::command]
-pub async fn update_check(current_version: String) -> Result<Option<String>, String> {
+pub async fn developer_update_check(current_version: String) -> Result<Option<String>, String> {
     let client = reqwest::Client::builder()
         .user_agent("fluyer-updater")
         .build()

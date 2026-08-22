@@ -4,7 +4,7 @@ import { listen } from '@tauri-apps/api/event';
 
 const TauriBackgroundAPI = {
 	isCefEnabled: () => {
-		return invoke<boolean>(TauriCommands.IS_CEF_ENABLED);
+		return invoke<boolean>(TauriCommands.ANIMATED_BACKGROUND_IS_CEF_ENABLED);
 	},
 	updateBackground: (
 		colors: { r: number; g: number; b: number }[] | null,
@@ -17,7 +17,7 @@ const TauriBackgroundAPI = {
 		return invoke(TauriCommands.ANIMATED_BACKGROUND_RESTORE);
 	},
 	triggerRedraw: () => {
-		return invoke(TauriCommands.TRIGGER_REDRAW);
+		return invoke(TauriCommands.RENDERER_TRIGGER_REDRAW);
 	},
 	listenTransitionComplete(callback: () => void) {
 		return listen(TauriCommands.ANIMATED_BACKGROUND_TRANSITION_COMPLETE, callback);

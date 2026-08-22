@@ -304,7 +304,7 @@ pub fn library_collection_shuffle_and_play(
 #[tauri::command]
 pub async fn library_sync() {
     #[cfg(target_os = "android")]
-    if !crate::commands::mobile::audio_permission_read_check() {
+    if !crate::commands::mobile::mobile_audio_permission_read_check() {
         return;
     }
 

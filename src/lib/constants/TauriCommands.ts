@@ -24,7 +24,7 @@ export const TauriCommands = {
 	MUSIC_IMAGE_GET: 'music_image_get',
 	MUSIC_DEFAULT_COVER_ART_GET: 'music_default_cover_art_get',
 	MUSIC_VISUALIZER_BUFFER_GET: 'music_visualizer_buffer_get',
-	MUSIC_CURRENT_DURATION_GET: 'music_current_duration_get',
+	MUSIC_DURATION_GET: 'music_duration_get',
 	MUSIC_LYRICS_GET: 'music_lyrics_get',
 	MUSIC_BIT_PERFECT_TOGGLE: 'music_bit_perfect_toggle',
 	MUSIC_DISCORD_RPC_SET: 'music_discord_rpc_set',
@@ -54,13 +54,13 @@ export const TauriCommands = {
 
 	SIDEBAR_MOUSE_LEAVE: 'sidebar_mouse_leave',
 
-	AUDIO_PERMISSION_READ_CHECK: 'audio_permission_read_check',
-	AUDIO_PERMISSION_READ_REQUEST: 'audio_permission_read_request',
+	MOBILE_AUDIO_PERMISSION_READ_CHECK: 'mobile_audio_permission_read_check',
+	MOBILE_AUDIO_PERMISSION_READ_REQUEST: 'mobile_audio_permission_read_request',
 
-	NAVIGATION_BAR_HEIGHT_GET: 'navigation_bar_height_get',
-	STATUS_BAR_HEIGHT_GET: 'status_bar_height_get',
-	NAVIGATION_BAR_VISIBILITY_SET: 'navigation_bar_visibility_set',
-	ANDROID_DIRECTORY_REQUEST: 'android_directory_request',
+	MOBILE_NAVIGATION_BAR_HEIGHT_GET: 'mobile_navigation_bar_height_get',
+	MOBILE_STATUS_BAR_HEIGHT_GET: 'mobile_status_bar_height_get',
+	MOBILE_NAVIGATION_BAR_VISIBILITY_SET: 'mobile_navigation_bar_visibility_set',
+	MOBILE_ANDROID_DIRECTORY_REQUEST: 'mobile_android_directory_request',
 
 	LOG: 'log',
 
@@ -69,15 +69,13 @@ export const TauriCommands = {
 	ANIMATED_BACKGROUND_UPDATE: 'animated_background_update',
 	ANIMATED_BACKGROUND_RESTORE: 'animated_background_restore',
 	ANIMATED_BACKGROUND_TRANSITION_COMPLETE: 'animated_background_transition_complete',
-	IS_CEF_ENABLED: 'is_cef_enabled',
+	ANIMATED_BACKGROUND_IS_CEF_ENABLED: 'animated_background_is_cef_enabled',
 	DEVELOPER_LOG_SAVE: 'developer_log_save',
 	DEVELOPER_MPV_LOG_SAVE: 'developer_mpv_log_save',
 	DEVELOPER_CLEAR_DATA: 'developer_clear_data',
 	DEVELOPER_CLEAR_CACHE: 'developer_clear_cache',
+	DEVELOPER_SCREENSHOT_SAVE: 'developer_screenshot_save',
+	DEVELOPER_UPDATE_CHECK: 'developer_update_check',
 
-	SCREENSHOT_SAVE: 'screenshot_save',
-
-	TRIGGER_REDRAW: 'trigger_redraw',
-
-	UPDATE_CHECK: 'update_check'
-};
+	RENDERER_TRIGGER_REDRAW: 'renderer_trigger_redraw'
+} as const;

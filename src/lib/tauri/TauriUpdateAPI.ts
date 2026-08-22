@@ -3,7 +3,7 @@ import { TauriCommands } from '$lib/constants/TauriCommands';
 
 const TauriUpdateAPI = {
 	checkUpdate: (currentVersion: string) => {
-		return invoke<string | null>(TauriCommands.UPDATE_CHECK, { currentVersion });
+		return invoke<string | null>(TauriCommands.DEVELOPER_UPDATE_CHECK, { currentVersion });
 	}
 };
 
