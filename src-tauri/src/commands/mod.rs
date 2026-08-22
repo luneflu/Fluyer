@@ -81,6 +81,7 @@ pub const COMMAND_HANDLERS: fn(crate::tauri_types::Invoke) -> bool = tauri::gene
     crate::animated_background::animated_background_update,
     crate::animated_background::animated_background_restore,
     crate::animated_background::animated_background_is_cef_enabled,
+    #[cfg(not(feature = "cef"))]
     crate::renderer::renderer_trigger_redraw,
     // Playlist commands
     crate::playlist::commands::playlist_all_get,
