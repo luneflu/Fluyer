@@ -163,9 +163,9 @@ pub fn draw_background<T: Renderer>(canvas: &mut Canvas<T>, state: &mut SharedRe
     if let Some(cur_id) = state.current_image_id {
         let paint = Paint::image(cur_id, 0.0, 0.0, w, h, 0.0, 1.0);
         let mut path = Path::new();
-        // #[cfg(any(target_os = "windows", all(target_os = "linux", not(feature = "cef"))))]
-        // path.rounded_rect(0.0, 0.0, w, h, 8.0);
-        // #[cfg(not(any(target_os = "windows", all(target_os = "linux", not(feature = "cef")))))]
+        #[cfg(any(target_os = "windows", all(target_os = "linux", not(feature = "cef"))))]
+        path.rounded_rect(0.0, 0.0, w, h, 8.0);
+        #[cfg(not(any(target_os = "windows", all(target_os = "linux", not(feature = "cef")))))]
         path.rect(0.0, 0.0, w, h);
         canvas.save();
         canvas.global_composite_operation(femtovg::CompositeOperation::Copy);
@@ -178,9 +178,9 @@ pub fn draw_background<T: Renderer>(canvas: &mut Canvas<T>, state: &mut SharedRe
     if let Some(next_id) = state.next_image_id {
         let paint = Paint::image(next_id, 0.0, 0.0, w, h, 0.0, 1.0);
         let mut path = Path::new();
-        // #[cfg(any(target_os = "windows", all(target_os = "linux", not(feature = "cef"))))]
-        // path.rounded_rect(0.0, 0.0, w, h, 8.0);
-        // #[cfg(not(any(target_os = "windows", all(target_os = "linux", not(feature = "cef")))))]
+        #[cfg(any(target_os = "windows", all(target_os = "linux", not(feature = "cef"))))]
+        path.rounded_rect(0.0, 0.0, w, h, 8.0);
+        #[cfg(not(any(target_os = "windows", all(target_os = "linux", not(feature = "cef")))))]
         path.rect(0.0, 0.0, w, h);
         canvas.save();
         if state.current_image_id.is_none() {
