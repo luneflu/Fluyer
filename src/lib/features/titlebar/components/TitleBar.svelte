@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { isLinux, isWindows } from '$lib/platform';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
-	import { invoke } from '@tauri-apps/api/core';
+	import TauriBackgroundAPI from '$lib/tauri/TauriBackgroundAPI';
 
 	const LINUX_ICONS = {
 		close: '/icons/linux/window-close-symbolic.svg',
@@ -18,7 +18,12 @@
 		}
 	) {
 		if (e.buttons === 1) {
-			e.detail === 2 ? currentWindow.toggleMaximize() : currentWindow.startDragging();
+			if (e.detail === 2) {
+				currentWindow.toggleMaximize();
+				if (isWindows()) triggerRedraw();
+			} else {
+				currentWindow.startDragging();
+			}
 		}
 	}
 
@@ -37,6 +42,10 @@
 		if (snapOverlayTimer != null) clearTimeout(snapOverlayTimer);
 	}
 
+	function triggerRedraw() {
+		setTimeout(TauriBackgroundAPI.triggerRedraw, 50);
+	}
+
 	currentWindow.onResized(async () => {
 		isMaximized = await currentWindow.isMaximized();
 	});
@@ -49,7 +58,10 @@
 		<div class="absolute right-0 top-0 mt-3 pe-3">
 			<button
 				class="tb-button {isWindows() && 'win-button'} {isLinux() && 'linux-button'}"
-				onclick={() => currentWindow.minimize()}
+				onclick={() => {
+					currentWindow.minimize();
+					if (isWindows()) triggerRedraw();
+				}}
 			>
 				{#if isWindows()}
 					&#59681;
@@ -63,7 +75,10 @@
 				class="tb-button {isWindows() && 'win-button'} {isLinux() && 'linux-button'}"
 				onmouseenter={handleMaximizeMouseEnter}
 				onmouseleave={handleMaximizeMouseLeave}
-				onclick={() => currentWindow.toggleMaximize()}
+				onclick={() => {
+					currentWindow.toggleMaximize();
+					if (isWindows()) triggerRedraw();
+				}}
 			>
 				{#if isWindows()}
 					{#if isMaximized}

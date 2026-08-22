@@ -16,6 +16,9 @@ const TauriBackgroundAPI = {
 	restoreBackground: () => {
 		return invoke(TauriCommands.ANIMATED_BACKGROUND_RESTORE);
 	},
+	triggerRedraw: () => {
+		return invoke(TauriCommands.TRIGGER_REDRAW);
+	},
 	listenTransitionComplete(callback: () => void) {
 		return listen(TauriCommands.ANIMATED_BACKGROUND_TRANSITION_COMPLETE, callback);
 	}

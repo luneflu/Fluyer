@@ -77,5 +77,7 @@ export const TauriCommands = {
 
 	SCREENSHOT_SAVE: 'screenshot_save',
 
+	TRIGGER_REDRAW: 'trigger_redraw',
+
 	UPDATE_CHECK: 'update_check'
 };
