@@ -8,6 +8,7 @@ import QueueService from '$lib/services/QueueService.svelte';
 import LyricService, { type MusicLyric } from '$lib/services/LyricService.svelte';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import TauriBackgroundAPI from '$lib/tauri/TauriBackgroundAPI';
+import { MusicConfig } from '$lib/constants/MusicConfig';
 
 let lyricContainerElement: HTMLDivElement;
 
@@ -165,7 +166,7 @@ function handleProgressLeave() {
 }
 
 function handleVolumeProgressClick(percentage: number) {
-	musicStore.volume = percentage / 100;
+	musicStore.volume = (percentage / 100) * (MusicConfig.vmax - MusicConfig.vmin) + MusicConfig.vmin;
 }
 
 export function usePlayPage() {

@@ -4,7 +4,7 @@ export const MusicConfig = {
 	max: 10,
 	vstep: 0.01,
 	vmin: 0,
-	vmax: 1,
+	vmax: 2,
 	separator: '•',
 	separatorAlbum: '-',
 	separatorAudio: '/',

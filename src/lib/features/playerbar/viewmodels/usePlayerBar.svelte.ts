@@ -8,6 +8,7 @@ import PageService from '$lib/services/PageService.svelte';
 import playerBarStore from '$lib/stores/playerBar.svelte';
 import QueueService from '$lib/services/QueueService.svelte';
 import { CoverArtSize } from '$lib/services/CoverArtService.svelte';
+import { MusicConfig } from '$lib/constants/MusicConfig';
 
 let element = $state<HTMLDivElement>();
 let coverArt = $state<Promise<string | null> | null>(null);
@@ -66,7 +67,7 @@ function handleProgressClick(percentage: number) {
 }
 
 function handleVolumeProgressClick(percentage: number) {
-	musicStore.volume = percentage / 100;
+	musicStore.volume = (percentage / 100) * (MusicConfig.vmax - MusicConfig.vmin) + MusicConfig.vmin;
 }
 
 function updatePlayerBarHeight() {

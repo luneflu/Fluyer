@@ -1063,7 +1063,7 @@ impl MusicPlayer {
 
     pub fn set_volume(&self, volume: f32) {
         let bass_mixer = self.bass_mixer.load(Ordering::SeqCst);
-        let clamped = volume.clamp(0.0, 1.0);
+        let clamped = volume.clamp(0.0, 2.0);
 
         #[cfg(desktop)]
         unsafe {
