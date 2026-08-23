@@ -31,7 +31,7 @@
 	bind:this={vm.element}
 >
 	<div
-		class="grid gap-x-1 pe-2 ps-3 sm:pe-3 sm:ps-3 md:gap-x-3
+		class="grid gap-x-1 px-3 sm:pe-3 sm:ps-3 md:gap-x-3
 		{isMacos() ? 'ms-[68px]' : ''}
 		{isWindows() || (isLinux() && !appStore.isCefEnabled) ? 'me-[100px] sm:me-0' : ''}
 		{isMobile()
