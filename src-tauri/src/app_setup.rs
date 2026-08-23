@@ -18,29 +18,16 @@ pub fn setup_application(app: &mut App) -> Result<(), Box<dyn std::error::Error>
 
     initialize_store(app);
 
-    #[cfg(not(feature = "cef"))]
-    crate::renderer::init_global_renderer(app);
-
-    #[cfg(not(target_os = "linux"))]
-    {
-        crate::debug!("setup_application: About to call setup_wgpu");
-        match crate::wgpu_renderer::setup_wgpu(app) {
-            Ok(_) => crate::debug!("setup_application: WGPU initialized successfully"),
-            Err(e) => crate::error!("setup_application: WGPU initialization failed: {:?}", e),
-        }
-    }
-
-    #[cfg(all(target_os = "linux", not(feature = "cef")))]
-    {
-        crate::debug!("setup_application: About to call setup_linux_background");
-        match crate::linux_renderer::setup_linux_background(app) {
-            Ok(_) => crate::debug!("setup_application: GTK OpenGL initialized successfully"),
-            Err(e) => crate::error!(
-                "setup_application: GTK OpenGL initialization failed: {:?}",
-                e
-            ),
-        }
-    }
+    // Native renderers (renderer.rs, wgpu_renderer.rs, linux_renderer.rs) are disabled.
+    // Background is rendered entirely by the frontend canvas. Code kept for reference.
+    // #[cfg(not(feature = "cef"))]
+    // crate::renderer::init_global_renderer(app);
+    //
+    // #[cfg(not(target_os = "linux"))]
+    // { let _ = crate::wgpu_renderer::setup_wgpu(app); }
+    //
+    // #[cfg(all(target_os = "linux", not(feature = "cef")))]
+    // { let _ = crate::linux_renderer::setup_linux_background(app); }
 
     Ok(())
 }

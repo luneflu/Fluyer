@@ -1,5 +1,5 @@
 use crate::tauri_types::{AppHandle, Window};
-use tauri::{Manager, RunEvent, WindowEvent};
+use tauri::{RunEvent, WindowEvent};
 
 #[cfg(target_os = "macos")]
 use crate::platform::{TRAFFIC_LIGHTS_INSET_X, TRAFFIC_LIGHTS_INSET_Y};
@@ -8,7 +8,7 @@ use crate::state::main_window;
 #[cfg(target_os = "macos")]
 use tauri_plugin_decorum::WebviewWindowExt;
 
-pub fn handle_window_events(window: &Window, event: &WindowEvent) {
+pub fn handle_window_events(_window: &Window, event: &WindowEvent) {
     match event {
         WindowEvent::Resized(_) => {
             #[cfg(target_os = "macos")]
@@ -18,16 +18,11 @@ pub fn handle_window_events(window: &Window, event: &WindowEvent) {
                     .unwrap();
             }
         }
-        WindowEvent::Focused(focused) =>
+        WindowEvent::Focused(_focused) =>
         {
-            #[cfg(not(target_os = "linux"))]
-            if *focused {
-                crate::wgpu_renderer::resume_wgpu(window.app_handle());
-                #[cfg(target_os = "android")]
-                crate::renderer::renderer_trigger_redraw();
-            } else {
-                crate::wgpu_renderer::suspend_wgpu(window.app_handle());
-            }
+            // wgpu_renderer suspend/resume disabled — background rendered by frontend canvas.
+            // #[cfg(not(target_os = "linux"))]
+            // if *focused { crate::wgpu_renderer::resume_wgpu(...) } else { suspend_wgpu(...) }
         }
         _ => {}
     }
@@ -49,20 +44,23 @@ pub fn handle_app_events(app_handle: &AppHandle, event: RunEvent) {
 
             #[cfg(target_os = "linux")]
             let _ = crate::sidebar::linux_listen_mouse_leave();
-            #[cfg(not(target_os = "linux"))]
-            crate::wgpu_renderer::start_render_loop(app_handle.clone());
+            // wgpu_renderer::start_render_loop disabled — background rendered by frontend canvas.
+            // #[cfg(not(target_os = "linux"))]
+            // crate::wgpu_renderer::start_render_loop(app_handle.clone());
         }
         RunEvent::WindowEvent {
             label: _,
-            event: tauri::WindowEvent::Resized(size),
+            event: tauri::WindowEvent::Resized(_size),
             ..
         } => {
-            #[cfg(not(target_os = "linux"))]
-            crate::wgpu_renderer::handle_wgpu_resize(app_handle, size.width, size.height);
+            // wgpu_renderer::handle_wgpu_resize disabled — frontend canvas handles resize.
+            // #[cfg(not(target_os = "linux"))]
+            // crate::wgpu_renderer::handle_wgpu_resize(app_handle, size.width, size.height);
         }
         RunEvent::Resumed => {
-            #[cfg(not(target_os = "linux"))]
-            crate::wgpu_renderer::resume_wgpu(app_handle);
+            // wgpu_renderer::resume_wgpu disabled — frontend canvas handles resume.
+            // #[cfg(not(target_os = "linux"))]
+            // crate::wgpu_renderer::resume_wgpu(app_handle);
         }
         _ => {}
     }

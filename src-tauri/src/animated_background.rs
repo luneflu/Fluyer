@@ -96,28 +96,11 @@ pub async fn animated_background_update(
     height: u32,
 ) -> Result<Option<(Vec<u8>, u32, u32)>, String> {
     let blurred = generate_blurred_background(colors, width, height)?;
-
-    #[cfg(all(target_os = "linux", feature = "cef"))]
-    {
-        return Ok(Some((
-            blurred.clone().into_raw(),
-            blurred.width(),
-            blurred.height(),
-        )));
-    }
-
-    #[cfg(any(not(target_os = "linux"), not(feature = "cef")))]
-    {
-        crate::renderer::update_background(blurred);
-        Ok(None)
-    }
+    Ok(Some((blurred.clone().into_raw(), blurred.width(), blurred.height())))
 }
 
 #[tauri::command]
 pub async fn animated_background_restore() -> Result<(), String> {
-    #[cfg(any(not(target_os = "linux"), not(feature = "cef")))]
-    {
-        crate::renderer::restore_background();
-    }
+    // Restore is handled entirely by the frontend canvas; no Rust action needed.
     Ok(())
 }

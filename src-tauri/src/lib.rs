@@ -7,18 +7,24 @@ mod database;
 mod developer;
 mod folder;
 pub mod library;
+// linux_renderer kept for reference; not called — background rendered by frontend canvas.
 #[cfg(all(target_os = "linux", not(feature = "cef")))]
+#[allow(dead_code)]
 mod linux_renderer;
 pub mod logger;
 mod lyric;
 mod music;
 mod playlist;
+// renderer kept for reference; not called — background rendered by frontend canvas.
 #[cfg(not(feature = "cef"))]
+#[allow(dead_code)]
 pub mod renderer;
 pub mod screenshot;
 mod sidebar;
 mod utils;
+// wgpu_renderer kept for reference; not called — background rendered by frontend canvas.
 #[cfg(not(target_os = "linux"))]
+#[allow(dead_code)]
 mod wgpu_renderer;
 
 // Application modules

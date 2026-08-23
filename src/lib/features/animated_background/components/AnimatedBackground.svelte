@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { onDestroy, onMount, tick } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { PageRoutes } from '$lib/constants/PageRoutes';
-	import { isAndroid, isLinux } from '$lib/platform';
+	import { isAndroid, isLinux, isWindows } from '$lib/platform';
 	import { afterNavigate } from '$app/navigation';
 	import MetadataService from '$lib/services/MetadataService.svelte';
 	import musicStore from '$lib/stores/music.svelte';
@@ -16,7 +16,6 @@
 	import type { Unsubscriber } from 'svelte/store';
 	import ColorConvert, { type RGB } from 'color-convert';
 	import { currentMonitor } from '@tauri-apps/api/window';
-	import appStore from '$lib/stores/app.svelte';
 
 	interface Color {
 		r: number;
@@ -33,173 +32,95 @@
 	let lastRenderedHeight = 0;
 
 	let unlistenFocus: Unsubscriber;
-	let unlistenTransition: Unsubscriber;
 	let libraryInitialized = false;
 
-	let glCanvas: HTMLCanvasElement;
-	let gl: WebGLRenderingContext;
-	let glProgram: WebGLProgram;
-	let glCurrentTex: WebGLTexture | null = null;
-	let glNextTex: WebGLTexture | null = null;
-	let glMixLoc: WebGLUniformLocation | null = null;
-	let glCurrentTexLoc: WebGLUniformLocation | null = null;
-	let glNextTexLoc: WebGLUniformLocation | null = null;
-
-	let glReady = false;
+	// Canvas 2D state
+	let canvas: HTMLCanvasElement;
+	let ctx: CanvasRenderingContext2D | null = null;
+	let currentBitmap: ImageBitmap | null = null;
+	let nextBitmap: ImageBitmap | null = null;
 	let mountComplete = false;
-
-	const VS_SRC = `
-		attribute vec2 a_position;
-		varying vec2 v_uv;
-		void main() {
-			// flip Y so texture top = screen top
-			v_uv = vec2(a_position.x * 0.5 + 0.5, 0.5 - a_position.y * 0.5);
-			gl_Position = vec4(a_position, 0.0, 1.0);
-		}
-	`;
-
-	const FS_SRC = `
-		precision mediump float;
-		varying vec2 v_uv;
-		uniform sampler2D u_current;
-		uniform sampler2D u_next;
-		uniform float u_mix;
-		void main() {
-			vec4 c1 = texture2D(u_current, v_uv);
-			vec4 c2 = texture2D(u_next,    v_uv);
-			gl_FragColor = mix(c1, c2, u_mix);
-		}
-	`;
-
-	function compileShader(type: number, src: string): WebGLShader {
-		const shader = gl.createShader(type)!;
-		gl.shaderSource(shader, src);
-		gl.compileShader(shader);
-		if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-			throw new Error('Shader compile error: ' + gl.getShaderInfoLog(shader));
-		}
-		return shader;
-	}
-
-	function initWebGL(): boolean {
-		const ctx = glCanvas.getContext('webgl') ?? glCanvas.getContext('experimental-webgl');
-		if (!ctx) {
-			console.error('WebGL not available');
-			return false;
-		}
-		gl = ctx as WebGLRenderingContext;
-
-		const vs = compileShader(gl.VERTEX_SHADER, VS_SRC);
-		const fs = compileShader(gl.FRAGMENT_SHADER, FS_SRC);
-
-		glProgram = gl.createProgram()!;
-		gl.attachShader(glProgram, vs);
-		gl.attachShader(glProgram, fs);
-		gl.linkProgram(glProgram);
-		if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS)) {
-			throw new Error('Program link error: ' + gl.getProgramInfoLog(glProgram));
-		}
-		gl.useProgram(glProgram);
-
-		// Full-screen quad (two triangles)
-		const buf = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-		gl.bufferData(
-			gl.ARRAY_BUFFER,
-			new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
-			gl.STATIC_DRAW
-		);
-		const posLoc = gl.getAttribLocation(glProgram, 'a_position');
-		gl.enableVertexAttribArray(posLoc);
-		gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
-
-		glMixLoc = gl.getUniformLocation(glProgram, 'u_mix');
-		glCurrentTexLoc = gl.getUniformLocation(glProgram, 'u_current');
-		glNextTexLoc = gl.getUniformLocation(glProgram, 'u_next');
-
-		glReady = true;
-		return true;
-	}
-
-	function createGLTexture(
-		width: number,
-		height: number,
-		data: number[] | Uint8Array
-	): WebGLTexture {
-		const tex = gl.createTexture()!;
-		gl.bindTexture(gl.TEXTURE_2D, tex);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-		const pixels = data instanceof Uint8Array ? data : new Uint8Array(data);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-		return tex;
-	}
 
 	let animationFrameId: number;
 	let transitionStart: number | null = null;
 	const TRANSITION_DURATION = 750; // ms
 
-	function drawGL(timestamp: number) {
-		if (!gl || !glProgram || !glCurrentTex || !glNextTex) return;
+	function initCanvas2D() {
+		ctx = canvas.getContext('2d');
+	}
+
+	function renderStill() {
+		if (!ctx || !currentBitmap) return;
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		ctx.globalAlpha = 1.0;
+		ctx.drawImage(currentBitmap, 0, 0, canvas.width, canvas.height);
+	}
+
+	function drawFadeIn(timestamp: number) {
+		if (!ctx || !currentBitmap) return;
+
+		if (transitionStart === null) transitionStart = timestamp;
+		const alpha = Math.min((timestamp - transitionStart) / TRANSITION_DURATION, 1.0);
+
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		ctx.globalAlpha = alpha;
+		ctx.drawImage(currentBitmap, 0, 0, canvas.width, canvas.height);
+		ctx.globalAlpha = 1.0;
+
+		if (alpha >= 1.0) {
+			transitionStart = null;
+			if (!libraryInitialized) {
+				libraryInitialized = true;
+				LibraryService.initialize();
+			}
+		} else {
+			animationFrameId = requestAnimationFrame(drawFadeIn);
+		}
+	}
+
+	function drawFrame(timestamp: number) {
+		if (!ctx || !currentBitmap || !nextBitmap) return;
 
 		if (transitionStart === null) transitionStart = timestamp;
 		const mix = Math.min((timestamp - transitionStart) / TRANSITION_DURATION, 1.0);
 
-		gl.viewport(0, 0, glCanvas.width, glCanvas.height);
-		gl.clearColor(0, 0, 0, 1);
-		gl.clear(gl.COLOR_BUFFER_BIT);
-
-		gl.useProgram(glProgram);
-		gl.uniform1f(glMixLoc, mix);
-
-		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, glCurrentTex);
-		gl.uniform1i(glCurrentTexLoc, 0);
-
-		gl.activeTexture(gl.TEXTURE1);
-		gl.bindTexture(gl.TEXTURE_2D, glNextTex);
-		gl.uniform1i(glNextTexLoc, 1);
-
-		gl.drawArrays(gl.TRIANGLES, 0, 6);
+		ctx.globalAlpha = 1.0;
+		ctx.drawImage(currentBitmap, 0, 0, canvas.width, canvas.height);
+		ctx.globalAlpha = mix;
+		ctx.drawImage(nextBitmap, 0, 0, canvas.width, canvas.height);
+		ctx.globalAlpha = 1.0;
 
 		if (mix >= 1.0) {
-			// Promote next → current; free old current
 			transitionStart = null;
-			if (glCurrentTex) gl.deleteTexture(glCurrentTex);
-			glCurrentTex = glNextTex;
-			glNextTex = null;
+			currentBitmap.close();
+			currentBitmap = nextBitmap;
+			nextBitmap = null;
 
 			if (!libraryInitialized) {
 				libraryInitialized = true;
 				LibraryService.initialize();
 			}
 		} else {
-			animationFrameId = requestAnimationFrame(drawGL);
+			animationFrameId = requestAnimationFrame(drawFrame);
 		}
-	}
-
-	function renderStill() {
-		// Draw the current texture at mix=1 with itself so the screen stays filled
-		if (!gl || !glCurrentTex) return;
-		gl.viewport(0, 0, glCanvas.width, glCanvas.height);
-		gl.clear(gl.COLOR_BUFFER_BIT);
-		gl.useProgram(glProgram);
-		gl.uniform1f(glMixLoc, 0.0);
-		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, glCurrentTex);
-		gl.uniform1i(glCurrentTexLoc, 0);
-		gl.activeTexture(gl.TEXTURE1);
-		gl.bindTexture(gl.TEXTURE_2D, glCurrentTex);
-		gl.uniform1i(glNextTexLoc, 1);
-		gl.drawArrays(gl.TRIANGLES, 0, 6);
 	}
 
 	function triggerTransition() {
 		if (animationFrameId) cancelAnimationFrame(animationFrameId);
 		transitionStart = null;
-		animationFrameId = requestAnimationFrame(drawGL);
+		animationFrameId = requestAnimationFrame(drawFrame);
+	}
+
+	function triggerFadeIn() {
+		if (animationFrameId) cancelAnimationFrame(animationFrameId);
+		transitionStart = null;
+		animationFrameId = requestAnimationFrame(drawFadeIn);
+	}
+
+	async function bitmapFromRgba(data: number[] | Uint8Array, w: number, h: number): Promise<ImageBitmap> {
+		const pixels = data instanceof Uint8Array ? data : new Uint8Array(data);
+		const imageData = new ImageData(new Uint8ClampedArray(pixels.buffer, pixels.byteOffset, pixels.byteLength), w, h);
+		return createImageBitmap(imageData);
 	}
 
 	async function getColors(): Promise<Color[] | null> {
@@ -277,22 +198,17 @@
 			currentHeight
 		);
 
-		// CEF path: render via WebGL canvas
-		if (appStore.isCefEnabled && glReady && result) {
+		if (result && ctx) {
 			const [data, texWidth, texHeight] = result;
 
-			if (!glCurrentTex) {
-				// First frame — show immediately, no transition
-				glCurrentTex = createGLTexture(texWidth, texHeight, data);
-				renderStill();
-				if (!libraryInitialized) {
-					libraryInitialized = true;
-					LibraryService.initialize();
-				}
+			if (!currentBitmap) {
+				// First frame — fade in from transparent
+				currentBitmap = await bitmapFromRgba(data, texWidth, texHeight);
+				triggerFadeIn();
 			} else {
-				// Swap in new texture as "next" and crossfade
-				if (glNextTex) gl.deleteTexture(glNextTex);
-				glNextTex = createGLTexture(texWidth, texHeight, data);
+				// Crossfade to new image
+				if (nextBitmap) nextBitmap.close();
+				nextBitmap = await bitmapFromRgba(data, texWidth, texHeight);
 				triggerTransition();
 			}
 		}
@@ -305,7 +221,7 @@
 			setTimeout(() => {
 				canUpdate = true;
 			}, 1000);
-			console.log('AnimatedBackground is initialized (WebGL/Native)');
+			console.log('AnimatedBackground is initialized (Canvas 2D)');
 		}
 	}
 
@@ -321,11 +237,9 @@
 
 		if (widthDiff >= 0.25 || heightDiff >= 0.25) {
 			console.log('Resized by 25%, updating background');
-			if (appStore.isCefEnabled && glReady && glCanvas) {
-				glCanvas.width = window.innerWidth;
-				glCanvas.height = window.innerHeight;
-				renderStill();
-			}
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+			renderStill();
 			updateBackground(true);
 		}
 	}
@@ -351,63 +265,33 @@
 	});
 
 	async function restoreBackground() {
-		if (!isInitialized) return;
-
-		if (appStore.isCefEnabled && glReady && glCurrentTex) {
-			// Crossfade back to the cached current texture (copy it into "next")
-			if (glNextTex) gl.deleteTexture(glNextTex);
-			// Re-upload current texture pixels as next (effectively a no-op fade)
-			glNextTex = glCurrentTex;
-			glCurrentTex = null; // will be repopulated on next updateBackground
-			triggerTransition();
-		} else {
-			await TauriBackgroundAPI.restoreBackground();
-		}
+		if (!isInitialized || !ctx || !currentBitmap) return;
+		// Re-draw current bitmap — no Rust call needed
+		renderStill();
 	}
 
 	onMount(async () => {
-		// appStore.isCefEnabled is now handled in +layout.svelte on initialization
-		if (appStore.isCefEnabled) {
-			// Let Svelte render the {#if appStore.isCefEnabled} canvas into the DOM first.
-			await tick();
-			await tick();
-			await tick();
-			if (glCanvas) {
-				glCanvas.width = window.innerWidth;
-				glCanvas.height = window.innerHeight;
-			}
-			initWebGL();
-		}
+		canvas.width = window.innerWidth;
+		canvas.height = window.innerHeight;
+		initCanvas2D();
 
-		// Call updateBackground only after WebGL is ready so the guard passes.
 		mountComplete = true;
 		updateBackground(true);
 		if (isAndroid()) unlistenFocus = await listen('tauri://focus', restoreBackground);
-
-		unlistenTransition = await TauriBackgroundAPI.listenTransitionComplete(() => {
-			if (!libraryInitialized) {
-				libraryInitialized = true;
-				LibraryService.initialize();
-			}
-		});
 	});
 
 	onDestroy(() => {
 		if (unlistenFocus) unlistenFocus();
-		if (unlistenTransition) unlistenTransition();
 		if (animationFrameId) cancelAnimationFrame(animationFrameId);
-		if (gl) {
-			if (glCurrentTex) gl.deleteTexture(glCurrentTex);
-			if (glNextTex) gl.deleteTexture(glNextTex);
-		}
+		if (currentBitmap) currentBitmap.close();
+		if (nextBitmap) nextBitmap.close();
 	});
 </script>
 
 <svelte:window onresize={onWindowResize} />
 
-{#if appStore.isCefEnabled}
-	<canvas
-		bind:this={glCanvas}
-		style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;"
-	></canvas>
-{/if}
+<canvas
+	bind:this={canvas}
+	style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;"
+	class:rounded-lg={isLinux() || isWindows()}
+></canvas>
