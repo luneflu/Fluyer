@@ -18,6 +18,9 @@ pub fn setup_application(app: &mut App) -> Result<(), Box<dyn std::error::Error>
 
     initialize_store(app);
 
+    #[cfg(target_os = "android")]
+    crate::developer::logcat::start_logcat_listener();
+
     // Native renderers (renderer.rs, wgpu_renderer.rs, linux_renderer.rs) are disabled.
     // Background is rendered entirely by the frontend canvas. Code kept for reference.
     // #[cfg(not(feature = "cef"))]

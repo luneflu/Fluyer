@@ -18,6 +18,7 @@
 		"core:window:allow-toggle-maximize",
 		"core:window:allow-show",
 		"core:window:allow-set-fullscreen",
+		"clipboard-manager:allow-write-text",
 		"decorum:allow-show-snap-overlay",
 		"os:default",
 		"fs:default"

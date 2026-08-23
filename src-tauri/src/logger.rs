@@ -1,6 +1,8 @@
 use std::env::temp_dir;
 use std::sync::atomic::{AtomicU8, Ordering};
+use std::sync::Mutex;
 
+use once_cell::sync::Lazy;
 use tauri::Emitter;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -35,9 +37,12 @@ fn level_color(level: Level) -> &'static str {
 }
 
 const RESET: &str = "\x1b[0m";
+const MAX_LOGS: usize = 1000;
 
 // Global max level filter (4 = Debug by default)
 static MAX_LEVEL: AtomicU8 = AtomicU8::new(4);
+static LOG_BUFFER: Lazy<Mutex<Vec<(String, String)>>> =
+    Lazy::new(|| Mutex::new(Vec::with_capacity(MAX_LOGS)));
 
 pub fn init() {
     // Set max level to Debug
@@ -53,22 +58,27 @@ pub fn _log(level: Level, target: &str, args: std::fmt::Arguments) {
 
     let color = level_color(level);
     let message = format!("{}", args);
+    let full_message = format!("{} - {}", target, message);
 
-    println!(
-        "{}[{}]{} {} - {}",
-        color,
-        level.as_str(),
-        RESET,
-        target,
-        message
-    );
+    println!("{}[{}]{} {}", color, level.as_str(), RESET, full_message);
+
+    if let Ok(mut buffer) = LOG_BUFFER.lock() {
+        if buffer.len() >= MAX_LOGS {
+            buffer.remove(0);
+        }
+        buffer.push((level.as_str().to_string(), full_message.clone()));
+    }
 
     if let Some(handle) = crate::state::try_app_handle() {
         let _ = handle.emit(
             crate::commands::route::LOG,
-            [level.as_str(), format!("{} - {}", target, message).as_str()],
+            [level.as_str(), full_message.as_str()],
         );
     }
+}
+
+pub fn get_buffered_logs() -> Vec<(String, String)> {
+    LOG_BUFFER.lock().unwrap_or_else(|e| e.into_inner()).clone()
 }
 
 #[macro_export]

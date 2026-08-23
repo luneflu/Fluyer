@@ -6,6 +6,9 @@ const TauriDeveloperAPI = {
 	listenLog: (callback: (event: { payload: string[] }) => void) => {
 		return listen<string[]>(TauriCommands.LOG, callback);
 	},
+	getDeveloperLog: () => {
+		return invoke<[string, string][]>(TauriCommands.DEVELOPER_LOG_GET);
+	},
 	saveDeveloperLog: () => {
 		return invoke(TauriCommands.DEVELOPER_LOG_SAVE);
 	},

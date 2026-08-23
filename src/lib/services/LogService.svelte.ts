@@ -1,6 +1,7 @@
 import TauriDeveloperAPI from '$lib/tauri/TauriDeveloperAPI';
 import PersistentStoreService from '$lib/services/PersistentStoreService.svelte';
 import ToastService from '$lib/services/ToastService.svelte';
+import { untrack } from 'svelte';
 
 enum Level {
 	Error = 1,
@@ -9,76 +10,85 @@ enum Level {
 	Debug = 4,
 	Trace = 5
 }
+
+export const logs: { level: string; message: string; timestamp: Date }[] = $state([]);
+
 const LogService = {
 	initialize: async () => {
 		LogService.listenLog();
-		LogService.listenError();
+		await LogService.fetchInitialBackendLogs();
 		LogService.listenBackendLog();
 	},
+	fetchInitialBackendLogs: async () => {
+		try {
+			const initialLogs = await TauriDeveloperAPI.getDeveloperLog();
+			for (const [levelStr, message] of initialLogs) {
+				LogService.processBackendLog(levelStr, message);
+			}
+		} catch (e) {
+			console.error("Failed to fetch initial backend logs", e);
+		}
+	},
+	processBackendLog: (levelStr: string, message: string) => {
+		// For logcat (Android)
+		if (levelStr === 'ADBLOG') {
+			logs.push({ level: 'ADBLOG', message, timestamp: new Date() });
+			return;
+		}
+		
+		// Rust logger sends strings like 'INFO', 'ERROR', not numbers
+		switch (levelStr) {
+			case 'ERROR':
+				logs.push({ level: 'RS-ERROR', message, timestamp: new Date() });
+				break;
+			case 'WARN':
+				logs.push({ level: 'RS-WARN', message, timestamp: new Date() });
+				break;
+			case 'INFO':
+				logs.push({ level: 'RS-INFO', message, timestamp: new Date() });
+				break;
+			case 'DEBUG':
+				logs.push({ level: 'RS-DEBUG', message, timestamp: new Date() });
+				break;
+			case 'TRACE':
+				logs.push({ level: 'RS-TRACE', message, timestamp: new Date() });
+				break;
+			default:
+				logs.push({ level: 'RS-LOG', message: `${levelStr}: ${message}`, timestamp: new Date() });
+		}
+		
+		if (logs.length > 1000) {
+			logs.splice(0, logs.length - 1000); // Keep last 1000
+		}
+	},
 	listenLog: () => {
-		console.log = new Proxy(console.log, {
-			apply(target, thisArg, args) {
-				return Reflect.apply(target, thisArg, ['[LOG]', ...args]);
-			}
-		});
-		console.trace = new Proxy(console.trace, {
-			apply(target, thisArg, args) {
-				return Reflect.apply(target, thisArg, ['[TRACE]', ...args]);
-			}
-		});
-		console.debug = new Proxy(console.debug, {
-			apply(target, thisArg, args) {
-				return Reflect.apply(target, thisArg, ['[DEBUG]', ...args]);
-			}
-		});
-		console.info = new Proxy(console.info, {
-			apply(target, thisArg, args) {
-				return Reflect.apply(target, thisArg, ['[INFO]', ...args]);
-			}
-		});
-		console.warn = new Proxy(console.warn, {
-			apply(target, thisArg, args) {
-				return Reflect.apply(target, thisArg, ['[WARN]', ...args]);
-			}
-		});
-		console.error = new Proxy(console.error, {
-			apply(target, thisArg, args) {
-				return Reflect.apply(target, thisArg, ['[ERROR]', ...args]);
-			}
+		const methods = ['log', 'trace', 'debug', 'info', 'warn', 'error'] as const;
+		let isLogging = false;
+
+		methods.forEach((method) => {
+			const original = console[method];
+			console[method] = (...args: any[]) => {
+				if (isLogging) return original.apply(console, args);
+				
+				isLogging = true;
+				try {
+					const msg = args.join(' ');
+					untrack(() => logs.push({ level: 'WEB-' + method.toUpperCase(), message: msg, timestamp: new Date() }));
+				} finally {
+					isLogging = false;
+				}
+				
+				return original.apply(console, args);
+			};
 		});
 	},
 	listenBackendLog: () => {
 		TauriDeveloperAPI.listenLog((event) => {
-			switch (parseInt(event.payload[0])) {
-				case Level.Error:
-					console.error(event.payload[1]);
-					break;
-				case Level.Warn:
-					console.warn(event.payload[1]);
-					break;
-				case Level.Info:
-					console.info(event.payload[1]);
-					break;
-				case Level.Debug:
-					console.debug(event.payload[1]);
-					break;
-				case Level.Trace:
-					console.trace(event.payload[1]);
-					break;
-			}
+			const levelStr = event.payload[0];
+			const message = event.payload[1];
+			LogService.processBackendLog(levelStr, message);
 		});
 	},
-	listenError: () => {
-		window.addEventListener('error', async (e) => {
-			if (e.message.toString().includes('ResizeObserver')) return;
-			if (await PersistentStoreService.developerMode.get())
-				ToastService.error(e.message.toString());
-		});
-		window.addEventListener('unhandledrejection', async (e) => {
-			const message = e.reason.toString();
-			if (await PersistentStoreService.developerMode.get()) ToastService.error(message);
-		});
-	}
 };
 
 export default LogService;

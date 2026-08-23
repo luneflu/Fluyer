@@ -80,6 +80,11 @@ pub fn developer_clear_cache() {
     app_handle().fluyer().restart_app();
 }
 
+#[tauri::command]
+pub fn developer_log_get() -> Vec<(String, String)> {
+    crate::logger::get_buffered_logs()
+}
+
 #[derive(serde::Deserialize)]
 struct LatestRelease {
     version: String,

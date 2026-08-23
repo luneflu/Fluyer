@@ -24,6 +24,8 @@
 	import UpdateService from '$lib/services/UpdateService.svelte';
 	import TauriBackgroundAPI from '$lib/tauri/TauriBackgroundAPI';
 	import appStore from '$lib/stores/app.svelte';
+	import settingStore from '$lib/stores/setting.svelte';
+	import LogPanel from '$lib/features/developer_debug_overlay/components/LogPanel.svelte';
 
 	if (isLinux()) {
 		import('$lib/scss/linux.scss');
@@ -50,7 +52,6 @@
 			PlaylistService.initialize(),
 			(async () => {
 				appStore.isCefEnabled = await TauriBackgroundAPI.isCefEnabled();
-				console.log(appStore.isCefEnabled);
 			})()
 		]);
 
@@ -84,5 +85,8 @@
 	{#if [PageRoutes.HOME, PageRoutes.HOME_PRODUCTION].includes(page.url.pathname)}
 		<FilterBar />
 	{/if}
+{/if}
+{#if settingStore.developerMode}
+	<LogPanel />
 {/if}
 <CreatePlaylistModal />

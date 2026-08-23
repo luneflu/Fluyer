@@ -71,6 +71,7 @@ export const TauriCommands = {
 	ANIMATED_BACKGROUND_TRANSITION_COMPLETE: 'animated_background_transition_complete',
 	ANIMATED_BACKGROUND_IS_CEF_ENABLED: 'animated_background_is_cef_enabled',
 	DEVELOPER_LOG_SAVE: 'developer_log_save',
+	DEVELOPER_LOG_GET: 'developer_log_get',
 	DEVELOPER_MPV_LOG_SAVE: 'developer_mpv_log_save',
 	DEVELOPER_CLEAR_DATA: 'developer_clear_data',
 	DEVELOPER_CLEAR_CACHE: 'developer_clear_cache',
