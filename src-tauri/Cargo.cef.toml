@@ -24,13 +24,14 @@ tauri-build = { git = "https://github.com/tauri-apps/tauri", branch = "feat/cef"
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 walkdir = "2.5.0"
-tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "feat/cef" }
-tauri-plugin-dialog = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "feat/cef" }
-tauri-plugin-os = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "feat/cef" }
+tauri-plugin-store = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-os = "2"
 tauri-plugin-prevent-default = "5"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-decorum = "1.1.1"
 tauri-plugin-fluyer = { path = "./tauri-plugin-fluyer" }
 regex = "1.12"
-tauri-plugin-decorum = "1.1.1"
 image = "0.25.10"
 lazy_static = "1.5.0"
 dotenvy = "0.15.7"
