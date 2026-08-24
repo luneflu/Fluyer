@@ -180,8 +180,8 @@
 		if (!isInitialized) {
 			const monitor = await currentMonitor();
 			const dpr = window.devicePixelRatio;
-			currentWidth = (monitor?.size.width ?? 0) / dpr;
-			currentHeight = (monitor?.size.height ?? 0) / dpr;
+			currentWidth = Math.floor((monitor?.size.width ?? window.innerWidth ?? 0) / dpr);
+			currentHeight = Math.floor((monitor?.size.height ?? window.innerHeight ?? 0) / dpr);
 		}
 
 		if (currentCoverArt !== null && !MetadataService.isDefaultCoverArt(currentCoverArt)) {
