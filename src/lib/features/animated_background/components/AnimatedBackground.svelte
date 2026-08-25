@@ -151,10 +151,12 @@
 
 		let balancedColors: RGB[] = colors.map((color) => {
 			let [h, s, l] = ColorConvert.rgb.hsl(color[0], color[1], color[2]);
-			if (l > 50) l = 50;
-			if (s > 40) s = 40;
 			if (MetadataService.isDefaultCoverArt(currentCoverArt)) {
 				l = 50;
+				s = 40 + (s - 60) * 0.2;
+			} else {
+				if (l > 45) l = 45 + (l - 45) * 0.3;
+				if (s > 60) s = 60 + (s - 60) * 0.3;
 			}
 			return ColorConvert.hsl.rgb(h, s, l);
 		});
