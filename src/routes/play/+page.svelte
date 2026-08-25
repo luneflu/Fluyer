@@ -79,7 +79,7 @@
 			: 'justify-center'} anim anim-fade-in"
 	>
 		<View
-			class="h-fit w-full rounded-xl
+			class="h-fit w-full rounded-lg
             px-4 py-5 {isMobile() ? '' : 'hover:px-5 hover:py-7'}
             sm:w-[90%] md:mt-4 md:w-[85%] lg:w-[80%] xl:w-[75%] 2xl:w-[70%] 3xl:w-[65%]"
 		>

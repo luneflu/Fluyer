@@ -215,7 +215,7 @@
 	>
 		<View
 			class="anim pointer-events-auto h-full
-				rounded-lg p-3
+				rounded p-3
 				{isShowing
 				? type === SidebarType.Right
 					? 'anim-fade-in-right'
