@@ -21,12 +21,12 @@
 		{#if playlistStore.selectedPlaylist?.id === playlist.id}
 			<div
 				class="absolute left-0 top-0 z-10 h-full w-full
-            rounded-lg border-2 border-white"
+            rounded border-2 border-white"
 			></div>
 		{:else}
 			<div
 				class="playlist-item-actions absolute z-20 h-full w-full cursor-pointer
-                rounded-lg border-2 border-white bg-white/20"
+                rounded border-2 border-white bg-white/20"
 				onclick={vm.selectPlaylist}
 			></div>
 		{/if}
@@ -35,12 +35,12 @@
 		{:then image}
 			{#if image}
 				<img
-					class="anim anim-fade-in aspect-square w-full rounded-lg object-cover"
+					class="anim anim-fade-in aspect-square w-full rounded object-cover"
 					src={image}
 					alt="Playlist"
 				/>
 			{:else}
-				<div class="aspect-square w-full rounded-lg"></div>
+				<div class="aspect-square w-full roundedg"></div>
 			{/if}
 		{/await}
 	</div>

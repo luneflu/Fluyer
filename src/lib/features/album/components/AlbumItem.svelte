@@ -19,7 +19,7 @@
 <div class="col-auto row-[1] h-fit px-3 pb-3">
 	<div class="relative w-full">
 		<div
-			class="absolute left-0 top-0 h-full w-full cursor-pointer rounded-lg border-2 border-white transition-all
+			class="absolute left-0 top-0 h-full w-full cursor-pointer rounded border-2 border-white transition-all
             {vm.isValidFilterAlbum ? 'z-10' : 'album-item-actions z-20 bg-white/20'}"
 			onclick={!vm.isValidFilterAlbum ? vm.setFilterAlbum : undefined}
 			ondblclick={vm.playAlbum}
@@ -29,12 +29,12 @@
 		{:then image}
 			{#if image}
 				<img
-					class="anim anim-fade-in aspect-square w-full rounded-lg object-cover"
+					class="anim anim-fade-in aspect-square w-full rounded object-cover"
 					src={image}
 					alt="Album"
 				/>
 			{:else}
-				<div class="aspect-square w-full rounded-lg"></div>
+				<div class="aspect-square w-full rounded"></div>
 			{/if}
 		{/await}
 	</div>

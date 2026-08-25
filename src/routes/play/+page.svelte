@@ -63,7 +63,7 @@
 				<div class="aspect-square w-full"></div>
 			{:then image}
 				<img
-					class="anim anim-fade-in aspect-square w-full rounded-lg object-cover shadow-lg"
+					class="anim anim-fade-in aspect-square w-full rounded-[6px] object-cover shadow-lg"
 					src={image}
 					alt="Music Album"
 				/>
@@ -79,7 +79,7 @@
 			: 'justify-center'} anim anim-fade-in"
 	>
 		<View
-			class="h-fit w-full rounded-lg
+			class="h-fit w-full rounded-[6px]
             px-4 py-5 {isMobile() ? '' : 'hover:px-5 hover:py-7'}
             sm:w-[90%] md:mt-4 md:w-[85%] lg:w-[80%] xl:w-[75%] 2xl:w-[70%] 3xl:w-[65%]"
 		>
