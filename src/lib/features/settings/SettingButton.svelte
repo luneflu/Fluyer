@@ -14,7 +14,7 @@
 
 <div class="w-full px-5">
 	<Button
-		class="my-3 w-full rounded px-3 py-2 text-start
+		class="my-3 w-full rounded px-3 py-2 text-start bg-transparent
         {icon ? 'grid grid-cols-[min-content_auto] items-center gap-2' : ''}"
 		{onclick}
 	>

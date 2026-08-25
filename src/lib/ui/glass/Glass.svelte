@@ -17,7 +17,6 @@
 
 	let {
 		children,
-		shineColor = 'rgba(255, 255, 255, 0.5)',
 		enableBlur = false,
 		shineSize = 'md',
 		thisElement = $bindable<HTMLDivElement>(),
@@ -48,7 +47,7 @@
 	class="{getBlurClass()} {getHoverClasses()}
         {getShineSize()}
         {props.class ?? ''}"
-	style="--shine-color: {shineColor}; {isAndroid()
+	style="--shine-color: {props.shineColor ?? 'rgba(255, 255, 255, 0.5)'}; {isAndroid()
 		? '-webkit-transform: translate3d(0, 0, 0);'
 		: ''} {props.style || ''}"
 	bind:this={thisElement}

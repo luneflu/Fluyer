@@ -10,7 +10,8 @@
 </script>
 
 <div class="w-full px-5 {className}">
-	<View class="my-3 w-full rounded" glassShineSize="xs">
+	<View class="my-3 w-full rounded bg-transparent"
+		glassShineSize="xs">
 		{@render children?.()}
 	</View>
 </div>
