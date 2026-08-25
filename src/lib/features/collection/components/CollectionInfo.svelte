@@ -25,6 +25,7 @@
         px-4 py-2 md:grid
 		{isSidebarVisible ? 'anim-fade-out' : 'anim-fade-in'}"
 		style="animation-duration: {isLinux() ? '350ms' : '500ms'};"
+		glassShineSize="sm"
 	>
 		<div class="grid items-center">
 			<div class="overflow-hidden text-sm font-medium md:text-base">
