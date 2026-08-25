@@ -14,7 +14,7 @@
 
 <Button
 	class="mx-2 my-3 grid cursor-pointer grid-cols-[min-content_auto]
-    items-center gap-3 rounded-md px-3 py-2 text-base font-medium
+    items-center gap-3 rounded px-3 py-2 text-base font-medium
     tracking-wide hover:px-[15px] hover:py-[11px] md:text-lg"
 	{onclick}
 >

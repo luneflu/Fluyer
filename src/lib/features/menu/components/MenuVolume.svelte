@@ -24,7 +24,7 @@
 
 <View
 	class="mx-2 mt-4 grid cursor-default
-    grid-cols-[min-content_auto_min-content] items-center gap-3 rounded-md px-3 py-3 text-base font-medium tracking-wide
+    grid-cols-[min-content_auto_min-content] items-center gap-3 rounded px-3 py-3 text-base font-medium tracking-wide
     md:hidden md:text-lg {settingStore.bitPerfectMode ? 'pointer-events-none opacity-50' : ''}"
 >
 	<button class="w-5" onclick={handleMuteButton}>
