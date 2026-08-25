@@ -13,6 +13,7 @@
 <Button
 	class="pointer-events-auto grid aspect-square h-9 shrink-0 items-center justify-center rounded"
 	onclick={props.onclick}
+	glassShineColor="rgba(255, 255, 255, 0.3)"
 >
 	<div class="w-5">
 		<Icon type={IconType.PlaylistAdd} />

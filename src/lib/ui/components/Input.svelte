@@ -8,6 +8,7 @@
 		value?: string;
 		placeholder?: string;
 		icon?: IconType;
+		glassShineColor?: string;
 	}
 
 	let { value = $bindable(), icon, ...props }: Props = $props();
@@ -27,6 +28,7 @@
 	class="px-2 py-[6px] {props.class} {isPressed ? 'scale-[.99]' : 'scale-100'}"
 	glassEnableHoverEffect={true}
 	glassShineSize="xs"
+	glassShineColor={props.glassShineColor}
 	events={{
 		onclick: handleClick,
 		ontouchstart: handleClick

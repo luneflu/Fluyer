@@ -16,6 +16,7 @@
 	<Button
 		class="pointer-events-auto grid h-9 w-full items-center justify-center gap-x-2 rounded p-[3.5px] sm:p-0 sm:px-2"
 		onclick={props.onconfirm}
+		glassShineColor="rgba(255, 255, 255, 0.3)"
 	>
 		<div class="w-5">
 			<Icon type={IconType.Check} />
@@ -24,6 +25,7 @@
 	<Button
 		class="pointer-events-auto grid h-9 w-full items-center justify-center gap-x-2 rounded p-[3.5px] sm:p-0 sm:px-2"
 		onclick={props.oncancel}
+		glassShineColor="rgba(255, 255, 255, 0.3)"
 	>
 		<div class="w-5">
 			<Icon type={IconType.Cancel} />

@@ -51,6 +51,7 @@
 
 		<Input
 			class="pointer-events-auto h-9 rounded p-0 sm:hidden"
+			glassShineColor="rgba(255, 255, 255, 0.3)"
 			icon={IconType.Search}
 			placeholder="Search..."
 			bind:value={filterStore.search}
@@ -58,6 +59,7 @@
 
 		<Button
 			class="pointer-events-auto grid aspect-square h-9 justify-center rounded"
+			glassShineColor="rgba(255, 255, 255, 0.3)"
 			onclick={vm.toggleSort}
 		>
 			<div class="w-5">
@@ -138,6 +140,7 @@
 	>
 		<Input
 			class="pointer-events-auto h-9 rounded p-0"
+			glassShineColor="rgba(255, 255, 255, 0.3)"
 			icon={IconType.Search}
 			placeholder="Search..."
 			bind:value={filterStore.search}
@@ -147,6 +150,7 @@
 			<Button
 				class="pointer-events-auto grid aspect-square h-9 justify-center rounded sm:p-0"
 				onclick={vm.handleQueueButton}
+				glassShineColor="rgba(255, 255, 255, 0.3)"
 			>
 				<div class="w-5">
 					<Icon type={IconType.Queue} />

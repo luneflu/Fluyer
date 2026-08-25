@@ -25,4 +25,5 @@
 	options={props.options}
 	selected={props.selected}
 	onchange={props.onchange}
+	glassShineColor="rgba(255, 255, 255, 0.3)"
 />
