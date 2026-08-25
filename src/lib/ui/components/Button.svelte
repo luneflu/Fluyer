@@ -30,7 +30,7 @@
 <View
 	class="cursor-pointer {props.class} {isPressed ? 'scale-95' : 'scale-100'}"
 	glassEnableHoverEffect={isDesktop()}
-	glassShineSize={props.glassShineSize}
+	glassShineSize={props.glassShineSize ?? 'xs'}
 	events={{
 		onclick: handleClick
 	}}

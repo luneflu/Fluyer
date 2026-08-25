@@ -83,6 +83,7 @@
 <View
 	class="h-full w-full rounded {props.class}"
 	glassEnableHoverEffect={false}
+	glassShineSize="xs"
 	bind:thisElement={toggleElement}
 >
 	<div bind:this={containerElement} class="relative flex h-full w-full items-center">

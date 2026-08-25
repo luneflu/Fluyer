@@ -16,7 +16,6 @@
 	<Button
 		class="my-3 w-full rounded px-3 py-2 text-start
         {icon ? 'grid grid-cols-[min-content_auto] items-center gap-2' : ''}"
-		glassShineSize="sm"
 		{onclick}
 	>
 		{#if icon}

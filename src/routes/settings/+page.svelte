@@ -57,7 +57,6 @@
 				class="mx-5 grid w-fit grid-cols-[min-content_auto] items-center
                 gap-2 rounded px-3 py-2"
 				onclick={() => PageService.back()}
-				glassShineSize="sm"
 			>
 				<div class="w-4"><Icon type={IconType.Back} /></div>
 				<div>Back</div>

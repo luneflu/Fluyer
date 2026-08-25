@@ -26,6 +26,7 @@
 <View
 	class="px-2 py-[6px] {props.class} {isPressed ? 'scale-[.99]' : 'scale-100'}"
 	glassEnableHoverEffect={true}
+	glassShineSize="xs"
 	events={{
 		onclick: handleClick,
 		ontouchstart: handleClick

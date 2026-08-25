@@ -229,6 +229,7 @@
 				width: {sidebarWidth}px;
 				animation-duration: {isLinux() ? '350ms' : '500ms'};
 			"
+			glassShineSize="sm"
 			events={{ onanimationend: handleAnimationEnd }}
 		>
 			{@render children?.()}
