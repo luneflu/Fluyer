@@ -1,6 +1,7 @@
 <script lang="ts">
 	import musicStore from '$lib/stores/music.svelte';
 	import playlistStore from '$lib/stores/playlist.svelte';
+	import sidebarStore from '$lib/stores/sidebar.svelte';
 	import { MusicListType } from '$lib/features/music/types';
 	import AlbumItem from '$lib/features/album/components/AlbumItem.svelte';
 	import PlaylistItem from '$lib/features/album/components/PlaylistItem.svelte';
@@ -15,7 +16,7 @@
 
 <svelte:window onresize={vm.updateItemWidth} />
 
-<div class="w-screen" style="height: {vm.containerHeight}px;">
+<div class="w-screen transition-all duration-300 {sidebarStore.showType ? 'opacity-20 pointer-events-none' : ''}" style="height: {vm.containerHeight}px;">
 	<div
 		bind:this={scrollContainer}
 		use:vm.scrollable
