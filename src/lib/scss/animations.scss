@@ -4,7 +4,7 @@
 
 .anim {
 	animation-duration: var(--anim-duration);
-	animation-fill-mode: both;
+	animation-fill-mode: forwards;
 }
 
 .anim.anim-fast {
