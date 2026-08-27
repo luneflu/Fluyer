@@ -1,24 +1,34 @@
 <script lang="ts">
 	import { useAlbumItem } from '$lib/features/album/viewmodels/useAlbumItem.svelte';
+	import filterStore from '$lib/stores/filter.svelte';
 
 	interface Props {
 		albumIndex: number;
 		index: number;
 		visible?: boolean;
+		isListHovered?: boolean;
 	}
 
-	let { albumIndex, index, visible = false }: Props = $props();
+	let { albumIndex, index, visible = false, isListHovered = false }: Props = $props();
 
 	const vm = useAlbumItem(
 		() => albumIndex,
 		() => index,
-		() => visible
+		() => visible,
+		() => isListHovered
 	);
 
 	let imageAnimating = $state(false);
 </script>
 
-<div class="col-auto row-[1] h-fit px-3 pb-3">
+<div
+	class="col-auto row-[1] h-fit px-3 pb-3 transition-opacity duration-300 {vm.isValidFilterAlbum ===
+		false &&
+	filterStore.album &&
+	!vm.isListHovered
+		? 'opacity-40'
+		: ''}"
+>
 	<div class="group relative w-full">
 		{#await vm.coverArt}
 			<div class="aspect-square w-full"></div>
@@ -39,7 +49,9 @@
 		{/await}
 		<div
 			class="absolute left-0 top-0 h-full w-full cursor-pointer rounded border-2 border-white transition-all
-            {vm.isValidFilterAlbum ? 'z-10' : 'z-20 bg-white/20 opacity-0 transition-opacity duration-700 group-hover:opacity-100'}"
+            {vm.isValidFilterAlbum
+				? 'z-10'
+				: 'z-20 bg-white/20 opacity-0 transition-opacity duration-700 group-hover:opacity-100'}"
 			onclick={!vm.isValidFilterAlbum ? vm.setFilterAlbum : undefined}
 			ondblclick={vm.playAlbum}
 		></div>

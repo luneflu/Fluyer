@@ -11,10 +11,12 @@ import TauriLibraryAPI, { CollectionType } from '$lib/tauri/TauriLibraryAPI';
 export function useAlbumItem(
 	getAlbumIndex: () => number,
 	getIndex: () => number,
-	getVisible: () => boolean = () => true
+	getVisible: () => boolean = () => true,
+	getIsListHovered: () => boolean = () => false
 ) {
 	const albumIndex = $derived(getAlbumIndex());
 	const index = $derived(getIndex());
+	const isListHovered = $derived(getIsListHovered());
 
 	// Fetched from Rust when visible
 	let music = $state<MusicData | null>(null);
@@ -104,6 +106,9 @@ export function useAlbumItem(
 		},
 		get music() {
 			return music;
+		},
+		get isListHovered() {
+			return isListHovered;
 		},
 		setFilterAlbum,
 		playAlbum
