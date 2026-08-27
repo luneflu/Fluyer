@@ -24,7 +24,7 @@
 		class="anim mx-3 mb-2 box-border grid-cols-[auto_max-content] rounded
         px-4 py-2 md:grid
 		{isSidebarVisible ? 'anim-fade-out' : 'anim-fade-in'}"
-		style="animation-duration: {isLinux() ? '350ms' : '500ms'};"
+		style="animation-duration: 300ms;"
 		glassShineSize="sm"
 	>
 		<div class="grid items-center">
