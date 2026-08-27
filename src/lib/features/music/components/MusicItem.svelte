@@ -20,8 +20,6 @@
 		() => folder,
 		() => visible
 	);
-
-	let imageAnimating = $state(false);
 </script>
 
 <div class="group w-full text-sm md:text-base">
@@ -33,13 +31,12 @@
 			{#if image && !folder}
 				<div class="relative h-12 w-12 md:h-14 md:w-14">
 					<img
-						class={imageAnimating
+						class={vm.isImageAnimating
 							? 'anim anim-fade-in absolute inset-0 h-full w-full rounded object-cover'
 							: 'absolute inset-0 h-full w-full rounded object-cover'}
 						src={image}
 						alt="Album"
-						onload={() => (imageAnimating = true)}
-						onanimationend={() => (imageAnimating = false)}
+						onanimationend={() => (vm.isImageAnimating = false)}
 					/>
 					{#if !playlistStore.isCreating}
 						<button
@@ -53,10 +50,10 @@
 			{:else if image && folder}
 			<!-- Folder with album art -->
 			<div
-				class={imageAnimating
+				class={vm.isImageAnimating
 					? 'anim anim-fade-in relative aspect-square h-12 w-12 transition-transform duration-300 group-hover:scale-110 md:h-14 md:w-14'
 					: 'relative aspect-square h-12 w-12 transition-transform duration-300 group-hover:scale-110 md:h-14 md:w-14'}
-				onanimationend={() => (imageAnimating = false)}
+				onanimationend={() => (vm.isImageAnimating = false)}
 			>
 					<div class="absolute inset-0 opacity-75">
 						<Icon type={IconType.Folder} />
@@ -66,7 +63,6 @@
 							class="mt-2 h-4 w-4 rounded-sm object-cover shadow-md md:h-5 md:w-5"
 							src={image}
 							alt="Album"
-							onload={() => (imageAnimating = true)}
 						/>
 					</div>
 				</div>

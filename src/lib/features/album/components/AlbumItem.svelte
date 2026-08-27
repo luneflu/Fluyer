@@ -17,8 +17,6 @@
 		() => visible,
 		() => isListHovered
 	);
-
-	let imageAnimating = $state(false);
 </script>
 
 <div
@@ -35,13 +33,12 @@
 		{:then image}
 			{#if image}
 				<img
-					class={imageAnimating
+					class={vm.isImageAnimating
 						? 'anim anim-fade-in aspect-square w-full rounded object-cover'
 						: 'aspect-square w-full rounded object-cover'}
 					src={image}
 					alt="Album"
-					onload={() => (imageAnimating = true)}
-					onanimationend={() => (imageAnimating = false)}
+					onanimationend={() => (vm.isImageAnimating = false)}
 				/>
 			{:else}
 				<div class="aspect-square w-full rounded"></div>

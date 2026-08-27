@@ -22,6 +22,7 @@ export function useAlbumItem(
 	let music = $state<MusicData | null>(null);
 	let coverArt = $state<Promise<string | null> | null>(null);
 	let currentBlobUrl: string | null = null;
+	let isImageAnimating = $state(false);
 
 	const isValidFilterAlbum = $derived(
 		filterStore.album && music?.album && filterStore.album.name === music.album
@@ -53,6 +54,7 @@ export function useAlbumItem(
 					URL.revokeObjectURL(currentBlobUrl);
 				}
 				currentBlobUrl = url;
+				isImageAnimating = true;
 			}
 		}, COVER_ART_DEBOUNCE_DELAY);
 
@@ -109,6 +111,12 @@ export function useAlbumItem(
 		},
 		get isListHovered() {
 			return isListHovered;
+		},
+		get isImageAnimating() {
+			return isImageAnimating;
+		},
+		set isImageAnimating(v) {
+			isImageAnimating = v;
 		},
 		setFilterAlbum,
 		playAlbum
