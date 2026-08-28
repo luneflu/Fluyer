@@ -275,10 +275,43 @@ impl MusicMetadata {
             }
         };
 
-        // Try format metadata
-        if let Some(rev) = format.metadata().current() {
-            extract_tags(rev, &mut metadata);
+        // Prefer ID3v2 tags over ID3v1 to avoid encoding issues with Cyrillic characters
+        // ID3v1 is strictly ISO-8859-1 (or system local), which symphonia decodes as ISO-8859-1 lossy.
+        // It replaces non-ISO-8859-1 characters (like Cyrillic Windows-1251) with '?' or replacement chars.
+        let mut metadatas = format.metadata();
+        let mut best_score = -1;
+        
+        // We will accumulate the best metadata found across all revisions
+        let mut best_temp_meta = MusicMetadata::default();
+        
+        while let Some(rev) = metadatas.current() {
+            let score = match rev.info.short_name {
+                "id3v2" => 10,
+                "vorbis" | "mp4" | "flac" => 8,
+                "ape" | "apev2" => 5,
+                "id3v1" => 1,
+                _ => 0,
+            };
+            
+            if score > best_score {
+                best_score = score;
+                best_temp_meta = MusicMetadata::default();
+                extract_tags(rev, &mut best_temp_meta);
+            }
+            
+            if metadatas.pop().is_none() {
+                break;
+            }
         }
+        
+        // Apply the best metadata tags found
+        metadata.title = best_temp_meta.title;
+        metadata.artist = best_temp_meta.artist;
+        metadata.album = best_temp_meta.album;
+        metadata.album_artist = best_temp_meta.album_artist;
+        metadata.track_number = best_temp_meta.track_number;
+        metadata.genre = best_temp_meta.genre;
+        metadata.date = best_temp_meta.date;
 
         Ok(metadata)
     }
