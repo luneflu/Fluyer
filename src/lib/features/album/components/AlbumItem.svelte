@@ -1,42 +1,57 @@
 <script lang="ts">
 	import { useAlbumItem } from '$lib/features/album/viewmodels/useAlbumItem.svelte';
+	import filterStore from '$lib/stores/filter.svelte';
 
 	interface Props {
 		albumIndex: number;
 		index: number;
 		visible?: boolean;
+		isListHovered?: boolean;
 	}
 
-	let { albumIndex, index, visible = false }: Props = $props();
+	let { albumIndex, index, visible = false, isListHovered = false }: Props = $props();
 
 	const vm = useAlbumItem(
 		() => albumIndex,
 		() => index,
-		() => visible
+		() => visible,
+		() => isListHovered
 	);
 </script>
 
-<div class="col-auto row-[1] h-fit px-3 pb-3">
-	<div class="relative w-full">
-		<div
-			class="absolute left-0 top-0 h-full w-full cursor-pointer rounded border-2 border-white transition-all
-            {vm.isValidFilterAlbum ? 'z-10' : 'album-item-actions z-20 bg-white/20'}"
-			onclick={!vm.isValidFilterAlbum ? vm.setFilterAlbum : undefined}
-			ondblclick={vm.playAlbum}
-		></div>
+<div
+	class="col-auto row-[1] h-fit px-3 pb-3 transition-opacity duration-300 {vm.isValidFilterAlbum ===
+		false &&
+	filterStore.album &&
+	!vm.isListHovered
+		? 'opacity-40'
+		: ''}"
+>
+	<div class="group relative w-full">
 		{#await vm.coverArt}
 			<div class="aspect-square w-full"></div>
 		{:then image}
 			{#if image}
 				<img
-					class="anim anim-fade-in aspect-square w-full rounded object-cover"
+					class={vm.isImageAnimating
+						? 'anim anim-fade-in aspect-square w-full rounded object-cover'
+						: 'aspect-square w-full rounded object-cover'}
 					src={image}
 					alt="Album"
+					onanimationend={() => (vm.isImageAnimating = false)}
 				/>
 			{:else}
 				<div class="aspect-square w-full rounded"></div>
 			{/if}
 		{/await}
+		<div
+			class="absolute left-0 top-0 h-full w-full cursor-pointer rounded border-2 border-white transition-all
+            {vm.isValidFilterAlbum
+				? 'z-10'
+				: 'z-20 bg-white/20 opacity-0 transition-opacity duration-700 group-hover:opacity-100'}"
+			onclick={!vm.isValidFilterAlbum ? vm.setFilterAlbum : undefined}
+			ondblclick={vm.playAlbum}
+		></div>
 	</div>
 	<p
 		class="animate-scroll-overflow-text mt-2 overflow-hidden whitespace-nowrap font-medium md:text-lg"
@@ -49,15 +64,3 @@
 		{vm.music?.albumArtist ?? vm.music?.artist}
 	</p>
 </div>
-
-<style lang="scss">
-	.album-item-actions {
-		opacity: 0;
-		transition: opacity 0.75s;
-
-		&:hover {
-			opacity: 1;
-			transition: opacity 0.5s;
-		}
-	}
-</style>

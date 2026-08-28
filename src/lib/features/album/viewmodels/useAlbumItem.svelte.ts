@@ -11,15 +11,18 @@ import TauriLibraryAPI, { CollectionType } from '$lib/tauri/TauriLibraryAPI';
 export function useAlbumItem(
 	getAlbumIndex: () => number,
 	getIndex: () => number,
-	getVisible: () => boolean = () => true
+	getVisible: () => boolean = () => true,
+	getIsListHovered: () => boolean = () => false
 ) {
 	const albumIndex = $derived(getAlbumIndex());
 	const index = $derived(getIndex());
+	const isListHovered = $derived(getIsListHovered());
 
 	// Fetched from Rust when visible
 	let music = $state<MusicData | null>(null);
 	let coverArt = $state<Promise<string | null> | null>(null);
 	let currentBlobUrl: string | null = null;
+	let isImageAnimating = $state(false);
 
 	const isValidFilterAlbum = $derived(
 		filterStore.album && music?.album && filterStore.album.name === music.album
@@ -51,6 +54,7 @@ export function useAlbumItem(
 					URL.revokeObjectURL(currentBlobUrl);
 				}
 				currentBlobUrl = url;
+				isImageAnimating = true;
 			}
 		}, COVER_ART_DEBOUNCE_DELAY);
 
@@ -104,6 +108,15 @@ export function useAlbumItem(
 		},
 		get music() {
 			return music;
+		},
+		get isListHovered() {
+			return isListHovered;
+		},
+		get isImageAnimating() {
+			return isImageAnimating;
+		},
+		set isImageAnimating(v) {
+			isImageAnimating = v;
 		},
 		setFilterAlbum,
 		playAlbum

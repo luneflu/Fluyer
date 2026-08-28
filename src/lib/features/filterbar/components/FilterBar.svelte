@@ -5,6 +5,7 @@
 	import Button from '$lib/ui/components/Button.svelte';
 	import Input from '$lib/ui/components/Input.svelte';
 	import filterStore from '$lib/stores/filter.svelte';
+	import sidebarStore from '$lib/stores/sidebar.svelte';
 	import filterBarStore from '$lib/stores/filterBar.svelte';
 	import mobileStore from '$lib/stores/mobile.svelte';
 	import musicStore from '$lib/stores/music.svelte';
@@ -25,7 +26,7 @@
         {isMacos() ? 'sm:justify-end' : ''}
         {isMacos() ? 'right-0' : 'left-0'}
         {modalStore.show ? 'opacity-10 blur-sm' : ''} anim anim-slide-in-down
-        transition-opacity duration-300"
+        transition-opacity duration-300 {sidebarStore.showType ? 'opacity-20' : ''}"
 	style="margin-top: {isMobile() ? mobileStore.statusBarHeight : 8}px;
         grid-template-columns: {vm.state.gridSize};"
 	bind:this={vm.element}

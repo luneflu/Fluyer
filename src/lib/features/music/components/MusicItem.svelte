@@ -22,22 +22,39 @@
 	);
 </script>
 
-<div class="group relative w-full text-sm md:text-base">
+<div class="group w-full text-sm md:text-base">
 	<div class="grid grid-cols-[max-content_auto_max-content] py-2">
+		<!-- Image / folder icon cell -->
 		{#await vm.coverArt}
-			<div class="relative aspect-square h-12 w-12 md:h-14 md:w-14"></div>
+			<div class="aspect-square h-12 w-12 md:h-14 md:w-14"></div>
 		{:then image}
 			{#if image && !folder}
-				<img
-					class="anim anim-fade-in relative h-12 w-12 rounded object-cover md:h-14 md:w-14"
-					src={image}
-					alt="Album"
-				/>
+				<div class="relative h-12 w-12 md:h-14 md:w-14">
+					<img
+						class={vm.isImageAnimating
+							? 'anim anim-fade-in absolute inset-0 h-full w-full rounded object-cover'
+							: 'absolute inset-0 h-full w-full rounded object-cover'}
+						src={image}
+						alt="Album"
+						onanimationend={() => (vm.isImageAnimating = false)}
+					/>
+					{#if !playlistStore.isCreating}
+						<button
+							class="absolute inset-0 grid items-center justify-items-center rounded bg-black bg-opacity-40 opacity-0 transition-opacity duration-500 group-hover:opacity-100 md:p-1"
+							onclick={vm.addMusicAndPlay}
+						>
+							<Icon type={IconType.Play} />
+						</button>
+					{/if}
+				</div>
 			{:else if image && folder}
-				<!-- Folder with album art -->
-				<div
-					class="anim anim-fade-in relative aspect-square h-12 w-12 transition-transform duration-300 group-hover:scale-110 md:h-14 md:w-14"
-				>
+			<!-- Folder with album art -->
+			<div
+				class={vm.isImageAnimating
+					? 'anim anim-fade-in relative aspect-square h-12 w-12 transition-transform duration-300 group-hover:scale-110 md:h-14 md:w-14'
+					: 'relative aspect-square h-12 w-12 transition-transform duration-300 group-hover:scale-110 md:h-14 md:w-14'}
+				onanimationend={() => (vm.isImageAnimating = false)}
+			>
 					<div class="absolute inset-0 opacity-75">
 						<Icon type={IconType.Folder} />
 					</div>
@@ -50,11 +67,15 @@
 					</div>
 				</div>
 			{:else}
-				<div class="relative aspect-square h-12 w-12 md:h-14 md:w-14"></div>
+				<div class="aspect-square h-12 w-12 md:h-14 md:w-14"></div>
 			{/if}
 		{/await}
 
-		<div class="ms-3 overflow-hidden">
+		<!-- Text cell — click target for play/folder -->
+		<div
+			class="ms-3 cursor-pointer overflow-hidden"
+			onclick={folder ? vm.selectFolder : vm.addMusicAndPlay}
+		>
 			<p
 				class="animate-scroll-overflow-text overflow-hidden whitespace-nowrap text-sm/[14px] font-medium md:text-sm"
 			>
@@ -70,64 +91,27 @@
 			</p>
 		</div>
 
-		<div class="h-12 w-12 ps-2 md:h-14 md:w-14"></div>
-	</div>
-
-	<div class="absolute left-0 top-0 w-full py-2">
-		{#if playlistStore.isCreating && vm.resolvedMusic}
-			<div class="grid w-full grid-cols-[max-content_auto_max-content]">
-				<div class="h-12 w-12 md:h-14 md:w-14"></div>
-
-				<div class="cursor-pointer" onclick={vm.togglePlaylistSelection}></div>
-
-				<div class="h-12 w-12 ps-4 md:h-14 md:w-14">
-					<label
-						class="flex aspect-square h-full w-full cursor-pointer items-center justify-center"
-					>
-						<input
-							type="checkbox"
-							checked={vm.isSelectedForPlaylist}
-							onchange={vm.togglePlaylistSelection}
-							class="h-5 w-5 accent-white"
-						/>
-					</label>
-				</div>
-			</div>
-		{:else}
-			<div class="music-item-play grid w-full grid-cols-[max-content_auto_max-content]">
-				<button
-					class="h-12 w-12 md:h-14 md:w-14"
-					onclick={folder ? vm.selectFolder : vm.addMusicAndPlay}
+		<!-- Action cell (third column) -->
+		<div class="h-12 w-12 ps-2 md:h-14 md:w-14">
+			{#if playlistStore.isCreating && vm.resolvedMusic}
+				<label
+					class="flex aspect-square h-full w-full cursor-pointer items-center justify-center ps-2"
 				>
-					{#if !folder}
-						<div
-							class="box-border grid items-center justify-items-center rounded bg-black bg-opacity-40 md:p-1"
-						>
-							<Icon type={IconType.Play} />
-						</div>
-					{/if}
+					<input
+						type="checkbox"
+						checked={vm.isSelectedForPlaylist}
+						onchange={vm.togglePlaylistSelection}
+						class="h-5 w-5 accent-white"
+					/>
+				</label>
+			{:else}
+				<button
+					class="aspect-square h-full w-full opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+					onclick={vm.addMusic}
+				>
+					<Icon type={IconType.QueueMusic} />
 				</button>
-
-				<div class="cursor-pointer" onclick={folder ? vm.selectFolder : vm.addMusicAndPlay}></div>
-
-				<div class="h-12 w-12 ps-4 md:h-14 md:w-14">
-					<button class="aspect-square h-full w-full" onclick={vm.addMusic}>
-						<Icon type={IconType.QueueMusic} />
-					</button>
-				</div>
-			</div>
-		{/if}
+			{/if}
+		</div>
 	</div>
 </div>
-
-<style lang="scss">
-	.music-item-play {
-		opacity: 0;
-		transition: opacity 0.75s;
-
-		&:hover {
-			opacity: 1;
-			transition: opacity 0.5s;
-		}
-	}
-</style>
