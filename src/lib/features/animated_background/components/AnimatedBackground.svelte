@@ -117,9 +117,17 @@
 		animationFrameId = requestAnimationFrame(drawFadeIn);
 	}
 
-	async function bitmapFromRgba(data: number[] | Uint8Array, w: number, h: number): Promise<ImageBitmap> {
+	async function bitmapFromRgba(
+		data: number[] | Uint8Array,
+		w: number,
+		h: number
+	): Promise<ImageBitmap> {
 		const pixels = data instanceof Uint8Array ? data : new Uint8Array(data);
-		const imageData = new ImageData(new Uint8ClampedArray(pixels.buffer, pixels.byteOffset, pixels.byteLength), w, h);
+		const imageData = new ImageData(
+			new Uint8ClampedArray(pixels.buffer, pixels.byteOffset, pixels.byteLength),
+			w,
+			h
+		);
 		return createImageBitmap(imageData);
 	}
 

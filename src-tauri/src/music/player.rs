@@ -1438,7 +1438,11 @@ impl MusicPlayer {
 
         #[cfg(desktop)]
         unsafe {
-            let path_wide: Vec<u16> = music.path.encode_utf16().chain(std::iter::once(0)).collect();
+            let path_wide: Vec<u16> = music
+                .path
+                .encode_utf16()
+                .chain(std::iter::once(0))
+                .collect();
             let stream = BASS_StreamCreateFile(
                 false,
                 path_wide.as_ptr() as *const _,
@@ -1456,7 +1460,11 @@ impl MusicPlayer {
                 );
 
                 if let Some(wav_path) = Self::convert_to_pcm_wav(&music.path) {
-                    let wav_wide: Vec<u16> = wav_path.to_string_lossy().encode_utf16().chain(std::iter::once(0)).collect();
+                    let wav_wide: Vec<u16> = wav_path
+                        .to_string_lossy()
+                        .encode_utf16()
+                        .chain(std::iter::once(0))
+                        .collect();
                     let wav_stream = BASS_StreamCreateFile(
                         false,
                         wav_wide.as_ptr() as *const _,
@@ -1564,7 +1572,11 @@ impl MusicPlayer {
         {
             if let Some(bass) = bass_android::get_bass() {
                 unsafe {
-                    let path_wide: Vec<u16> = music.path.encode_utf16().chain(std::iter::once(0)).collect();
+                    let path_wide: Vec<u16> = music
+                        .path
+                        .encode_utf16()
+                        .chain(std::iter::once(0))
+                        .collect();
                     let stream = (bass.bass_stream_create_file)(
                         false,
                         path_wide.as_ptr() as *const _,
@@ -1582,7 +1594,8 @@ impl MusicPlayer {
                         );
 
                         if let Some(wav_path) = Self::convert_to_pcm_wav_android(&music.path) {
-                            let wav_wide: Vec<u16> = wav_path.encode_utf16().chain(std::iter::once(0)).collect();
+                            let wav_wide: Vec<u16> =
+                                wav_path.encode_utf16().chain(std::iter::once(0)).collect();
                             let wav_stream = (bass.bass_stream_create_file)(
                                 false,
                                 wav_wide.as_ptr() as *const _,

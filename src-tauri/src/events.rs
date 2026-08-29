@@ -18,8 +18,7 @@ pub fn handle_window_events(_window: &Window, event: &WindowEvent) {
                     .unwrap();
             }
         }
-        WindowEvent::Focused(_focused) =>
-        {
+        WindowEvent::Focused(_focused) => {
             // wgpu_renderer suspend/resume disabled — background rendered by frontend canvas.
             // #[cfg(not(target_os = "linux"))]
             // if *focused { crate::wgpu_renderer::resume_wgpu(...) } else { suspend_wgpu(...) }

@@ -40,7 +40,7 @@
 					alt="Playlist"
 				/>
 			{:else}
-				<div class="aspect-square w-full roundedg"></div>
+				<div class="rounded aspect-square w-full"></div>
 			{/if}
 		{/await}
 	</div>

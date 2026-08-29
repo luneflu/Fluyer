@@ -96,7 +96,11 @@ pub async fn animated_background_update(
     height: u32,
 ) -> Result<Option<(Vec<u8>, u32, u32)>, String> {
     let blurred = generate_blurred_background(colors, width, height)?;
-    Ok(Some((blurred.clone().into_raw(), blurred.width(), blurred.height())))
+    Ok(Some((
+        blurred.clone().into_raw(),
+        blurred.width(),
+        blurred.height(),
+    )))
 }
 
 #[tauri::command]

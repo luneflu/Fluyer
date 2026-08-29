@@ -46,8 +46,10 @@
 		size="lg"
 	/>
 
-	<View class="rounded-full px-3 py-2 {isMobile() ? '' : 'hover:px-4 hover:py-3'}"
-		glassShineSize="sm">
+	<View
+		class="rounded-full px-3 py-2 {isMobile() ? '' : 'hover:px-4 hover:py-3'}"
+		glassShineSize="sm"
+	>
 		<div class="grid w-full grid-cols-[auto_min-content] py-1 md:grid-cols-3">
 			<div class="flex items-center ps-1 sm:gap-x-1">
 				<button class="hidden w-10 sm:block md:w-12 lg:w-12" onclick={vm.handleButtonPrevious}

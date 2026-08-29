@@ -19,7 +19,9 @@
 <div
 	use:vm.scrollable
 	onscroll={vm.handleScroll}
-	class="scrollbar-hidden relative w-full overflow-y-auto px-3 transition-all duration-300 {sidebarStore.showType ? 'opacity-20 pointer-events-none' : ''}"
+	class="scrollbar-hidden relative w-full overflow-y-auto px-3 transition-all duration-300 {sidebarStore.showType
+		? 'pointer-events-none opacity-20'
+		: ''}"
 	style="height: {containerHeight};"
 >
 	{#if vm.data && vm.data.length > 0 && vm.state.columnCount}

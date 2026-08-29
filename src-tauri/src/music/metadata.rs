@@ -280,10 +280,10 @@ impl MusicMetadata {
         // It replaces non-ISO-8859-1 characters (like Cyrillic Windows-1251) with '?' or replacement chars.
         let mut metadatas = format.metadata();
         let mut best_score = -1;
-        
+
         // We will accumulate the best metadata found across all revisions
         let mut best_temp_meta = MusicMetadata::default();
-        
+
         while let Some(rev) = metadatas.current() {
             let score = match rev.info.short_name {
                 "id3v2" => 10,
@@ -292,18 +292,18 @@ impl MusicMetadata {
                 "id3v1" => 1,
                 _ => 0,
             };
-            
+
             if score > best_score {
                 best_score = score;
                 best_temp_meta = MusicMetadata::default();
                 extract_tags(rev, &mut best_temp_meta);
             }
-            
+
             if metadatas.pop().is_none() {
                 break;
             }
         }
-        
+
         // Apply the best metadata tags found
         metadata.title = best_temp_meta.title;
         metadata.artist = best_temp_meta.artist;

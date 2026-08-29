@@ -181,7 +181,10 @@
 
 	<div
 		class="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 rounded-full bg-white transition-all duration-200 ease-linear"
-		style="height: {getProgressHeight()}px; width: {Math.max(0, Math.min(100, progressPercentage))}%;"
+		style="height: {getProgressHeight()}px; width: {Math.max(
+			0,
+			Math.min(100, progressPercentage)
+		)}%;"
 	></div>
 
 	<input

@@ -48,13 +48,13 @@
 					{/if}
 				</div>
 			{:else if image && folder}
-			<!-- Folder with album art -->
-			<div
-				class={vm.isImageAnimating
-					? 'anim anim-fade-in relative aspect-square h-12 w-12 transition-transform duration-300 group-hover:scale-110 md:h-14 md:w-14'
-					: 'relative aspect-square h-12 w-12 transition-transform duration-300 group-hover:scale-110 md:h-14 md:w-14'}
-				onanimationend={() => (vm.isImageAnimating = false)}
-			>
+				<!-- Folder with album art -->
+				<div
+					class={vm.isImageAnimating
+						? 'anim anim-fade-in relative aspect-square h-12 w-12 transition-transform duration-300 group-hover:scale-110 md:h-14 md:w-14'
+						: 'relative aspect-square h-12 w-12 transition-transform duration-300 group-hover:scale-110 md:h-14 md:w-14'}
+					onanimationend={() => (vm.isImageAnimating = false)}
+				>
 					<div class="absolute inset-0 opacity-75">
 						<Icon type={IconType.Folder} />
 					</div>
