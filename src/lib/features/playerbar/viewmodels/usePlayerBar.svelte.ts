@@ -58,8 +58,15 @@ function redirectToPlay() {
 	PageService.goTo(PageRoutes.PLAY);
 }
 
+let previousVolume = 1;
+
 function handleVolumeButton() {
-	musicStore.volume = musicStore.volume > 0 ? 0 : 1;
+	if (musicStore.volume > 0) {
+		previousVolume = musicStore.volume;
+		musicStore.volume = 0;
+	} else {
+		musicStore.volume = previousVolume > 0 ? previousVolume : 1;
+	}
 }
 
 function handleProgressClick(percentage: number) {
