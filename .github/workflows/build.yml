@@ -11,6 +11,10 @@ on:
         description: 'Build windows-x86_64'
         type: boolean
         default: true
+      build_windows_arm64:
+        description: 'Build windows-arm64'
+        type: boolean
+        default: true
       build_macos_intel:
         description: 'Build macos-intel'
         type: boolean
@@ -33,10 +37,6 @@ on:
         default: true
       build_android_aarch64:
         description: 'Build android-aarch64'
-        type: boolean
-        default: true
-      build_android_i686:
-        description: 'Build android-i686'
         type: boolean
         default: true
       build_android_x86_64:
@@ -103,6 +103,56 @@ jobs:
           artifacts: |
             ./src-tauri/target/release/bundle/nsis/Fluyer_*.exe
             ./src-tauri/target/release/bundle/nsis/Fluyer_*.exe.sig
+          tag: v${{ needs.prepare.outputs.version }}
+          name: Fluyer v${{ needs.prepare.outputs.version }}
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          prerelease: true
+          artifactErrorsFailBuild: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows-arm64:
+    needs: prepare
+    if: ${{ inputs.build_windows_arm64 }}
+    runs-on: windows-latest
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 9
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-pc-windows-msvc
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+          shared-key: 'build-windows-arm64'
+          prefix-key: 'v2-rust'
+      - name: Setup Workflow
+        shell: bash
+        env:
+          arch: arm64
+        run: bash infra/windows.sh
+      - name: Upload artifact
+        if: ${{ !inputs.release_build }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-arm64
+          path: ./src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/Fluyer_*.exe
+      - name: Publish release
+        if: ${{ inputs.release_build }}
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: |
+            ./src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/Fluyer_*.exe
+            ./src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/Fluyer_*.exe.sig
           tag: v${{ needs.prepare.outputs.version }}
           name: Fluyer v${{ needs.prepare.outputs.version }}
           allowUpdates: true
@@ -447,70 +497,6 @@ jobs:
           artifactErrorsFailBuild: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  build-android-i686:
-    needs: prepare
-    if: ${{ inputs.build_android_i686 }}
-    runs-on: ubuntu-latest
-    permissions: write-all
-    steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 9
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: 'pnpm'
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-      - name: Install NDK
-        run: sdkmanager "ndk;28.0.13004108"
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: i686-linux-android
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
-          shared-key: 'build-android-i686'
-          prefix-key: 'v2-rust'
-      - name: Setup Workflow
-        shell: bash
-        env:
-          ANDROID_ARCH: i686
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          ANDROID_KEY_BASE64: ${{ secrets.ANDROID_KEY_BASE64 }}
-          RUNNER_TEMP: ${{ runner.temp }}
-          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.0.13004108
-        run: bash infra/android.sh
-      - name: Rename Android APK
-        run: mv ./src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk ./Fluyer_${{ needs.prepare.outputs.version }}_i686.apk
-      - name: Upload artifact
-        if: ${{ !inputs.release_build }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-i686
-          path: ./Fluyer_*_i686.apk
-      - name: Publish release
-        if: ${{ inputs.release_build }}
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: ./Fluyer_*_i686.apk
-          tag: v${{ needs.prepare.outputs.version }}
-          name: Fluyer v${{ needs.prepare.outputs.version }}
-          allowUpdates: true
-          omitBodyDuringUpdate: true
-          prerelease: true
-          artifactErrorsFailBuild: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-
   build-android-x86_64:
     needs: prepare
     if: ${{ inputs.build_android_x86_64 }}
@@ -580,13 +566,13 @@ jobs:
       [
         prepare,
         build-windows-x86_64,
+        build-windows-arm64,
         build-macos-intel,
         build-macos-silicon,
         build-linux,
         build-linux-cef,
         build-android-armv7,
         build-android-aarch64,
-        build-android-i686,
         build-android-x86_64
       ]
     if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') && inputs.release_build

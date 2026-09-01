@@ -23,11 +23,16 @@ export interface InstallOptions {
 
 export async function installBassLib(name: string, options: InstallOptions = {}) {
 	const platform = options.platform || os.platform();
-	const arch = options.arch || os.arch();
+	const arch = options.arch || process.env.ARCH || process.env.arch || os.arch();
 	const destPath = options.destDir || path.resolve('src-tauri', 'libs');
 
 	if (platform === 'darwin' && (name === 'bassalac' || name === 'bass_aac')) {
 		console.log(`Skipping ${name} for macOS...`);
+		return;
+	}
+
+	if (platform === 'win32' && (arch === 'arm64' || arch === 'aarch64') && (name === 'bassalac' || name === 'bass_aac')) {
+		console.log(`Skipping ${name} for Windows ARM64...`);
 		return;
 	}
 
@@ -58,15 +63,27 @@ export async function installBassLib(name: string, options: InstallOptions = {})
 			let platformSuffix = '';
 			switch (platform) {
 				case 'win32':
-					platformSuffix = '';
-					libSourcePath = path.join(extractPath, 'x64', `${name}.dll`);
-					libDestPath = path.join(destPath, `${name}.dll`);
+					if (arch === 'arm64' || arch === 'aarch64') {
+						downloadUrl = `https://www.un4seen.com/files/bass${VERSION}-arm64.zip`;
+						libSourcePath = path.join(extractPath, 'arm64', `${name}.dll`);
+						libDestPath = path.join(destPath, `${name}.dll`);
 
-					extraOps = async () => {
-						const libWindowsPath = path.join(extractPath, 'c', 'x64', `${name}.lib`);
-						const destLibWindowsPath = path.join(destPath, path.basename(libWindowsPath));
-						await fs.copyFile(libWindowsPath, destLibWindowsPath);
-					};
+						extraOps = async () => {
+							const libWindowsPath = path.join(extractPath, 'c', 'arm64', `${name}.lib`);
+							const destLibWindowsPath = path.join(destPath, path.basename(libWindowsPath));
+							await fs.copyFile(libWindowsPath, destLibWindowsPath);
+						};
+					} else {
+						platformSuffix = '';
+						libSourcePath = path.join(extractPath, 'x64', `${name}.dll`);
+						libDestPath = path.join(destPath, `${name}.dll`);
+
+						extraOps = async () => {
+							const libWindowsPath = path.join(extractPath, 'c', 'x64', `${name}.lib`);
+							const destLibWindowsPath = path.join(destPath, path.basename(libWindowsPath));
+							await fs.copyFile(libWindowsPath, destLibWindowsPath);
+						};
+					}
 					break;
 				case 'darwin':
 					platformSuffix = '-osx';
@@ -100,7 +117,9 @@ export async function installBassLib(name: string, options: InstallOptions = {})
 				default:
 					throw new Error(`Unsupported platform: ${platform}`);
 			}
-			downloadUrl = `https://www.un4seen.com/files/${name === 'bass_aac' ? 'z/2/' : ''}${name}${VERSION}${platformSuffix}.zip`;
+			if (!downloadUrl) {
+				downloadUrl = `https://www.un4seen.com/files/${name === 'bass_aac' ? 'z/2/' : ''}${name}${VERSION}${platformSuffix}.zip`;
+			}
 		}
 
 		try {
