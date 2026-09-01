@@ -11,8 +11,8 @@ fi
 pnpm run init
 
 # Required for wgpu
-cd src-tauri
-cargo update
+# cd src-tauri
+# cargo update
 
-cd ..
+# cd ..
 pnpm tauri build

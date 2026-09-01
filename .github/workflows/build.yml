@@ -299,13 +299,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: linux
-          path: ./src-tauri/target/release/bundle/deb/Fluyer_*_amd64.deb
+          path: |
+            ./src-tauri/target/release/bundle/deb/Fluyer_*_amd64.deb
+            ./src-tauri/target/release/bundle/rpm/Fluyer-*.x86_64.rpm
       - name: Publish release
         if: ${{ inputs.release_build }}
         uses: ncipollo/release-action@v1
         with:
           artifacts: |
             ./src-tauri/target/release/bundle/deb/Fluyer_*_amd64.deb
+            ./src-tauri/target/release/bundle/rpm/Fluyer-*.x86_64.rpm
           tag: v${{ needs.prepare.outputs.version }}
           name: Fluyer v${{ needs.prepare.outputs.version }}
           allowUpdates: true
@@ -349,18 +352,23 @@ jobs:
         run: |
           mv ./src-tauri/target/release/bundle/deb/fluyer_*_amd64.deb ./src-tauri/target/release/bundle/deb/Fluyer-cef_${{ needs.prepare.outputs.version }}_amd64.deb || \
           mv ./src-tauri/target/release/bundle/deb/Fluyer_*_amd64.deb ./src-tauri/target/release/bundle/deb/Fluyer-cef_${{ needs.prepare.outputs.version }}_amd64.deb
+          mv ./src-tauri/target/release/bundle/rpm/fluyer-*.x86_64.rpm ./src-tauri/target/release/bundle/rpm/Fluyer-cef-${{ needs.prepare.outputs.version }}-1.x86_64.rpm || \
+          mv ./src-tauri/target/release/bundle/rpm/Fluyer-*.x86_64.rpm ./src-tauri/target/release/bundle/rpm/Fluyer-cef-${{ needs.prepare.outputs.version }}-1.x86_64.rpm
       - name: Upload artifact
         if: ${{ !inputs.release_build }}
         uses: actions/upload-artifact@v4
         with:
           name: linux-cef
-          path: ./src-tauri/target/release/bundle/deb/Fluyer-cef_*_amd64.deb
+          path: |
+            ./src-tauri/target/release/bundle/deb/Fluyer-cef_*_amd64.deb
+            ./src-tauri/target/release/bundle/rpm/Fluyer-cef-*.x86_64.rpm
       - name: Publish release
         if: ${{ inputs.release_build }}
         uses: ncipollo/release-action@v1
         with:
           artifacts: |
             ./src-tauri/target/release/bundle/deb/Fluyer-cef_*_amd64.deb
+            ./src-tauri/target/release/bundle/rpm/Fluyer-cef-*.x86_64.rpm
           tag: v${{ needs.prepare.outputs.version }}
           name: Fluyer v${{ needs.prepare.outputs.version }}
           allowUpdates: true

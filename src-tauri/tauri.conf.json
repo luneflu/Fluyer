@@ -33,7 +33,7 @@
 			"hardenedRuntime": false
 		},
 		"active": true,
-		"targets": ["nsis", "dmg", "deb", "app", "msi"],
+		"targets": ["nsis", "dmg", "deb", "rpm", "app", "msi"],
 		"icon": [
 			"icons/32x32.png",
 			"icons/128x128.png",
