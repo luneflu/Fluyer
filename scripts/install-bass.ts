@@ -10,9 +10,7 @@ const DEFAULT_LIBS = [
 	'bassflac',
 	'bassopus',
 	'bassape',
-	'bassalac',
-	'basswv',
-	'bass_aac'
+	'basswv'
 ];
 
 export interface InstallOptions {
@@ -25,11 +23,6 @@ export async function installBassLib(name: string, options: InstallOptions = {})
 	const platform = options.platform || os.platform();
 	const arch = options.arch || process.env.ARCH || process.env.arch || os.arch();
 	const destPath = options.destDir || path.resolve('src-tauri', 'libs');
-
-	if (platform === 'darwin' && (name === 'bassalac' || name === 'bass_aac')) {
-		console.log(`Skipping ${name} for macOS...`);
-		return;
-	}
 
 	const downloadPath = path.join(destPath, `${name}-${VERSION}-${platform}-${arch}.zip`);
 	const extractPath = path.join(destPath, `${name}-${VERSION}-${platform}-${arch}`);
@@ -46,7 +39,7 @@ export async function installBassLib(name: string, options: InstallOptions = {})
 		if (platform === 'android') {
 			if (!options.arch) throw new Error('Arch is required for Android installation');
 
-			downloadUrl = `https://www.un4seen.com/files/${name === 'bass_aac' ? 'z/2/' : ''}${name}${VERSION}-android.zip`;
+			downloadUrl = `https://www.un4seen.com/files/${name}${VERSION}-android.zip`;
 			// Android zip structure: libs/<arch>/lib<name>.so
 			libSourcePath = path.join(extractPath, 'libs', arch, `lib${name}.so`);
 
@@ -101,7 +94,7 @@ export async function installBassLib(name: string, options: InstallOptions = {})
 					throw new Error(`Unsupported platform: ${platform}`);
 			}
 			if (!downloadUrl) {
-				downloadUrl = `https://www.un4seen.com/files/${name === 'bass_aac' ? 'z/2/' : ''}${name}${VERSION}${platformSuffix}.zip`;
+				downloadUrl = `https://www.un4seen.com/files/${name}${VERSION}${platformSuffix}.zip`;
 			}
 		}
 
@@ -174,7 +167,6 @@ export async function installBass(options: InstallOptions = {}) {
 			await extractZip(downloadPath, extractPath);
 
 			for (const lib of DEFAULT_LIBS) {
-				if (lib === 'bassalac' || lib === 'bass_aac') continue;
 				const dllSrc = path.join(extractPath, 'arm64', `${lib}.dll`);
 				const libSrc = path.join(extractPath, 'c', 'arm64', `${lib}.lib`);
 				await fs.copyFile(dllSrc, path.join(destDir, `${lib}.dll`));

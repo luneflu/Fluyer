@@ -341,11 +341,6 @@ impl MusicPlayer {
             let extension = "so";
 
             for plugin in BASS_PLUGINS {
-                #[cfg(target_os = "macos")]
-                if plugin == "bassalac" || plugin == "bass_aac" {
-                    continue;
-                }
-
                 #[cfg(not(target_os = "linux"))]
                 let c_path = CString::new(format!("{}.{}", plugin, extension)).unwrap();
                 #[cfg(target_os = "linux")]

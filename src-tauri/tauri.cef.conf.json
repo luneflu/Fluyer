@@ -22,9 +22,7 @@
 					"/usr/lib/fluyer/libbassmix.so": "./libs/libbassmix.so",
 					"/usr/lib/fluyer/libbassopus.so": "./libs/libbassopus.so",
 					"/usr/lib/fluyer/libbassape.so": "./libs/libbassape.so",
-					"/usr/lib/fluyer/libbassalac.so": "./libs/libbassalac.so",
-					"/usr/lib/fluyer/libbasswv.so": "./libs/libbasswv.so",
-					"/usr/lib/fluyer/libbass_aac.so": "./libs/libbass_aac.so"
+					"/usr/lib/fluyer/libbasswv.so": "./libs/libbasswv.so"
 				}
 			},
 			"rpm": {
@@ -36,9 +34,7 @@
 					"/usr/lib/fluyer/libbassmix.so": "./libs/libbassmix.so",
 					"/usr/lib/fluyer/libbassopus.so": "./libs/libbassopus.so",
 					"/usr/lib/fluyer/libbassape.so": "./libs/libbassape.so",
-					"/usr/lib/fluyer/libbassalac.so": "./libs/libbassalac.so",
-					"/usr/lib/fluyer/libbasswv.so": "./libs/libbasswv.so",
-					"/usr/lib/fluyer/libbass_aac.so": "./libs/libbass_aac.so"
+					"/usr/lib/fluyer/libbasswv.so": "./libs/libbasswv.so"
 				}
 			}
 		}

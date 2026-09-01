@@ -1,5 +1,5 @@
-pub const BASS_PLUGINS: [&str; 6] = [
-    "bassflac", "bassopus", "bassape", "bassalac", "basswv", "bass_aac",
+pub const BASS_PLUGINS: [&str; 4] = [
+    "bassflac", "bassopus", "bassape", "basswv",
 ];
 
 pub const BASS_UNICODE: u32 = 0x80000000;
