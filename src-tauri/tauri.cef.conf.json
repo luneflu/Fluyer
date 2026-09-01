@@ -26,6 +26,20 @@
 					"/usr/lib/fluyer/libbasswv.so": "./libs/libbasswv.so",
 					"/usr/lib/fluyer/libbass_aac.so": "./libs/libbass_aac.so"
 				}
+			},
+			"rpm": {
+				"files": {
+					"/usr/lib/fluyer/ffmpeg": "./libs/ffmpeg/bin/ffmpeg",
+					"/usr/lib/fluyer/ffprobe": "./libs/ffmpeg/bin/ffprobe",
+					"/usr/lib/fluyer/libbass.so": "./libs/libbass.so",
+					"/usr/lib/fluyer/libbassflac.so": "./libs/libbassflac.so",
+					"/usr/lib/fluyer/libbassmix.so": "./libs/libbassmix.so",
+					"/usr/lib/fluyer/libbassopus.so": "./libs/libbassopus.so",
+					"/usr/lib/fluyer/libbassape.so": "./libs/libbassape.so",
+					"/usr/lib/fluyer/libbassalac.so": "./libs/libbassalac.so",
+					"/usr/lib/fluyer/libbasswv.so": "./libs/libbasswv.so",
+					"/usr/lib/fluyer/libbass_aac.so": "./libs/libbass_aac.so"
+				}
 			}
 		}
 	}
