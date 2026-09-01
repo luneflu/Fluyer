@@ -216,8 +216,16 @@
 				currentBitmap = await bitmapFromRgba(data, texWidth, texHeight);
 				triggerFadeIn();
 			} else {
-				// Crossfade to new image
-				if (nextBitmap) nextBitmap.close();
+				// Interrupted transition: capture current canvas state as starting bitmap
+				if (animationFrameId) cancelAnimationFrame(animationFrameId);
+				if (nextBitmap || transitionStart !== null) {
+					const snapshot = await createImageBitmap(canvas);
+					currentBitmap.close();
+					if (nextBitmap) nextBitmap.close();
+					currentBitmap = snapshot;
+					nextBitmap = null;
+					transitionStart = null;
+				}
 				nextBitmap = await bitmapFromRgba(data, texWidth, texHeight);
 				triggerTransition();
 			}
