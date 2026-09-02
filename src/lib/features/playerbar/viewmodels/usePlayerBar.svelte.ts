@@ -46,12 +46,7 @@ function handleButtonNext() {
 }
 
 async function handleButtonShuffle() {
-	await MusicPlayerService.pause();
-
 	await QueueService.shuffleQueue();
-
-	await MusicPlayerService.play();
-	ProgressService.start();
 }
 
 function redirectToPlay() {
