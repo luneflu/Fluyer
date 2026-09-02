@@ -8,6 +8,7 @@ pub const BASS_STREAM_DECODE: u32 = 0x200000;
 pub const BASS_MIXER_NORAMPIN: u32 = 0x800000;
 pub const BASS_ACTIVE_STOPPED: u32 = 0;
 pub const BASS_ACTIVE_PLAYING: u32 = 1;
+pub const BASS_ACTIVE_STALLED: u32 = 2;
 #[allow(dead_code)]
 pub const BASS_ACTIVE_PAUSED: u32 = 3;
 pub const BASS_POS_BYTE: u32 = 0;

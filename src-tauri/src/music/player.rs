@@ -628,13 +628,15 @@ impl MusicPlayer {
         } else {
             #[cfg(desktop)]
             unsafe {
-                BASS_ChannelIsActive(bass_mixer) == BASS_ACTIVE_PLAYING
+                let status = BASS_ChannelIsActive(bass_mixer);
+                status == BASS_ACTIVE_PLAYING || status == BASS_ACTIVE_STALLED
             }
             #[cfg(target_os = "android")]
             {
                 bass_android::get_bass()
                     .map(|bass| unsafe {
-                        (bass.bass_channel_is_active)(bass_mixer) == BASS_ACTIVE_PLAYING
+                        let status = (bass.bass_channel_is_active)(bass_mixer);
+                        status == BASS_ACTIVE_PLAYING || status == BASS_ACTIVE_STALLED
                     })
                     .unwrap_or(false)
             }
@@ -1302,12 +1304,16 @@ impl MusicPlayer {
         } else {
             #[cfg(desktop)]
             unsafe {
-                BASS_ChannelIsActive(bm) == BASS_ACTIVE_PLAYING
+                let status = BASS_ChannelIsActive(bm);
+                status == BASS_ACTIVE_PLAYING || status == BASS_ACTIVE_STALLED
             }
             #[cfg(target_os = "android")]
             {
                 bass_android::get_bass()
-                    .map(|bass| unsafe { (bass.bass_channel_is_active)(bm) == BASS_ACTIVE_PLAYING })
+                    .map(|bass| unsafe {
+                        let status = (bass.bass_channel_is_active)(bm);
+                        status == BASS_ACTIVE_PLAYING || status == BASS_ACTIVE_STALLED
+                    })
                     .unwrap_or(false)
             }
         };
