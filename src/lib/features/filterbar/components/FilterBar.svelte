@@ -42,6 +42,7 @@
 		{#if isMobile()}
 			<Button
 				class="pointer-events-auto grid aspect-square h-9 justify-center rounded sm:p-0"
+				glassShineColor="rgba(255, 255, 255, 0.3)"
 				onclick={vm.handleMenuButton}
 			>
 				<div class="w-5">
@@ -75,6 +76,7 @@
 		{#if isMobile()}
 			<Button
 				class="pointer-events-auto grid aspect-square h-9 justify-center rounded sm:hidden sm:p-0"
+				glassShineColor="rgba(255, 255, 255, 0.3)"
 				onclick={vm.handleQueueButton}
 			>
 				<div class="w-5">
@@ -134,8 +136,8 @@
 		{/if}
 	</div>
 	<div
-		class="hidden sm:grid sm:ps-3
-		{isMobile() ? 'sm:pe-3' : 'gap-x-1 sm:grid-cols-[1fr_min-content] md:gap-x-3'}
+		class="hidden sm:grid sm:px-3
+		{isMobile() && 'gap-x-1 sm:grid-cols-[1fr_min-content] md:gap-x-3'}
 		{isLinux() && !appStore.isCefEnabled ? 'me-[100px]' : ''}
 		{isWindows() ? 'me-[120px]' : ''}"
 	>
