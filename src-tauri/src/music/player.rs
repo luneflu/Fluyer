@@ -341,11 +341,6 @@ impl MusicPlayer {
             let extension = "so";
 
             for plugin in BASS_PLUGINS {
-                #[cfg(target_os = "macos")]
-                if plugin == "bassalac" || plugin == "bass_aac" {
-                    continue;
-                }
-
                 #[cfg(not(target_os = "linux"))]
                 let c_path = CString::new(format!("{}.{}", plugin, extension)).unwrap();
                 #[cfg(target_os = "linux")]
@@ -633,13 +628,15 @@ impl MusicPlayer {
         } else {
             #[cfg(desktop)]
             unsafe {
-                BASS_ChannelIsActive(bass_mixer) == BASS_ACTIVE_PLAYING
+                let status = BASS_ChannelIsActive(bass_mixer);
+                status == BASS_ACTIVE_PLAYING || status == BASS_ACTIVE_STALLED
             }
             #[cfg(target_os = "android")]
             {
                 bass_android::get_bass()
                     .map(|bass| unsafe {
-                        (bass.bass_channel_is_active)(bass_mixer) == BASS_ACTIVE_PLAYING
+                        let status = (bass.bass_channel_is_active)(bass_mixer);
+                        status == BASS_ACTIVE_PLAYING || status == BASS_ACTIVE_STALLED
                     })
                     .unwrap_or(false)
             }
@@ -1307,12 +1304,16 @@ impl MusicPlayer {
         } else {
             #[cfg(desktop)]
             unsafe {
-                BASS_ChannelIsActive(bm) == BASS_ACTIVE_PLAYING
+                let status = BASS_ChannelIsActive(bm);
+                status == BASS_ACTIVE_PLAYING || status == BASS_ACTIVE_STALLED
             }
             #[cfg(target_os = "android")]
             {
                 bass_android::get_bass()
-                    .map(|bass| unsafe { (bass.bass_channel_is_active)(bm) == BASS_ACTIVE_PLAYING })
+                    .map(|bass| unsafe {
+                        let status = (bass.bass_channel_is_active)(bm);
+                        status == BASS_ACTIVE_PLAYING || status == BASS_ACTIVE_STALLED
+                    })
                     .unwrap_or(false)
             }
         };

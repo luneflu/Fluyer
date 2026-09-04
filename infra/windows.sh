@@ -5,6 +5,7 @@ echo "DISCORD_APPLICATION_ID=${DISCORD_APPLICATION_ID:-}" >> .env
 
 pnpm i
 if [[ "$arch" == "arm64" ]]; then
+    export ARCH="arm64"
     pnpm i @tauri-apps/cli-win32-arm64-msvc
 fi
 
@@ -15,4 +16,8 @@ pnpm run init
 # cargo update
 
 # cd ..
-pnpm tauri build
+if [[ "$arch" == "arm64" ]]; then
+    pnpm tauri build --target aarch64-pc-windows-msvc
+else
+    pnpm tauri build
+fi

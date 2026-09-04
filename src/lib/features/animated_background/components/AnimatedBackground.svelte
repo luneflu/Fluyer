@@ -161,10 +161,10 @@
 			let [h, s, l] = ColorConvert.rgb.hsl(color[0], color[1], color[2]);
 			if (MetadataService.isDefaultCoverArt(currentCoverArt)) {
 				l = 50;
-				s = 40 + (s - 60) * 0.2;
+				while (s > 40) s *= 0.9;
 			} else {
-				if (l > 45) l = 45 + (l - 45) * 0.3;
-				if (s > 60) s = 60 + (s - 60) * 0.3;
+				while (l > 45) l *= 0.9;
+				while (s > 50) s *= 0.9;
 			}
 			return ColorConvert.hsl.rgb(h, s, l);
 		});
