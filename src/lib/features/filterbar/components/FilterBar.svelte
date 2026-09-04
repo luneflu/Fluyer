@@ -25,14 +25,14 @@
 	class="pointer-events-none fixed left-0 top-0 z-20 grid w-full gap-y-2 pb-3
         {isMacos() ? 'sm:justify-end' : ''}
         {isMacos() ? 'right-0' : 'left-0'}
-        {modalStore.show ? 'opacity-10 blur-sm' : ''} anim anim-slide-in-down
-        transition-opacity duration-300 {sidebarStore.showType ? 'opacity-20' : ''}"
+        {modalStore.show ? 'opacity-10 blur-sm' : ''} anim anim-slide-in-down"
 	style="margin-top: {isMobile() ? mobileStore.statusBarHeight : 8}px;
         grid-template-columns: {vm.state.gridSize};"
 	bind:this={vm.element}
 >
 	<div
-		class="grid gap-x-1 px-3 sm:pe-3 sm:ps-3 md:gap-x-3
+		class="grid gap-x-1 md:gap-x-3
+		{isMobile() ? 'px-3' : 'px-2 md:px-3'}
 		{isMacos() ? 'ms-[68px]' : ''}
 		{isWindows() || (isLinux() && !appStore.isCefEnabled) ? 'me-[100px] sm:me-0' : ''}
 		{isMobile()
@@ -52,7 +52,7 @@
 		{/if}
 
 		<Input
-			class="pointer-events-auto h-9 rounded p-0 sm:hidden"
+			class="pointer-events-auto h-9 rounded p-0 transition-opacity duration-300 sm:hidden {sidebarStore.showType ? 'opacity-20' : ''}"
 			glassShineColor="rgba(255, 255, 255, 0.3)"
 			icon={IconType.Search}
 			placeholder="Search..."
@@ -60,7 +60,7 @@
 		/>
 
 		<Button
-			class="pointer-events-auto grid aspect-square h-9 justify-center rounded"
+			class="pointer-events-auto grid aspect-square h-9 justify-center rounded transition-opacity duration-300 {sidebarStore.showType ? 'opacity-20' : ''}"
 			glassShineColor="rgba(255, 255, 255, 0.3)"
 			onclick={vm.toggleSort}
 		>
@@ -85,7 +85,7 @@
 			</Button>
 		{/if}
 
-		<div class="pointer-events-auto hidden h-9 w-full min-w-0 sm:flex sm:items-center sm:gap-x-1">
+		<div class="pointer-events-auto hidden h-9 w-full min-w-0 transition-opacity duration-300 sm:flex sm:items-center sm:gap-x-1 {sidebarStore.showType ? 'opacity-20' : ''}">
 			{#if musicStore.listType === 'playlist' && playlistStore.isCreating && vm.state.columns < 5}
 				<ConfirmCancelButtons
 					onconfirm={vm.confirmPlaylistCreation}
@@ -105,7 +105,7 @@
 		</div>
 	</div>
 
-	<div class="h-9 px-3 sm:hidden">
+	<div class="h-9 px-3 transition-opacity duration-300 sm:hidden {sidebarStore.showType ? 'opacity-20' : ''}">
 		<div class="flex h-9 w-full min-w-0 items-center gap-x-1">
 			{#if musicStore.listType === 'playlist' && playlistStore.isCreating}
 				<ConfirmCancelButtons
@@ -125,7 +125,7 @@
 			{/if}
 		</div>
 	</div>
-	<div class="hidden sm:block" style={vm.state.columns > 5 ? 'width: 50%;' : ''}>
+	<div class="hidden transition-opacity duration-300 sm:block {sidebarStore.showType ? 'opacity-20' : ''}" style={vm.state.columns > 5 ? 'width: 50%;' : ''}>
 		{#if musicStore.listType === 'playlist' && playlistStore.isCreating && vm.state.columns >= 5}
 			<ConfirmCancelButtons
 				onconfirm={vm.confirmPlaylistCreation}
@@ -142,7 +142,7 @@
 		{isWindows() ? 'me-[120px]' : ''}"
 	>
 		<Input
-			class="pointer-events-auto h-9 rounded p-0"
+			class="pointer-events-auto h-9 rounded p-0 transition-opacity duration-300 {sidebarStore.showType ? 'opacity-20' : ''}"
 			glassShineColor="rgba(255, 255, 255, 0.3)"
 			icon={IconType.Search}
 			placeholder="Search..."
