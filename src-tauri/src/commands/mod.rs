@@ -60,6 +60,7 @@ pub const COMMAND_HANDLERS: fn(crate::tauri_types::Invoke) -> bool = tauri::gene
     crate::developer::commands::developer_clear_data,
     crate::developer::commands::developer_clear_cache,
     crate::developer::commands::developer_log_get,
+    crate::developer::commands::developer_metrics_get,
     // Mobile commands
     #[cfg(target_os = "android")]
     mobile::mobile_audio_permission_read_request,

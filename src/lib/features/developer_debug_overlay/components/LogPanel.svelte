@@ -75,7 +75,7 @@
 			onpointerdown={onPointerDown}
 		>
 			<span>Logs</span>
-			<div class="flex gap-2">
+			<div class="flex gap-2" onpointerdown={(e) => e.stopPropagation()}>
 				<button
 					class="border border-white px-2 py-1 hover:bg-white hover:text-black"
 					onclick={copyLogs}>Copy</button
@@ -89,10 +89,6 @@
 				<button
 					class="border border-white px-2 py-1 hover:bg-white hover:text-black"
 					onclick={clearLogs}>Clear</button
-				>
-				<button
-					class="border border-white px-2 py-1 hover:bg-white hover:text-black"
-					onclick={() => (isVisible = false)}>X</button
 				>
 			</div>
 		</div>

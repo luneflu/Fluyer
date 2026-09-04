@@ -20,6 +20,26 @@ const TauriDeveloperAPI = {
 	},
 	clearDeveloperCache: () => {
 		return invoke(TauriCommands.DEVELOPER_CLEAR_CACHE);
+	},
+	getDeveloperMetrics: () => {
+		return invoke<{
+			total_ram_bytes: number;
+			total_app_ram_bytes: number;
+			total_app_working_set_bytes: number;
+			total_app_private_ws_bytes: number;
+			total_app_cpu_percent: number;
+			total_app_gpu_percent: number;
+			processes: {
+				pid: number;
+				name: string;
+				is_main: boolean;
+				ram_bytes: number;
+				working_set_bytes: number;
+				private_ws_bytes: number;
+				cpu_percent: number;
+				gpu_percent: number;
+			}[];
+		}>(TauriCommands.DEVELOPER_METRICS_GET);
 	}
 };
 

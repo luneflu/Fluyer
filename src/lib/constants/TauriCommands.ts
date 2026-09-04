@@ -77,6 +77,7 @@ export const TauriCommands = {
 	DEVELOPER_CLEAR_CACHE: 'developer_clear_cache',
 	DEVELOPER_SCREENSHOT_SAVE: 'developer_screenshot_save',
 	DEVELOPER_UPDATE_CHECK: 'developer_update_check',
+	DEVELOPER_METRICS_GET: 'developer_metrics_get',
 
 	RENDERER_TRIGGER_REDRAW: 'renderer_trigger_redraw',
 
