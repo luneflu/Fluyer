@@ -175,7 +175,7 @@ pub fn developer_metrics_get() -> AppMetrics {
         use windows_sys::Win32::System::Threading::*;
 
         lazy_static::lazy_static! {
-            static ref SYSINFO_SYSTEM: Mutex<System> = Mutex::new(System::new());
+            static ref SYSINFO_SYSTEM: Mutex<System> = Mutex::new(System::new_all());
         }
 
         let mut sys_guard = SYSINFO_SYSTEM.lock().unwrap();
@@ -185,6 +185,7 @@ pub fn developer_metrics_get() -> AppMetrics {
 
         sys.refresh_processes(ProcessesToUpdate::All, true);
         sys.refresh_memory();
+        sys.refresh_cpu_all();
 
         let mut all_pids = HashSet::new();
         all_pids.insert(main_pid);
@@ -343,7 +344,7 @@ pub fn developer_metrics_get() -> AppMetrics {
         use sysinfo::{Pid, ProcessesToUpdate, System};
 
         lazy_static::lazy_static! {
-            static ref SYSINFO_SYSTEM: Mutex<System> = Mutex::new(System::new());
+            static ref SYSINFO_SYSTEM: Mutex<System> = Mutex::new(System::new_all());
         }
 
         let mut sys_guard = SYSINFO_SYSTEM.lock().unwrap();
@@ -353,6 +354,7 @@ pub fn developer_metrics_get() -> AppMetrics {
 
         sys.refresh_processes(ProcessesToUpdate::All, true);
         sys.refresh_memory();
+        sys.refresh_cpu_all();
 
         let mut all_pids = HashSet::new();
         all_pids.insert(main_pid);
