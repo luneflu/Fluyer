@@ -60,12 +60,25 @@ export async function installBassLib(name: string, options: InstallOptions = {})
 				case 'win32':
 					platformSuffix = '';
 					libSourcePath = path.join(extractPath, 'x64', `${name}.dll`);
+					// Some bass zip files put dll in root directory instead of x64
+					try {
+						await fs.access(libSourcePath);
+					} catch {
+						libSourcePath = path.join(extractPath, `${name}.dll`);
+					}
 					libDestPath = path.join(destPath, `${name}.dll`);
 
 					extraOps = async () => {
-						const libWindowsPath = path.join(extractPath, 'c', 'x64', `${name}.lib`);
+						let libWindowsPath = path.join(extractPath, 'c', 'x64', `${name}.lib`);
+						try {
+							await fs.access(libWindowsPath);
+						} catch {
+							libWindowsPath = path.join(extractPath, 'c', `${name}.lib`);
+						}
 						const destLibWindowsPath = path.join(destPath, path.basename(libWindowsPath));
-						await fs.copyFile(libWindowsPath, destLibWindowsPath);
+						try {
+							await fs.copyFile(libWindowsPath, destLibWindowsPath);
+						} catch (e) {}
 					};
 					break;
 				case 'darwin':
@@ -122,11 +135,21 @@ export async function installBassLib(name: string, options: InstallOptions = {})
 				await downloadFile(downloadUrl, downloadPath);
 				await extractZip(downloadPath, extractPath);
 
+				if (platform === 'win32') {
+					libSourcePath = path.join(extractPath, 'x64', `${name}.dll`);
+					try {
+						await fs.access(libSourcePath);
+					} catch {
+						libSourcePath = path.join(extractPath, `${name}.dll`);
+					}
+				}
+
 				await fs.copyFile(libSourcePath, libDestPath);
 
 				if (extraOps) {
 					await extraOps();
 				}
+				console.log(`Successfully installed ${name} to ${libDestPath}`);
 				break;
 			} catch (error) {
 				attempts++;
