@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { isMacos } from '$lib/platform';
 	import TauriDeveloperAPI from '$lib/tauri/TauriDeveloperAPI';
 	import { onDestroy, onMount } from 'svelte';
 
@@ -130,15 +131,17 @@
 			onpointerdown={onPointerDown}
 		>
 			<span>Performance ({processes.length} procs)</span>
-			<div class="flex items-center gap-1.5" onpointerdown={(e) => e.stopPropagation()}>
-				<button
-					class="border border-white px-2 py-0.5 text-[10px] uppercase tracking-wider hover:bg-white hover:text-black"
-					title="Toggle mode: Private WS (Task Manager physical RAM), Working Set (Total physical RAM), Commit (Virtual RAM)"
-					onclick={toggleMemoryMode}
-				>
-					Mode: {getModeLabel()}
-				</button>
-			</div>
+			{#if !isMacos()}
+				<div class="flex items-center gap-1.5" onpointerdown={(e) => e.stopPropagation()}>
+					<button
+						class="border border-white px-2 py-0.5 text-[10px] uppercase tracking-wider hover:bg-white hover:text-black"
+						title="Toggle mode: Private WS (Task Manager physical RAM), Working Set (Total physical RAM), Commit (Virtual RAM)"
+						onclick={toggleMemoryMode}
+					>
+						Mode: {getModeLabel()}
+					</button>
+				</div>
+			{/if}
 		</div>
 
 		<div
@@ -147,7 +150,7 @@
 		>
 			<!-- Summary -->
 			<div class="flex items-center justify-between">
-				<span class="text-zinc-400">Total RAM ({getModeLabel()}):</span>
+				<span class="text-zinc-400">Total RAM{isMacos() ? '' : ` (${getModeLabel()})`}:</span>
 				<span class="font-bold">
 					{formatBytes(getActiveTotalRam())}
 					{#if totalRamBytes > 0}

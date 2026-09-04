@@ -336,7 +336,180 @@ pub fn developer_metrics_get() -> AppMetrics {
         }
     }
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "macos")]
+    {
+        use std::collections::HashSet;
+        use std::sync::Mutex;
+        use sysinfo::{Pid, ProcessesToUpdate, System};
+
+        lazy_static::lazy_static! {
+            static ref SYSINFO_SYSTEM: Mutex<System> = Mutex::new(System::new());
+        }
+
+        let mut sys_guard = SYSINFO_SYSTEM.lock().unwrap();
+        let sys = &mut *sys_guard;
+        let main_pid_u32 = std::process::id();
+        let main_pid = Pid::from_u32(main_pid_u32);
+
+        sys.refresh_processes(ProcessesToUpdate::All, true);
+        sys.refresh_memory();
+
+        let mut all_pids = HashSet::new();
+        all_pids.insert(main_pid);
+
+        // Find child processes via parent PID hierarchy
+        let mut added = true;
+        while added {
+            added = false;
+            for (&p_pid, process) in sys.processes() {
+                if !all_pids.contains(&p_pid) {
+                    if let Some(parent) = process.parent() {
+                        if all_pids.contains(&parent) {
+                            all_pids.insert(p_pid);
+                            added = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // On macOS, query WebKit WKWebView directly for exact WebKit process identifiers
+        if let Some(window) = crate::state::app_handle().get_webview_window("main") {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let _ = window.with_webview(move |webview| {
+                extern "C" {
+                    fn sel_registerName(name: *const std::ffi::c_char) -> *const std::ffi::c_void;
+                    fn objc_msgSend(
+                        receiver: *const std::ffi::c_void,
+                        op: *const std::ffi::c_void,
+                    ) -> i32;
+                }
+
+                let mut pids = Vec::new();
+                let wk_webview = webview.inner() as *const std::ffi::c_void;
+                if !wk_webview.is_null() {
+                    unsafe {
+                        let sel_web = sel_registerName(b"_webProcessIdentifier\0".as_ptr() as *const _);
+                        let sel_gpu = sel_registerName(b"_gpuProcessIdentifier\0".as_ptr() as *const _);
+                        let sel_net = sel_registerName(b"_networkProcessIdentifier\0".as_ptr() as *const _);
+                        let sel_model = sel_registerName(b"_modelProcessIdentifier\0".as_ptr() as *const _);
+
+                        let web_pid = objc_msgSend(wk_webview, sel_web);
+                        let gpu_pid = objc_msgSend(wk_webview, sel_gpu);
+                        let net_pid = objc_msgSend(wk_webview, sel_net);
+                        let model_pid = objc_msgSend(wk_webview, sel_model);
+
+                        for pid in [web_pid, gpu_pid, net_pid, model_pid] {
+                            if pid > 1 {
+                                pids.push(pid as u32);
+                            }
+                        }
+                    }
+                }
+                let _ = tx.send(pids);
+            });
+
+            if let Ok(pids) = rx.recv_timeout(std::time::Duration::from_millis(100)) {
+                for pid in pids {
+                    all_pids.insert(Pid::from_u32(pid));
+                }
+            }
+        }
+
+        extern "C" {
+            fn proc_pid_rusage(pid: i32, flavor: i32, buffer: *mut std::ffi::c_void) -> i32;
+        }
+
+        #[repr(C)]
+        struct RUsageInfoV4 {
+            ri_uuid: [u8; 16],
+            ri_user_time: u64,
+            ri_system_time: u64,
+            ri_pkg_idle_wkups: u64,
+            ri_interrupt_wkups: u64,
+            ri_pageins: u64,
+            ri_wired_size: u64,
+            ri_resident_size: u64,
+            ri_phys_footprint: u64,
+        }
+
+        let cpu_count = sys.cpus().len().max(1) as f32;
+        let mut processes = Vec::new();
+        let mut total_app_ram_bytes = 0u64;
+        let mut total_app_cpu_percent = 0.0f32;
+
+        for &pid in &all_pids {
+            let pid_u32 = pid.as_u32();
+            if let Some(p) = sys.process(pid) {
+                // Activity Monitor on macOS reports `phys_footprint` (physical memory footprint)
+                let mut ram = p.memory();
+                unsafe {
+                    let mut ru: RUsageInfoV4 = std::mem::zeroed();
+                    if proc_pid_rusage(
+                        pid_u32 as i32,
+                        4,
+                        &mut ru as *mut _ as *mut std::ffi::c_void,
+                    ) == 0
+                    {
+                        if ru.ri_phys_footprint > 0 {
+                            ram = ru.ri_phys_footprint;
+                        }
+                    }
+                }
+
+                let cpu = p.cpu_usage() / cpu_count;
+                let raw_name = p.name().to_string_lossy();
+                let name = if pid_u32 == main_pid_u32 {
+                    raw_name.to_string()
+                } else if raw_name.contains("WebContent") {
+                    "WebContent".to_string()
+                } else if raw_name.contains("GPU") {
+                    "Graphics and Media".to_string()
+                } else if raw_name.contains("Networking") {
+                    "Networking".to_string()
+                } else {
+                    raw_name
+                        .trim_start_matches("com.apple.WebKit.")
+                        .to_string()
+                };
+                let is_main = pid_u32 == main_pid_u32;
+
+                total_app_ram_bytes += ram;
+                total_app_cpu_percent += cpu;
+
+                processes.push(ProcessMetric {
+                    pid: pid_u32,
+                    name,
+                    is_main,
+                    ram_bytes: ram,
+                    working_set_bytes: ram,
+                    private_ws_bytes: ram,
+                    cpu_percent: cpu,
+                    gpu_percent: 0.0,
+                });
+            }
+        }
+
+        processes.sort_by(|a, b| {
+            b.is_main
+                .cmp(&a.is_main)
+                .then_with(|| b.ram_bytes.cmp(&a.ram_bytes))
+        });
+
+        let total_ram_bytes = sys.total_memory();
+
+        AppMetrics {
+            total_ram_bytes,
+            total_app_ram_bytes,
+            total_app_working_set_bytes: total_app_ram_bytes,
+            total_app_private_ws_bytes: total_app_ram_bytes,
+            total_app_cpu_percent,
+            total_app_gpu_percent: 0.0,
+            processes,
+        }
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     {
         AppMetrics {
             total_ram_bytes: 0,
