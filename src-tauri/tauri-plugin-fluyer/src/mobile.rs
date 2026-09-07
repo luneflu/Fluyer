@@ -117,12 +117,6 @@ impl<R: Runtime> Fluyer<R> {
             .map_err(Into::into)
     }
 
-    pub fn visualizer_get_buffer(&self, args: String) -> crate::Result<VisualizerGetBuffer> {
-        self.0
-            .run_mobile_plugin("visualizerGetBuffer", VisualizerGetBufferArgs { args })
-            .map_err(Into::into)
-    }
-
     pub fn metadata_get(&self, path: String) -> crate::Result<MetadataGetResponse> {
         self.0
             .run_mobile_plugin("metadataGet", MetadataGetArgs { path })

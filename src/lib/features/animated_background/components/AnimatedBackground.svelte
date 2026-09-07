@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { PageRoutes } from '$lib/constants/PageRoutes';
 	import { isAndroid, isLinux, isWindows } from '$lib/platform';
-	import { afterNavigate } from '$app/navigation';
 	import MetadataService from '$lib/services/MetadataService.svelte';
 	import musicStore from '$lib/stores/music.svelte';
 	import LibraryService from '$lib/services/LibraryService.svelte';
@@ -261,12 +259,6 @@
 			updateBackground(true);
 		}
 	}
-
-	if (isLinux())
-		afterNavigate((navigation) => {
-			if (navigation.from?.route.id !== PageRoutes.VISUALIZER) return;
-			updateBackground(true);
-		});
 
 	$effect(() => {
 		musicStore.currentMusic;

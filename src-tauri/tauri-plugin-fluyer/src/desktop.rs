@@ -60,10 +60,6 @@ impl<R: Runtime> Fluyer<R> {
         Ok(WatchPickFolderResponse { value: false })
     }
 
-    pub fn visualizer_get_buffer(&self, _args: String) -> crate::Result<VisualizerGetBuffer> {
-        Ok(VisualizerGetBuffer { value: false })
-    }
-
     pub fn init_media_control<F: Fn(MediaControlEvent) + Send + Sync + 'static>(
         &self,
         _callback: F,

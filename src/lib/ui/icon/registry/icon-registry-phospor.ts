@@ -67,7 +67,6 @@ const iconRegistryPhospor = {
 	[IconType.SaveLog]: FileTextIcon,
 	[IconType.Equalizer]: FadersIcon,
 	[IconType.Close]: XCircleIcon,
-	[IconType.Visualizer]: ChartBarIcon,
 	[IconType.Folder]: FolderIcon,
 	[IconType.SortAsc]: SortAscendingIcon,
 	[IconType.SortDesc]: SortDescendingIcon,

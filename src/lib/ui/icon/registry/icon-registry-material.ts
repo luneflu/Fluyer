@@ -67,7 +67,6 @@ const iconRegistryMaterial = {
 	[IconType.SaveLog]: FileDocumentOutline,
 	[IconType.Equalizer]: TuneVerticalVariant,
 	[IconType.Close]: CloseCircleOutline,
-	[IconType.Visualizer]: Poll,
 	[IconType.Folder]: Folder,
 	[IconType.SortAsc]: SortAscending,
 	[IconType.SortDesc]: SortDescending,
