@@ -511,7 +511,132 @@ pub fn developer_metrics_get() -> AppMetrics {
         }
     }
 
-    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+    #[cfg(target_os = "linux")]
+    {
+        use std::collections::HashSet;
+        use std::sync::Mutex;
+        use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System};
+
+        lazy_static::lazy_static! {
+            static ref SYSINFO_SYSTEM: Mutex<System> = Mutex::new(System::new_all());
+        }
+
+        let mut sys_guard = SYSINFO_SYSTEM.lock().unwrap();
+        let sys = &mut *sys_guard;
+        let main_pid_u32 = std::process::id();
+        let main_pid = Pid::from_u32(main_pid_u32);
+
+        // Do NOT refresh tasks/threads as separate processes on Linux (prevents thread multiplication)
+        sys.refresh_processes_specifics(
+            ProcessesToUpdate::All,
+            true,
+            ProcessRefreshKind::everything().without_tasks(),
+        );
+        sys.refresh_memory();
+        sys.refresh_cpu_all();
+
+        let mut all_pids = HashSet::new();
+        all_pids.insert(main_pid);
+
+        // Find child processes via parent PID hierarchy (e.g. WebKitGTK / CEF subprocesses)
+        let mut added = true;
+        while added {
+            added = false;
+            for (&p_pid, process) in sys.processes() {
+                if process.thread_kind().is_none() && !all_pids.contains(&p_pid) {
+                    if let Some(parent) = process.parent() {
+                        if all_pids.contains(&parent) {
+                            all_pids.insert(p_pid);
+                            added = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        let cpu_count = sys.cpus().len().max(1) as f32;
+        let mut processes = Vec::new();
+        let mut total_app_ram_bytes = 0u64;
+        let mut total_app_working_set_bytes = 0u64;
+        let mut total_app_private_ws_bytes = 0u64;
+        let mut total_app_cpu_percent = 0.0f32;
+
+        for &pid in &all_pids {
+            let pid_u32 = pid.as_u32();
+            if let Some(p) = sys.process(pid) {
+                let vm_rss = p.memory();
+                let vm_size = p.virtual_memory();
+                let mut pss_or_private = 0u64;
+
+                // Read smaps_rollup or status for exact private / PSS memory
+                if let Ok(smaps) = std::fs::read_to_string(format!("/proc/{}/smaps_rollup", pid_u32)) {
+                    for line in smaps.lines() {
+                        if let Some(rest) = line.strip_prefix("Pss:") {
+                            if let Some(val_str) = rest.trim().split_whitespace().next() {
+                                if let Ok(kb) = val_str.parse::<u64>() {
+                                    pss_or_private = kb * 1024;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if pss_or_private == 0 {
+                    pss_or_private = vm_rss;
+                }
+
+                let cpu = p.cpu_usage() / cpu_count;
+                let raw_name = p.name().to_string_lossy();
+                let name = if pid_u32 == main_pid_u32 {
+                    raw_name.to_string()
+                } else if raw_name.contains("WebKitWebProces") || raw_name.contains("WebContent") {
+                    "WebContent".to_string()
+                } else if raw_name.contains("WebKitNetworkPr") || raw_name.contains("Networking") {
+                    "Networking".to_string()
+                } else {
+                    raw_name.to_string()
+                };
+                let is_main = pid_u32 == main_pid_u32;
+
+                total_app_ram_bytes += vm_size;
+                total_app_working_set_bytes += vm_rss;
+                total_app_private_ws_bytes += pss_or_private;
+                total_app_cpu_percent += cpu;
+
+                processes.push(ProcessMetric {
+                    pid: pid_u32,
+                    name,
+                    is_main,
+                    ram_bytes: vm_size,
+                    working_set_bytes: vm_rss,
+                    private_ws_bytes: pss_or_private,
+                    cpu_percent: cpu,
+                    gpu_percent: 0.0,
+                });
+            }
+        }
+
+        processes.sort_by(|a, b| {
+            b.is_main
+                .cmp(&a.is_main)
+                .then_with(|| b.private_ws_bytes.cmp(&a.private_ws_bytes))
+        });
+
+        let total_ram_bytes = sys.total_memory();
+
+        AppMetrics {
+            total_ram_bytes,
+            total_app_ram_bytes,
+            total_app_working_set_bytes,
+            total_app_private_ws_bytes,
+            total_app_cpu_percent,
+            total_app_gpu_percent: 0.0,
+            processes,
+        }
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
     {
         AppMetrics {
             total_ram_bytes: 0,

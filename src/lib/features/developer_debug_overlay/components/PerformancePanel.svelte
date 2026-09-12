@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { isMacos } from '$lib/platform';
+	import { isLinux, isMacos } from '$lib/platform';
 	import TauriDeveloperAPI from '$lib/tauri/TauriDeveloperAPI';
 	import { onDestroy, onMount } from 'svelte';
 
@@ -78,9 +78,21 @@
 	};
 
 	const getModeLabel = () => {
+		if (isLinux()) {
+			if (memoryMode === 'private_ws') return 'PSS';
+			if (memoryMode === 'working_set') return 'RSS';
+			return 'VIRT';
+		}
 		if (memoryMode === 'private_ws') return 'Private WS';
 		if (memoryMode === 'working_set') return 'Working Set';
 		return 'Commit';
+	};
+
+	const getModeTooltip = () => {
+		if (isLinux()) {
+			return 'Toggle mode: PSS (Proportional Set Size), RSS (Resident Set Size), VIRT (Virtual Memory)';
+		}
+		return 'Toggle mode: Private WS (Task Manager physical RAM), Working Set (Total physical RAM), Commit (Virtual RAM)';
 	};
 
 	onMount(() => {
@@ -135,7 +147,7 @@
 				<div class="flex items-center gap-1.5" onpointerdown={(e) => e.stopPropagation()}>
 					<button
 						class="border border-white px-2 py-0.5 text-[10px] uppercase tracking-wider hover:bg-white hover:text-black"
-						title="Toggle mode: Private WS (Task Manager physical RAM), Working Set (Total physical RAM), Commit (Virtual RAM)"
+						title={getModeTooltip()}
 						onclick={toggleMemoryMode}
 					>
 						Mode: {getModeLabel()}
