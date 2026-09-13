@@ -30,11 +30,6 @@ MainFrame::MainFrame(FluyerEngine* engine)
     // Top: Album list container
     wxPanel* topPanel = new wxPanel(splitter);
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText* albumTitle = new wxStaticText(topPanel, wxID_ANY, "Albums");
-    wxFont headerFont = albumTitle->GetFont();
-    headerFont.SetWeight(wxFONTWEIGHT_BOLD);
-    albumTitle->SetFont(headerFont);
-    topSizer->Add(albumTitle, 0, wxALL, 8);
 
     m_albumList = new AlbumListCtrl(topPanel);
     topSizer->Add(m_albumList, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
@@ -43,18 +38,12 @@ MainFrame::MainFrame(FluyerEngine* engine)
     // Bottom: Music list container
     wxPanel* bottomPanel = new wxPanel(splitter);
     wxBoxSizer* bottomSizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText* musicTitle = new wxStaticText(bottomPanel, wxID_ANY, "Tracks");
-    musicTitle->SetFont(headerFont);
-    bottomSizer->Add(musicTitle, 0, wxALL, 8);
 
     m_musicList = new MusicListCtrl(bottomPanel);
     bottomSizer->Add(m_musicList, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
     bottomPanel->SetSizer(bottomSizer);
 
     splitter->SplitHorizontally(topPanel, bottomPanel, 220);
-
-    CreateStatusBar();
-    SetStatusText("Ready");
 
     RefreshViews();
 }
@@ -74,7 +63,6 @@ void MainFrame::OnOpenFolder(wxCommandEvent& WXUNUSED(evt)) {
         const char* c_path = path.c_str();
         const char* paths[] = { c_path };
         fluyer_library_scan(m_engine, paths, 1);
-        SetStatusText("Scanning directory: " + path);
     }
 }
 

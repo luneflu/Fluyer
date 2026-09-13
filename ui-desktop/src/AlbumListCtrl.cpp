@@ -6,12 +6,13 @@
 wxBEGIN_EVENT_TABLE(AlbumListCtrl, wxScrolledWindow)
     EVT_PAINT(AlbumListCtrl::OnPaint)
     EVT_SIZE(AlbumListCtrl::OnSize)
-    EVT_SCROLLWIN(AlbumListCtrl::OnScroll)
     EVT_LEFT_DOWN(AlbumListCtrl::OnLeftDown)
+    EVT_MOUSEWHEEL(AlbumListCtrl::OnMouseWheel)
 wxEND_EVENT_TABLE()
 
 AlbumListCtrl::AlbumListCtrl(wxWindow* parent, wxWindowID id)
-    : wxScrolledWindow(parent, id, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxFULL_REPAINT_ON_RESIZE) {
+    : wxScrolledWindow(parent, id, wxDefaultPosition, wxDefaultSize, wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE) {
+    ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(wxColour(18, 18, 18));
 }
@@ -20,6 +21,7 @@ void AlbumListCtrl::RefreshData(FluyerEngine* engine) {
     m_engine = engine;
     m_imageCache.clear();
     m_metaCache.clear();
+    m_scrollOffsetX = 0;
 
     if (m_engine) {
         m_albumCount = fluyer_library_get_album_count(m_engine);
@@ -27,57 +29,47 @@ void AlbumListCtrl::RefreshData(FluyerEngine* engine) {
         m_albumCount = 0;
     }
 
-    int totalWidth = static_cast<int>(m_albumCount) * (ITEM_WIDTH + ITEM_SPACING) + ITEM_SPACING;
-    SetVirtualSize(std::max(totalWidth, GetClientSize().GetWidth()), ITEM_HEIGHT);
-    SetScrollRate(20, 0);
-
     Refresh();
 }
 
 void AlbumListCtrl::OnSize(wxSizeEvent& evt) {
-    int totalWidth = static_cast<int>(m_albumCount) * (ITEM_WIDTH + ITEM_SPACING) + ITEM_SPACING;
-    SetVirtualSize(std::max(totalWidth, GetClientSize().GetWidth()), ITEM_HEIGHT);
     Refresh();
     evt.Skip();
 }
 
-void AlbumListCtrl::OnScroll(wxScrollWinEvent& evt) {
+void AlbumListCtrl::OnMouseWheel(wxMouseEvent& evt) {
+    int maxScroll = std::max(0, static_cast<int>(m_albumCount) * (ITEM_WIDTH + ITEM_SPACING) - GetClientSize().GetWidth() + ITEM_SPACING * 2);
+    int delta = evt.GetWheelRotation();
+    m_scrollOffsetX = std::clamp(m_scrollOffsetX - delta, 0, maxScroll);
     Refresh();
-    evt.Skip();
 }
 
 void AlbumListCtrl::OnLeftDown(wxMouseEvent& evt) {
-    int x, y;
-    CalcUnscrolledPosition(evt.GetX(), evt.GetY(), &x, &y);
+    int x = evt.GetX() + m_scrollOffsetX;
     int clickedIdx = (x - ITEM_SPACING) / (ITEM_WIDTH + ITEM_SPACING);
     if (clickedIdx >= 0 && clickedIdx < static_cast<int>(m_albumCount)) {
-        // Play first track of album or select
+        // Handle click
     }
     evt.Skip();
 }
 
 void AlbumListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
     wxAutoBufferedPaintDC dc(this);
-    DoPrepareDC(dc);
 
     dc.SetBackground(wxBrush(wxColour(18, 18, 18)));
     dc.Clear();
 
     if (m_albumCount == 0 || !m_engine) return;
 
-    int viewX, viewY, viewW, viewH;
-    GetViewStart(&viewX, &viewY);
-    int xUnit, yUnit;
-    GetScrollPixelsPerUnit(&xUnit, &yUnit);
-    int startPixelX = viewX * xUnit;
-    GetClientSize(&viewW, &viewH);
+    int viewW = GetClientSize().GetWidth();
+    int startPixelX = m_scrollOffsetX;
     int endPixelX = startPixelX + viewW;
 
     int startIdx = std::max(0, (startPixelX - ITEM_SPACING) / (ITEM_WIDTH + ITEM_SPACING));
     int endIdx = std::min(static_cast<int>(m_albumCount) - 1, (endPixelX - ITEM_SPACING) / (ITEM_WIDTH + ITEM_SPACING) + 1);
 
     for (int i = startIdx; i <= endIdx; ++i) {
-        int itemX = ITEM_SPACING + i * (ITEM_WIDTH + ITEM_SPACING);
+        int itemX = ITEM_SPACING + i * (ITEM_WIDTH + ITEM_SPACING) - m_scrollOffsetX;
         int itemY = 8;
 
         // Metadata cache check

@@ -8,12 +8,13 @@
 wxBEGIN_EVENT_TABLE(MusicListCtrl, wxScrolledWindow)
     EVT_PAINT(MusicListCtrl::OnPaint)
     EVT_SIZE(MusicListCtrl::OnSize)
-    EVT_SCROLLWIN(MusicListCtrl::OnScroll)
     EVT_LEFT_DCLICK(MusicListCtrl::OnLeftDClick)
+    EVT_MOUSEWHEEL(MusicListCtrl::OnMouseWheel)
 wxEND_EVENT_TABLE()
 
 MusicListCtrl::MusicListCtrl(wxWindow* parent, wxWindowID id)
-    : wxScrolledWindow(parent, id, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxFULL_REPAINT_ON_RESIZE) {
+    : wxScrolledWindow(parent, id, wxDefaultPosition, wxDefaultSize, wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE) {
+    ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(wxColour(14, 14, 14));
 }
@@ -22,6 +23,7 @@ void MusicListCtrl::RefreshData(FluyerEngine* engine) {
     m_engine = engine;
     m_imageCache.clear();
     m_metaCache.clear();
+    m_scrollOffsetY = 0;
 
     if (m_engine) {
         m_trackCount = fluyer_library_get_count(m_engine);
@@ -29,36 +31,28 @@ void MusicListCtrl::RefreshData(FluyerEngine* engine) {
         m_trackCount = 0;
     }
 
-    int clientW = GetClientSize().GetWidth();
-    int colCount = std::max(1, (clientW - PADDING * 2) / MIN_COL_WIDTH);
-    int totalRows = (static_cast<int>(m_trackCount) + colCount - 1) / colCount;
-    int totalHeight = totalRows * ITEM_HEIGHT + PADDING * 2;
-
-    SetVirtualSize(clientW, totalHeight);
-    SetScrollRate(0, ITEM_HEIGHT / 2);
-
     Refresh();
 }
 
 void MusicListCtrl::OnSize(wxSizeEvent& evt) {
-    int clientW = evt.GetSize().GetWidth();
-    int colCount = std::max(1, (clientW - PADDING * 2) / MIN_COL_WIDTH);
-    int totalRows = (static_cast<int>(m_trackCount) + colCount - 1) / colCount;
-    int totalHeight = totalRows * ITEM_HEIGHT + PADDING * 2;
-
-    SetVirtualSize(clientW, totalHeight);
     Refresh();
     evt.Skip();
 }
 
-void MusicListCtrl::OnScroll(wxScrollWinEvent& evt) {
+void MusicListCtrl::OnMouseWheel(wxMouseEvent& evt) {
+    int clientW = GetClientSize().GetWidth();
+    int colCount = std::max(1, (clientW - PADDING * 2) / MIN_COL_WIDTH);
+    int totalRows = (static_cast<int>(m_trackCount) + colCount - 1) / colCount;
+    int maxScroll = std::max(0, totalRows * ITEM_HEIGHT - GetClientSize().GetHeight() + PADDING * 2);
+
+    int delta = evt.GetWheelRotation();
+    m_scrollOffsetY = std::clamp(m_scrollOffsetY - delta, 0, maxScroll);
     Refresh();
-    evt.Skip();
 }
 
 void MusicListCtrl::OnLeftDClick(wxMouseEvent& evt) {
-    int x, y;
-    CalcUnscrolledPosition(evt.GetX(), evt.GetY(), &x, &y);
+    int x = evt.GetX();
+    int y = evt.GetY() + m_scrollOffsetY;
     int clientW = GetClientSize().GetWidth();
     int colCount = std::max(1, (clientW - PADDING * 2) / MIN_COL_WIDTH);
     int colWidth = (clientW - PADDING * 2) / colCount;
@@ -77,19 +71,15 @@ void MusicListCtrl::OnLeftDClick(wxMouseEvent& evt) {
 
 void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
     wxAutoBufferedPaintDC dc(this);
-    DoPrepareDC(dc);
 
     dc.SetBackground(wxBrush(wxColour(14, 14, 14)));
     dc.Clear();
 
     if (m_trackCount == 0 || !m_engine) return;
 
-    int viewX, viewY, viewW, viewH;
-    GetViewStart(&viewX, &viewY);
-    int xUnit, yUnit;
-    GetScrollPixelsPerUnit(&xUnit, &yUnit);
-    int startPixelY = viewY * yUnit;
-    GetClientSize(&viewW, &viewH);
+    int viewW = GetClientSize().GetWidth();
+    int viewH = GetClientSize().GetHeight();
+    int startPixelY = m_scrollOffsetY;
     int endPixelY = startPixelY + viewH;
 
     int colCount = std::max(1, (viewW - PADDING * 2) / MIN_COL_WIDTH);
@@ -107,7 +97,7 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
             if (idx >= m_trackCount) break;
 
             int cellX = PADDING + col * colWidth;
-            int cellY = PADDING + row * ITEM_HEIGHT;
+            int cellY = PADDING + row * ITEM_HEIGHT - m_scrollOffsetY;
 
             // Metadata cache
             if (m_metaCache.find(idx) == m_metaCache.end()) {

@@ -16,8 +16,11 @@ private:
     void OnScroll(wxScrollWinEvent& evt);
     void OnLeftDown(wxMouseEvent& evt);
 
+    void OnMouseWheel(wxMouseEvent& evt);
+
     FluyerEngine* m_engine = nullptr;
     uintptr_t m_albumCount = 0;
+    int m_scrollOffsetX = 0;
     
     // Cached items
     std::unordered_map<uintptr_t, wxBitmap> m_imageCache;

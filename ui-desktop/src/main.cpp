@@ -21,20 +21,12 @@ private:
 wxIMPLEMENT_APP(FluyerApp);
 
 void FluyerApp::OnScanProgress(void* user_data, uintptr_t current, uintptr_t total) {
-    auto* app = static_cast<FluyerApp*>(user_data);
-    if (app && app->m_mainFrame) {
-        wxTheApp->CallAfter([app, current, total]() {
-            app->m_mainFrame->SetStatusText(wxString::Format("Scanning: %lu / %lu", current, total));
-        });
-    }
 }
 
 void FluyerApp::OnToast(void* user_data, const char* msg) {
     auto* app = static_cast<FluyerApp*>(user_data);
-    if (app && app->m_mainFrame && msg) {
-        wxString s(msg);
-        wxTheApp->CallAfter([app, s]() {
-            app->m_mainFrame->SetStatusText(s);
+    if (app && app->m_mainFrame) {
+        wxTheApp->CallAfter([app]() {
             app->m_mainFrame->RefreshViews();
         });
     }

@@ -23,8 +23,11 @@ private:
     void OnScroll(wxScrollWinEvent& evt);
     void OnLeftDClick(wxMouseEvent& evt);
 
+    void OnMouseWheel(wxMouseEvent& evt);
+
     FluyerEngine* m_engine = nullptr;
     uintptr_t m_trackCount = 0;
+    int m_scrollOffsetY = 0;
 
     std::unordered_map<uintptr_t, wxBitmap> m_imageCache;
     std::unordered_map<uintptr_t, MusicTrackItem> m_metaCache;
