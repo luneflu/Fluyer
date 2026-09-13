@@ -1,7 +1,37 @@
+# Rust artifacts
 target/
 Cargo.lock
-include/
+crates/*/include/
+
+# C++ / CMake build artifacts
+ui-desktop/build/
+ui-desktop/bin/
+ui-desktop/out/
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.ninja
+.ninja_*
+
+# IDEs & Editor metadata
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Dynamic and static library artifacts
 *.dylib
 *.so
 *.dll
-.DS_Store
+*.lib
+*.a
+*.o
+*.obj
+
+# Temporary test data
+store.json
+

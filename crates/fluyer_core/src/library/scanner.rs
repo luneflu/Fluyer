@@ -162,38 +162,49 @@ pub fn load_all_music_from_db(db: &Database) -> Vec<MusicMetadata> {
             "SELECT id, path, duration, title, artist, album, album_artist,
                     track_number, genre, date, bits_per_sample, sample_rate
              FROM musics ORDER BY id ASC",
-        )
-        .unwrap();
+        );
 
-    let rows = stmt
-        .query_map([], |row| {
-            let path_str: String = row.get(1)?;
-            let filename = Path::new(&path_str)
-                .file_name()
-                .and_then(|f| f.to_str())
-                .map(|s| s.to_string());
+    let mut stmt = match stmt {
+        Ok(s) => s,
+        Err(e) => {
+            log::error!("Failed to prepare SQL query for musics: {}", e);
+            return Vec::new();
+        }
+    };
 
-            Ok(MusicMetadata {
-                id: row.get(0)?,
-                path: path_str,
-                duration: row.get::<_, Option<i64>>(2)?.map(|d| d as u128),
-                filename,
-                title: row.get(3)?,
-                artist: row.get(4)?,
-                album: row.get(5)?,
-                album_artist: row.get(6)?,
-                track_number: row.get(7)?,
-                genre: row.get(8)?,
-                date: row.get(9)?,
-                bits_per_sample: row.get::<_, Option<i64>>(10)?.map(|b| b as u32),
-                sample_rate: row.get::<_, Option<i64>>(11)?.map(|s| s as u32),
-                image: None,
-                extra_tags: None,
-            })
+    let rows = stmt.query_map([], |row| {
+        let path_str: String = row.get(1)?;
+        let filename = Path::new(&path_str)
+            .file_name()
+            .and_then(|f| f.to_str())
+            .map(|s| s.to_string());
+
+        Ok(MusicMetadata {
+            id: row.get(0)?,
+            path: path_str,
+            duration: row.get::<_, Option<i64>>(2)?.map(|d| d as u128),
+            filename,
+            title: row.get(3)?,
+            artist: row.get(4)?,
+            album: row.get(5)?,
+            album_artist: row.get(6)?,
+            track_number: row.get(7)?,
+            genre: row.get(8)?,
+            date: row.get(9)?,
+            bits_per_sample: row.get::<_, Option<i64>>(10)?.map(|b| b as u32),
+            sample_rate: row.get::<_, Option<i64>>(11)?.map(|s| s as u32),
+            image: None,
+            extra_tags: None,
         })
-        .unwrap();
+    });
 
-    rows.filter_map(|r| r.ok()).collect()
+    match rows {
+        Ok(iter) => iter.filter_map(|r| r.ok()).collect(),
+        Err(e) => {
+            log::error!("Query map failed: {}", e);
+            Vec::new()
+        }
+    }
 }
 
 fn get_modified_time(path: &Path) -> Option<String> {

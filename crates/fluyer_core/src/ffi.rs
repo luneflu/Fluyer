@@ -210,9 +210,40 @@ pub unsafe extern "C" fn fluyer_player_shuffle(engine: *mut FluyerEngine) {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn fluyer_library_scan(
+    engine: *mut FluyerEngine,
+    paths: *const *const c_char,
+    count: usize,
+) {
+    if let Some(e) = engine.as_ref() {
+        if !paths.is_null() && count > 0 {
+            let mut dirs = Vec::with_capacity(count);
+            for i in 0..count {
+                let p = *paths.add(i);
+                if !p.is_null() {
+                    if let Ok(s) = CStr::from_ptr(p).to_str() {
+                        dirs.push(s.to_string());
+                    }
+                }
+            }
+            e.scan_and_update(&dirs);
+        }
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn fluyer_library_get_count(engine: *mut FluyerEngine) -> usize {
     if let Some(e) = engine.as_ref() {
         e.library.read().unwrap().count()
+    } else {
+        0
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_library_get_album_count(engine: *mut FluyerEngine) -> usize {
+    if let Some(e) = engine.as_ref() {
+        e.library.read().unwrap().album_count()
     } else {
         0
     }
@@ -236,9 +267,97 @@ pub unsafe extern "C" fn fluyer_library_get_track_json(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn fluyer_library_get_album_json(
+    engine: *mut FluyerEngine,
+    index: usize,
+) -> *mut c_char {
+    if let Some(e) = engine.as_ref() {
+        if let Some(album) = e.library.read().unwrap().album_get_by_index(index) {
+            if let Ok(json) = serde_json::to_string(&album) {
+                if let Ok(c_str) = CString::new(json) {
+                    return c_str.into_raw();
+                }
+            }
+        }
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn fluyer_library_play_index(engine: *mut FluyerEngine, index: usize) {
     if let Some(e) = engine.as_ref() {
         e.play_all_from_library(index);
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_library_get_track_image(
+    engine: *mut FluyerEngine,
+    index: usize,
+    out_len: *mut usize,
+) -> *mut u8 {
+    if let Some(e) = engine.as_ref() {
+        if let Some(track) = e.library.read().unwrap().get_by_index(index) {
+            let img = MusicMetadata::get_image_with_symphonia(&track.path).ok().or_else(|| {
+                let artist = track.artist.as_deref().unwrap_or("");
+                let album = track.album.as_deref();
+                let title = track.title.as_deref();
+                e.cover_art.get_cached(artist, album, title)
+            });
+
+            if let Some(bytes) = img {
+                if !out_len.is_null() {
+                    *out_len = bytes.len();
+                }
+                let boxed = bytes.into_boxed_slice();
+                return Box::into_raw(boxed) as *mut u8;
+            }
+        }
+    }
+    if !out_len.is_null() {
+        *out_len = 0;
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_library_get_album_image(
+    engine: *mut FluyerEngine,
+    index: usize,
+    out_len: *mut usize,
+) -> *mut u8 {
+    if let Some(e) = engine.as_ref() {
+        if let Some(album) = e.library.read().unwrap().album_get_by_index(index) {
+            if let Some(first_track) = album.first() {
+                let img = MusicMetadata::get_image_with_symphonia(&first_track.path).ok().or_else(|| {
+                    let artist = first_track.album_artist.as_deref()
+                        .or(first_track.artist.as_deref())
+                        .unwrap_or("");
+                    let album_name = first_track.album.as_deref();
+                    e.cover_art.get_cached(artist, album_name, None)
+                });
+
+                if let Some(bytes) = img {
+                    if !out_len.is_null() {
+                        *out_len = bytes.len();
+                    }
+                    let boxed = bytes.into_boxed_slice();
+                    return Box::into_raw(boxed) as *mut u8;
+                }
+            }
+        }
+    }
+    if !out_len.is_null() {
+        *out_len = 0;
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_bytes_free(ptr: *mut u8, len: usize) {
+    if !ptr.is_null() && len > 0 {
+        let slice = std::slice::from_raw_parts_mut(ptr, len);
+        drop(Box::from_raw(slice as *mut [u8]));
     }
 }
 
