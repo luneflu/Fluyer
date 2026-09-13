@@ -1,9 +1,12 @@
 #include "MusicListCtrl.h"
 #include <wx/dcbuffer.h>
 #include <wx/graphics.h>
+#include <nlohmann/json.hpp>
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
+
+using json_t = nlohmann::json;
 
 wxBEGIN_EVENT_TABLE(MusicListCtrl, wxScrolledWindow)
     EVT_PAINT(MusicListCtrl::OnPaint)
@@ -109,44 +112,26 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
                 char* json = fluyer_library_get_track_json(m_engine, idx);
                 MusicTrackItem item = { "Unknown Title", "Unknown Artist", "Unknown Album", "0:00" };
                 if (json) {
-                    std::string raw(json);
-                    fluyer_string_free(json);
-
-                    size_t tPos = raw.find("\"title\":\"");
-                    if (tPos != std::string::npos) {
-                        size_t s = tPos + 9;
-                        size_t e = raw.find("\"", s);
-                        if (e != std::string::npos) item.title = raw.substr(s, e - s);
-                    }
-                    size_t aPos = raw.find("\"artist\":\"");
-                    if (aPos != std::string::npos) {
-                        size_t s = aPos + 10;
-                        size_t e = raw.find("\"", s);
-                        if (e != std::string::npos) item.artist = raw.substr(s, e - s);
-                    }
-                    size_t albPos = raw.find("\"album\":\"");
-                    if (albPos != std::string::npos) {
-                        size_t s = albPos + 9;
-                        size_t e = raw.find("\"", s);
-                        if (e != std::string::npos) item.album = raw.substr(s, e - s);
-                    }
-                    size_t dPos = raw.find("\"duration\":");
-                    if (dPos != std::string::npos) {
-                        size_t s = dPos + 11;
-                        size_t e = raw.find_first_of(",}", s);
-                        if (e != std::string::npos) {
-                            std::string num = raw.substr(s, e - s);
-                            if (num != "null") {
-                                try {
-                                    uint64_t dur_ms = std::stoull(num);
-                                    uint64_t total_sec = dur_ms / 1000;
-                                    std::ostringstream ss;
-                                    ss << (total_sec / 60) << ":" << std::setw(2) << std::setfill('0') << (total_sec % 60);
-                                    item.duration = ss.str();
-                                } catch (...) {}
-                            }
+                    try {
+                        auto j = json_t::parse(json);
+                        if (j.contains("title") && !j["title"].is_null()) {
+                            item.title = j["title"].get<std::string>();
                         }
-                    }
+                        if (j.contains("artist") && !j["artist"].is_null()) {
+                            item.artist = j["artist"].get<std::string>();
+                        }
+                        if (j.contains("album") && !j["album"].is_null()) {
+                            item.album = j["album"].get<std::string>();
+                        }
+                        if (j.contains("duration") && !j["duration"].is_null()) {
+                            uint64_t dur_ms = j["duration"].get<uint64_t>();
+                            uint64_t total_sec = dur_ms / 1000;
+                            std::ostringstream ss;
+                            ss << (total_sec / 60) << ":" << std::setw(2) << std::setfill('0') << (total_sec % 60);
+                            item.duration = ss.str();
+                        }
+                    } catch (...) {}
+                    fluyer_string_free(json);
                 }
                 m_metaCache[idx] = item;
             }

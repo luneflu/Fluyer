@@ -1,7 +1,10 @@
 #include "AlbumListCtrl.h"
 #include <wx/dcbuffer.h>
 #include <wx/graphics.h>
+#include <nlohmann/json.hpp>
 #include <algorithm>
+
+using json_t = nlohmann::json;
 
 wxBEGIN_EVENT_TABLE(AlbumListCtrl, wxScrolledWindow)
     EVT_PAINT(AlbumListCtrl::OnPaint)
@@ -83,21 +86,21 @@ void AlbumListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
             wxString albumName = "Unknown Album";
             wxString artistName = "Unknown Artist";
             if (json) {
-                std::string raw(json);
+                try {
+                    auto j = json_t::parse(json);
+                    if (j.is_array() && !j.empty()) {
+                        const auto& first = j[0];
+                        if (first.contains("album") && !first["album"].is_null()) {
+                            albumName = first["album"].get<std::string>();
+                        }
+                        if (first.contains("albumArtist") && !first["albumArtist"].is_null()) {
+                            artistName = first["albumArtist"].get<std::string>();
+                        } else if (first.contains("artist") && !first["artist"].is_null()) {
+                            artistName = first["artist"].get<std::string>();
+                        }
+                    }
+                } catch (...) {}
                 fluyer_string_free(json);
-                size_t albPos = raw.find("\"album\":\"");
-                if (albPos != std::string::npos) {
-                    size_t start = albPos + 9;
-                    size_t end = raw.find("\"", start);
-                    if (end != std::string::npos) albumName = raw.substr(start, end - start);
-                }
-                size_t artPos = raw.find("\"albumArtist\":\"");
-                if (artPos == std::string::npos) artPos = raw.find("\"artist\":\"");
-                if (artPos != std::string::npos) {
-                    size_t start = raw.find(":", artPos) + 2;
-                    size_t end = raw.find("\"", start);
-                    if (end != std::string::npos) artistName = raw.substr(start, end - start);
-                }
             }
             m_metaCache[i] = { albumName, artistName };
         }

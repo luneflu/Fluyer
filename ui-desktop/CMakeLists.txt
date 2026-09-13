@@ -7,6 +7,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(wxWidgets REQUIRED COMPONENTS core base)
 include(${wxWidgets_USE_FILE})
 
+include(FetchContent)
+FetchContent_Declare(
+    json
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+)
+FetchContent_MakeAvailable(json)
+
 set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 include_directories(
@@ -25,6 +32,7 @@ add_executable(FluyerApp ${SOURCES})
 
 target_link_libraries(FluyerApp
     ${wxWidgets_LIBRARIES}
+    nlohmann_json::nlohmann_json
     ${ROOT_DIR}/target/debug/libfluyer_core.dylib
     ${ROOT_DIR}/libs/macos/libbass.dylib
     ${ROOT_DIR}/libs/macos/libbassmix.dylib
