@@ -113,8 +113,11 @@ void AlbumListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
                 wxMemoryInputStream stream(bytes, imgLen);
                 wxImage img(stream);
                 if (img.IsOk()) {
-                    wxImage scaled = img.Scale(COVER_SIZE, COVER_SIZE, wxIMAGE_QUALITY_HIGH);
-                    m_imageCache[i] = wxBitmap(scaled);
+                    double scaleFactor = GetContentScaleFactor();
+                    int targetW = static_cast<int>(COVER_SIZE * scaleFactor);
+                    int targetH = static_cast<int>(COVER_SIZE * scaleFactor);
+                    wxImage scaled = img.Scale(targetW, targetH, wxIMAGE_QUALITY_HIGH);
+                    m_imageCache[i] = wxBitmap(scaled, -1, scaleFactor);
                 }
                 fluyer_bytes_free(bytes, imgLen);
             }
@@ -132,14 +135,14 @@ void AlbumListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
         // Draw text
         const auto& meta = m_metaCache[i];
         dc.SetTextForeground(wxColour(240, 240, 240));
-        wxFont titleFont(11, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+        wxFont titleFont = wxFontInfo(wxSize(0, 13)).Bold().Family(wxFONTFAMILY_DEFAULT);
         dc.SetFont(titleFont);
         
         wxString truncatedTitle = dc.GetTextExtent(meta.first).GetWidth() > COVER_SIZE ? meta.first.substr(0, 16) + "..." : meta.first;
         dc.DrawText(truncatedTitle, itemX, itemY + COVER_SIZE + 6);
 
         dc.SetTextForeground(wxColour(160, 160, 160));
-        wxFont artistFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+        wxFont artistFont = wxFontInfo(wxSize(0, 11)).Family(wxFONTFAMILY_DEFAULT);
         dc.SetFont(artistFont);
         wxString truncatedArtist = dc.GetTextExtent(meta.second).GetWidth() > COVER_SIZE ? meta.second.substr(0, 18) + "..." : meta.second;
         dc.DrawText(truncatedArtist, itemX, itemY + COVER_SIZE + 24);

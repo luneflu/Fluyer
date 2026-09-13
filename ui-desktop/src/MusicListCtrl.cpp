@@ -96,8 +96,8 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
     int startRow = std::max(0, (startPixelY - PADDING) / ITEM_HEIGHT);
     int endRow = (endPixelY - PADDING) / ITEM_HEIGHT + 1;
 
-    wxFont titleFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
-    wxFont subFont(9, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+    wxFont titleFont = wxFontInfo(wxSize(0, 13)).Bold().Family(wxFONTFAMILY_DEFAULT);
+    wxFont subFont = wxFontInfo(wxSize(0, 11)).Family(wxFONTFAMILY_DEFAULT);
 
     for (int row = startRow; row <= endRow; ++row) {
         for (int col = 0; col < colCount; ++col) {
@@ -144,8 +144,11 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
                     wxMemoryInputStream stream(bytes, imgLen);
                     wxImage img(stream);
                     if (img.IsOk()) {
-                        wxImage scaled = img.Scale(THUMB_SIZE, THUMB_SIZE, wxIMAGE_QUALITY_HIGH);
-                        m_imageCache[idx] = wxBitmap(scaled);
+                        double scaleFactor = GetContentScaleFactor();
+                        int targetW = static_cast<int>(THUMB_SIZE * scaleFactor);
+                        int targetH = static_cast<int>(THUMB_SIZE * scaleFactor);
+                        wxImage scaled = img.Scale(targetW, targetH, wxIMAGE_QUALITY_HIGH);
+                        m_imageCache[idx] = wxBitmap(scaled, -1, scaleFactor);
                     }
                     fluyer_bytes_free(bytes, imgLen);
                 }
