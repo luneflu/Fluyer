@@ -1,5 +1,6 @@
 #include "MainFrame.h"
 #include <wx/dirdlg.h>
+#include <nlohmann/json.hpp>
 
 enum {
     ID_OPEN_FOLDER = 1001,
@@ -11,7 +12,7 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
 wxEND_EVENT_TABLE()
 
 MainFrame::MainFrame(FluyerEngine* engine)
-    : wxFrame(nullptr, wxID_ANY, "Fluyer Native", wxDefaultPosition, wxSize(900, 700)),
+    : wxFrame(nullptr, wxID_ANY, "Fluyer Native", wxDefaultPosition, wxSize(960, 720)),
       m_engine(engine) {
     
     // Menu bar
@@ -22,6 +23,8 @@ MainFrame::MainFrame(FluyerEngine* engine)
     fileMenu->Append(wxID_EXIT, "E&xit\tCtrl+Q");
     menuBar->Append(fileMenu, "&File");
     SetMenuBar(menuBar);
+
+    wxBoxSizer* rootSizer = new wxBoxSizer(wxVERTICAL);
 
     // Splitter window: Albums top, Music bottom
     wxSplitterWindow* splitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3D);
@@ -45,6 +48,14 @@ MainFrame::MainFrame(FluyerEngine* engine)
 
     splitter->SplitHorizontally(topPanel, bottomPanel, 220);
 
+    // Player bar below music list
+    m_playerBar = new PlayerBarCtrl(this);
+    m_playerBar->SetEngine(m_engine);
+
+    rootSizer->Add(splitter, 1, wxEXPAND);
+    rootSizer->Add(m_playerBar, 0, wxEXPAND);
+    SetSizer(rootSizer);
+
     RefreshViews();
 }
 
@@ -62,6 +73,27 @@ void MainFrame::OnTrackCoverLoaded(uintptr_t index) {
 
 void MainFrame::OnAlbumCoverLoaded(uintptr_t index) {
     if (m_albumList) m_albumList->OnCoverLoaded(index);
+}
+
+void MainFrame::OnPlayerStateChanged(const FluyerPlayerState& state) {
+    if (m_playerBar) m_playerBar->UpdateState(state);
+}
+
+void MainFrame::OnTrackChanged(const wxString& jsonMeta, uintptr_t index) {
+    wxString title = "Unknown Title";
+    wxString artist = "Unknown Artist";
+    wxString album = "";
+
+    try {
+        auto j = nlohmann::json::parse(jsonMeta.ToStdString());
+        if (j.contains("title") && !j["title"].is_null()) title = j["title"].get<std::string>();
+        if (j.contains("artist") && !j["artist"].is_null()) artist = j["artist"].get<std::string>();
+        if (j.contains("album") && !j["album"].is_null()) album = j["album"].get<std::string>();
+    } catch (...) {}
+
+    if (m_playerBar) {
+        m_playerBar->UpdateTrack(title, artist, album, index);
+    }
 }
 
 void MainFrame::OnOpenFolder(wxCommandEvent& WXUNUSED(evt)) {

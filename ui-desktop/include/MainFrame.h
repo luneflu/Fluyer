@@ -4,6 +4,7 @@
 #include "fluyer_core.h"
 #include "AlbumListCtrl.h"
 #include "MusicListCtrl.h"
+#include "PlayerBarCtrl.h"
 
 class MainFrame : public wxFrame {
 public:
@@ -13,6 +14,8 @@ public:
     void RefreshViews();
     void OnTrackCoverLoaded(uintptr_t index);
     void OnAlbumCoverLoaded(uintptr_t index);
+    void OnPlayerStateChanged(const FluyerPlayerState& state);
+    void OnTrackChanged(const wxString& jsonMeta, uintptr_t index);
 
 private:
     void OnOpenFolder(wxCommandEvent& evt);
@@ -21,6 +24,7 @@ private:
     FluyerEngine* m_engine;
     AlbumListCtrl* m_albumList;
     MusicListCtrl* m_musicList;
+    PlayerBarCtrl* m_playerBar;
 
     wxDECLARE_EVENT_TABLE();
 };

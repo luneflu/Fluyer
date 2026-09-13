@@ -22,7 +22,7 @@ private:
     void OnPaint(wxPaintEvent& evt);
     void OnSize(wxSizeEvent& evt);
     void OnScroll(wxScrollWinEvent& evt);
-    void OnLeftDClick(wxMouseEvent& evt);
+    void OnLeftDown(wxMouseEvent& evt);
 
     void OnMouseWheel(wxMouseEvent& evt);
 

@@ -58,7 +58,7 @@ extern "C" {
     pub fn BASS_PluginLoad(file: *const std::ffi::c_char, flags: u32) -> u32;
     pub fn BASS_PluginFree(handle: u32) -> i32;
     pub fn BASS_StreamCreateFile(
-        mem: bool,
+        mem: i32,
         file: *const std::ffi::c_void,
         offset: u64,
         length: u64,

@@ -1,4 +1,5 @@
 #include "MusicListCtrl.h"
+#include "Log.h"
 #include <wx/dcbuffer.h>
 #include <wx/graphics.h>
 #include <nlohmann/json.hpp>
@@ -11,7 +12,7 @@ using json_t = nlohmann::json;
 wxBEGIN_EVENT_TABLE(MusicListCtrl, wxScrolledWindow)
     EVT_PAINT(MusicListCtrl::OnPaint)
     EVT_SIZE(MusicListCtrl::OnSize)
-    EVT_LEFT_DCLICK(MusicListCtrl::OnLeftDClick)
+    EVT_LEFT_DOWN(MusicListCtrl::OnLeftDown)
     EVT_MOUSEWHEEL(MusicListCtrl::OnMouseWheel)
 wxEND_EVENT_TABLE()
 
@@ -58,7 +59,7 @@ void MusicListCtrl::OnMouseWheel(wxMouseEvent& evt) {
     Refresh();
 }
 
-void MusicListCtrl::OnLeftDClick(wxMouseEvent& evt) {
+void MusicListCtrl::OnLeftDown(wxMouseEvent& evt) {
     int x = evt.GetX();
     int y = evt.GetY() + m_scrollOffsetY;
     int clientW = GetClientSize().GetWidth();
@@ -70,6 +71,7 @@ void MusicListCtrl::OnLeftDClick(wxMouseEvent& evt) {
 
     if (clickedCol >= 0 && clickedCol < colCount && clickedRow >= 0) {
         size_t trackIdx = clickedRow * colCount + clickedCol;
+        FluyerLog::Info("UI", "Clicked track index " + std::to_string(trackIdx));
         if (trackIdx < m_trackCount && m_engine) {
             fluyer_library_play_index(m_engine, trackIdx);
         }

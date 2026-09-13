@@ -18,6 +18,8 @@ private:
     static void OnToast(void* user_data, const char* msg);
     static void OnTrackCoverLoaded(void* user_data, uintptr_t index);
     static void OnAlbumCoverLoaded(void* user_data, uintptr_t index);
+    static void OnStateChanged(void* user_data, FluyerPlayerState state);
+    static void OnTrackChanged(void* user_data, const char* jsonMeta, uintptr_t index);
 };
 
 wxIMPLEMENT_APP(FluyerApp);
@@ -30,6 +32,25 @@ void FluyerApp::OnToast(void* user_data, const char* msg) {
     if (app && app->m_mainFrame) {
         wxTheApp->CallAfter([app]() {
             app->m_mainFrame->RefreshViews();
+        });
+    }
+}
+
+void FluyerApp::OnStateChanged(void* user_data, FluyerPlayerState state) {
+    auto* app = static_cast<FluyerApp*>(user_data);
+    if (app && app->m_mainFrame) {
+        wxTheApp->CallAfter([app, state]() {
+            app->m_mainFrame->OnPlayerStateChanged(state);
+        });
+    }
+}
+
+void FluyerApp::OnTrackChanged(void* user_data, const char* jsonMeta, uintptr_t index) {
+    auto* app = static_cast<FluyerApp*>(user_data);
+    if (app && app->m_mainFrame) {
+        wxString jsonStr = jsonMeta ? wxString::FromUTF8(jsonMeta) : "";
+        wxTheApp->CallAfter([app, jsonStr, index]() {
+            app->m_mainFrame->OnTrackChanged(jsonStr, index);
         });
     }
 }
@@ -64,6 +85,8 @@ bool FluyerApp::OnInit() {
 
     FluyerCallbacks callbacks = { 0 };
     callbacks.user_data = this;
+    callbacks.on_state_changed = FluyerApp::OnStateChanged;
+    callbacks.on_track_changed = FluyerApp::OnTrackChanged;
     callbacks.on_scan_progress = FluyerApp::OnScanProgress;
     callbacks.on_toast = FluyerApp::OnToast;
     callbacks.on_track_cover_loaded = FluyerApp::OnTrackCoverLoaded;

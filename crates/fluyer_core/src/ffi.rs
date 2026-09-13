@@ -68,10 +68,11 @@ struct FfiEventSink {
 impl EventSink for FfiEventSink {
     fn on_player_sync(&self, state: MusicPlayerSync) {
         if let Some(cb) = self.callbacks.on_state_changed {
+            let duration_ms = state.duration_ms();
             let ffi_state = FluyerPlayerState {
                 index: state.index,
                 position_ms: state.position_ms(),
-                duration_ms: 0,
+                duration_ms,
                 is_playing: state.is_playing,
                 repeat_mode: state.repeat_mode.into(),
                 is_shuffled: state.is_shuffled,

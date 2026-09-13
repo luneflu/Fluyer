@@ -56,7 +56,7 @@ impl MusicBrainz {
             return Ok(None);
         };
 
-        eprintln!("[MusicBrainz] {} request: '{}'", btype, bquery);
+        crate::flog!("MusicBrainz", "{} request: '{}'", btype, bquery);
 
         let client = reqwest::Client::builder()
             .user_agent("Fluyer/1.0 ( https://github.com/alvindimas05/fluyer )")

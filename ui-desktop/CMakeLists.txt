@@ -26,6 +26,7 @@ set(SOURCES
     src/MainFrame.cpp
     src/AlbumListCtrl.cpp
     src/MusicListCtrl.cpp
+    src/PlayerBarCtrl.cpp
 )
 
 add_executable(FluyerApp ${SOURCES})

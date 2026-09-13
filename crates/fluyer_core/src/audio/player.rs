@@ -29,6 +29,7 @@ pub enum RepeatMode {
 pub struct MusicPlayerSync {
     pub index: i64,
     pub current_position: Option<f64>,
+    pub duration: Option<f64>,
     pub is_playing: bool,
     pub repeat_mode: RepeatMode,
     pub is_shuffled: bool,
@@ -41,6 +42,12 @@ impl MusicPlayerSync {
 
     pub fn position_ms(&self) -> u64 {
         self.current_position
+            .map(|s| (s * 1000.0) as u64)
+            .unwrap_or(0)
+    }
+
+    pub fn duration_ms(&self) -> u64 {
+        self.duration
             .map(|s| (s * 1000.0) as u64)
             .unwrap_or(0)
     }
@@ -460,7 +467,17 @@ impl MusicPlayer {
         } else {
             unsafe {
                 let byte_pos = BASS_ChannelGetPosition(current_stream, BASS_POS_BYTE);
-                Some(BASS_ChannelBytes2Seconds(current_stream, byte_pos) * 1000.0)
+                Some(BASS_ChannelBytes2Seconds(current_stream, byte_pos))
+            }
+        };
+
+        let duration = if current_stream == 0 {
+            None
+        } else {
+            unsafe {
+                let len_bytes = BASS_ChannelGetLength(current_stream, BASS_POS_BYTE);
+                let sec = BASS_ChannelBytes2Seconds(current_stream, len_bytes);
+                if sec > 0.0 { Some(sec) } else { None }
             }
         };
 
@@ -490,6 +507,7 @@ impl MusicPlayer {
         MusicPlayerSync {
             index,
             current_position,
+            duration,
             is_playing,
             repeat_mode,
             is_shuffled,
@@ -497,40 +515,42 @@ impl MusicPlayer {
     }
 
     pub fn add_track(&self, track: Vec<MusicMetadata>) {
-        let was_empty;
-        {
-            let mut state = match self.state.lock() {
-                Ok(s) => s,
-                Err(e) => {
-                    log::error!("Failed to lock player state: {}", e);
-                    return;
-                }
-            };
-            was_empty = state.track.is_empty();
-            let mut items = Vec::with_capacity(track.len());
-            for music in track {
-                items.push(TrackItem { metadata: music });
-            }
-
-            if let Some(ref mut original) = state.original_track {
-                original.extend(items.clone());
-                let cur_idx = state.current_index.unwrap_or(0);
-                if cur_idx < state.track.len() {
-                    let insert_pos = cur_idx + 1;
-                    state.track.splice(insert_pos..insert_pos, items);
-                    let mut rng = rand::rng();
-                    state.track[insert_pos..].shuffle(&mut rng);
-                } else {
-                    state.track.extend(items);
-                }
-            } else {
-                state.track.extend(items);
-            }
-        }
-
+        let was_empty = self.add_track_no_auto_play(track);
         if was_empty {
             self.goto_track(0);
         }
+    }
+
+    pub fn add_track_no_auto_play(&self, track: Vec<MusicMetadata>) -> bool {
+        let mut state = match self.state.lock() {
+            Ok(s) => s,
+            Err(e) => {
+                log::error!("Failed to lock player state: {}", e);
+                return false;
+            }
+        };
+        let was_empty = state.track.is_empty();
+        let mut items = Vec::with_capacity(track.len());
+        for music in track {
+            items.push(TrackItem { metadata: music });
+        }
+
+        if let Some(ref mut original) = state.original_track {
+            original.extend(items.clone());
+            let cur_idx = state.current_index.unwrap_or(0);
+            if cur_idx < state.track.len() {
+                let insert_pos = cur_idx + 1;
+                state.track.splice(insert_pos..insert_pos, items);
+                let mut rng = rand::rng();
+                state.track[insert_pos..].shuffle(&mut rng);
+            } else {
+                state.track.extend(items);
+            }
+        } else {
+            state.track.extend(items);
+        }
+
+        was_empty
     }
 
     pub fn remove_track(&self, index: usize) {
@@ -581,15 +601,18 @@ impl MusicPlayer {
                 let state = match state_arc.lock() {
                     Ok(s) => s,
                     Err(e) => {
-                        log::error!("Failed to lock player state: {}", e);
+                        crate::flog_err!("Player", "Failed to lock player state: {}", e);
                         return;
                     }
                 };
                 if index >= state.track.len() {
+                    crate::flog_err!("Player", "index {} out of bounds (len: {})", index, state.track.len());
                     return;
                 }
                 (state.track[index].metadata.clone(), state.track.len())
             };
+
+            crate::flog!("Player", "Playing track: '{}' from path: '{}'", music.title.as_deref().unwrap_or("?"), music.path);
 
             Self::stop_stream(&bass_mixer, &current_stream, &temp_wav_path);
 
@@ -608,6 +631,9 @@ impl MusicPlayer {
                 }
                 Self::play_pause_inner(&bass_mixer, &current_stream, true);
                 Self::emit_sync_inner(&bass_mixer, &current_stream, &state_arc, sink.as_deref(), true);
+                crate::flog!("Player", "Playback started");
+            } else {
+                crate::flog_err!("Player", "load_music_inner failed");
             }
         });
     }
@@ -972,7 +998,17 @@ impl MusicPlayer {
         } else {
             unsafe {
                 let byte_pos = BASS_ChannelGetPosition(cs, BASS_POS_BYTE);
-                Some(BASS_ChannelBytes2Seconds(cs, byte_pos) * 1000.0)
+                Some(BASS_ChannelBytes2Seconds(cs, byte_pos))
+            }
+        };
+
+        let duration = if cs == 0 {
+            None
+        } else {
+            unsafe {
+                let len_bytes = BASS_ChannelGetLength(cs, BASS_POS_BYTE);
+                let sec = BASS_ChannelBytes2Seconds(cs, len_bytes);
+                if sec > 0.0 { Some(sec) } else { None }
             }
         };
 
@@ -1001,6 +1037,7 @@ impl MusicPlayer {
         let sync_state = MusicPlayerSync {
             index,
             current_position,
+            duration,
             is_playing,
             repeat_mode,
             is_shuffled,
@@ -1065,29 +1102,54 @@ impl MusicPlayer {
             return false;
         }
 
-        let c_path = match CString::new(music.path.as_str()) {
-            Ok(p) => p,
-            Err(e) => {
-                log::error!("Invalid path string: {}", e);
-                return false;
-            }
+        // On macOS/Linux, BASS_StreamCreateFile expects UTF-8 char* without BASS_UNICODE.
+        // BASS_UNICODE instructs BASS on Windows to expect UTF-16 wchar_t*.
+        #[cfg(target_os = "windows")]
+        let (flags, path_ptr) = {
+            use std::os::windows::ffi::OsStrExt;
+            let wide: Vec<u16> = std::ffi::OsStr::new(&music.path)
+                .encode_wide()
+                .chain(std::iter::once(0))
+                .collect();
+            (BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT | BASS_UNICODE, wide.as_ptr() as *const std::ffi::c_void)
+        };
+
+        #[cfg(not(target_os = "windows"))]
+        let (flags, path_ptr) = {
+            let c_path = match CString::new(music.path.as_str()) {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("[Player] Invalid path string: {}", e);
+                    return false;
+                }
+            };
+            eprintln!("[Player] Calling BASS_StreamCreateFile with path: '{}'", music.path);
+            (BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT, c_path.into_raw() as *const std::ffi::c_void)
         };
 
         let stream = unsafe {
             BASS_StreamCreateFile(
-                false,
-                c_path.as_ptr() as *const _,
+                0,
+                path_ptr,
                 0,
                 0,
-                BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT | BASS_UNICODE,
+                flags,
             )
         };
 
+        #[cfg(not(target_os = "windows"))]
+        unsafe {
+            // Reclaim CString memory after BASS creates stream
+            drop(CString::from_raw(path_ptr as *mut std::ffi::c_char));
+        };
+
         if stream == 0 {
-            log::error!(
-                "Failed to load music file {}: {}",
+            let err = unsafe { BASS_ErrorGetCode() };
+            crate::flog_err!(
+                "Player",
+                "Failed to load music file {}: BASS error {}",
                 music.path,
-                unsafe { BASS_ErrorGetCode() }
+                err
             );
             return false;
         }

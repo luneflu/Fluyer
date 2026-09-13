@@ -1,3 +1,5 @@
+#[macro_use]
+pub mod logger;
 pub mod audio;
 pub mod db;
 pub mod events;
@@ -131,7 +133,7 @@ impl FluyerEngine {
             return;
         }
         self.player.clear();
-        self.player.add_track(music);
+        self.player.add_track_no_auto_play(music);
         self.player.goto_track(start_index);
     }
 
