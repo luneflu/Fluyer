@@ -39,7 +39,7 @@ impl CoverArtService {
             return Ok(None);
         };
 
-        let res = reqwest::get(image_url).await.map_err(|e| e.to_string())?;
+        let res = reqwest::get(&image_url).await.map_err(|e| e.to_string())?;
         let bytes = res.bytes().await.map_err(|e| e.to_string())?.to_vec();
 
         let path = self.cache_path(artist, album, title);

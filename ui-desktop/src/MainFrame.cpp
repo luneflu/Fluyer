@@ -56,6 +56,14 @@ void MainFrame::RefreshViews() {
     if (m_musicList) m_musicList->RefreshData(m_engine);
 }
 
+void MainFrame::OnTrackCoverLoaded(uintptr_t index) {
+    if (m_musicList) m_musicList->OnCoverLoaded(index);
+}
+
+void MainFrame::OnAlbumCoverLoaded(uintptr_t index) {
+    if (m_albumList) m_albumList->OnCoverLoaded(index);
+}
+
 void MainFrame::OnOpenFolder(wxCommandEvent& WXUNUSED(evt)) {
     wxDirDialog dlg(this, "Choose music directory to scan", "", wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
     if (dlg.ShowModal() == wxID_OK) {

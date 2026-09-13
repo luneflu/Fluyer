@@ -32,6 +32,11 @@ void AlbumListCtrl::RefreshData(FluyerEngine* engine) {
     Refresh();
 }
 
+void AlbumListCtrl::OnCoverLoaded(uintptr_t index) {
+    m_imageCache.erase(index);
+    Refresh();
+}
+
 void AlbumListCtrl::OnSize(wxSizeEvent& evt) {
     Refresh();
     evt.Skip();

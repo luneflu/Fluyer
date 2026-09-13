@@ -54,6 +54,8 @@ pub struct FluyerCallbacks {
     pub on_track_changed: Option<unsafe extern "C" fn(*mut c_void, *const c_char, usize)>,
     pub on_scan_progress: Option<unsafe extern "C" fn(*mut c_void, usize, usize)>,
     pub on_toast: Option<unsafe extern "C" fn(*mut c_void, *const c_char)>,
+    pub on_track_cover_loaded: Option<unsafe extern "C" fn(*mut c_void, usize)>,
+    pub on_album_cover_loaded: Option<unsafe extern "C" fn(*mut c_void, usize)>,
 }
 
 unsafe impl Send for FluyerCallbacks {}
@@ -98,6 +100,18 @@ impl EventSink for FfiEventSink {
             unsafe { cb(self.callbacks.user_data, c_msg.as_ptr()) };
         }
     }
+
+    fn on_track_cover_loaded(&self, index: usize) {
+        if let Some(cb) = self.callbacks.on_track_cover_loaded {
+            unsafe { cb(self.callbacks.user_data, index) };
+        }
+    }
+
+    fn on_album_cover_loaded(&self, index: usize) {
+        if let Some(cb) = self.callbacks.on_album_cover_loaded {
+            unsafe { cb(self.callbacks.user_data, index) };
+        }
+    }
 }
 
 #[no_mangle]
@@ -124,6 +138,8 @@ pub unsafe extern "C" fn fluyer_init(
         || callbacks.on_track_changed.is_some()
         || callbacks.on_scan_progress.is_some()
         || callbacks.on_toast.is_some()
+        || callbacks.on_track_cover_loaded.is_some()
+        || callbacks.on_album_cover_loaded.is_some()
     {
         Some(Arc::new(FfiEventSink { callbacks }))
     } else {
@@ -302,7 +318,23 @@ pub unsafe extern "C" fn fluyer_library_get_track_image(
                 let artist = track.artist.as_deref().unwrap_or("");
                 let album = track.album.as_deref();
                 let title = track.title.as_deref();
-                e.cover_art.get_cached(artist, album, title)
+                if let Some(cached) = e.cover_art.get_cached(artist, album, title) {
+                    Some(cached)
+                } else {
+                    let cover_service = Arc::clone(&e.cover_art);
+                    let sink = e.event_sink.clone();
+                    let artist_s = artist.to_string();
+                    let album_s = album.map(|s| s.to_string());
+                    let title_s = title.map(|s| s.to_string());
+                    e.runtime.spawn(async move {
+                        if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), title_s.as_deref()).await {
+                            if let Some(s) = sink {
+                                s.on_track_cover_loaded(index);
+                            }
+                        }
+                    });
+                    None
+                }
             });
 
             if let Some(bytes) = img {
@@ -334,7 +366,22 @@ pub unsafe extern "C" fn fluyer_library_get_album_image(
                         .or(first_track.artist.as_deref())
                         .unwrap_or("");
                     let album_name = first_track.album.as_deref();
-                    e.cover_art.get_cached(artist, album_name, None)
+                    if let Some(cached) = e.cover_art.get_cached(artist, album_name, None) {
+                        Some(cached)
+                    } else {
+                        let cover_service = Arc::clone(&e.cover_art);
+                        let sink = e.event_sink.clone();
+                        let artist_s = artist.to_string();
+                        let album_s = album_name.map(|s| s.to_string());
+                        e.runtime.spawn(async move {
+                            if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), None).await {
+                                if let Some(s) = sink {
+                                    s.on_album_cover_loaded(index);
+                                }
+                            }
+                        });
+                        None
+                    }
                 });
 
                 if let Some(bytes) = img {

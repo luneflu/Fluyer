@@ -11,6 +11,8 @@ public:
     ~MainFrame();
 
     void RefreshViews();
+    void OnTrackCoverLoaded(uintptr_t index);
+    void OnAlbumCoverLoaded(uintptr_t index);
 
 private:
     void OnOpenFolder(wxCommandEvent& evt);

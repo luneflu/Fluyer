@@ -16,6 +16,8 @@ private:
 
     static void OnScanProgress(void* user_data, uintptr_t current, uintptr_t total);
     static void OnToast(void* user_data, const char* msg);
+    static void OnTrackCoverLoaded(void* user_data, uintptr_t index);
+    static void OnAlbumCoverLoaded(void* user_data, uintptr_t index);
 };
 
 wxIMPLEMENT_APP(FluyerApp);
@@ -28,6 +30,24 @@ void FluyerApp::OnToast(void* user_data, const char* msg) {
     if (app && app->m_mainFrame) {
         wxTheApp->CallAfter([app]() {
             app->m_mainFrame->RefreshViews();
+        });
+    }
+}
+
+void FluyerApp::OnTrackCoverLoaded(void* user_data, uintptr_t index) {
+    auto* app = static_cast<FluyerApp*>(user_data);
+    if (app && app->m_mainFrame) {
+        wxTheApp->CallAfter([app, index]() {
+            app->m_mainFrame->OnTrackCoverLoaded(index);
+        });
+    }
+}
+
+void FluyerApp::OnAlbumCoverLoaded(void* user_data, uintptr_t index) {
+    auto* app = static_cast<FluyerApp*>(user_data);
+    if (app && app->m_mainFrame) {
+        wxTheApp->CallAfter([app, index]() {
+            app->m_mainFrame->OnAlbumCoverLoaded(index);
         });
     }
 }
@@ -46,6 +66,8 @@ bool FluyerApp::OnInit() {
     callbacks.user_data = this;
     callbacks.on_scan_progress = FluyerApp::OnScanProgress;
     callbacks.on_toast = FluyerApp::OnToast;
+    callbacks.on_track_cover_loaded = FluyerApp::OnTrackCoverLoaded;
+    callbacks.on_album_cover_loaded = FluyerApp::OnAlbumCoverLoaded;
 
     m_engine = fluyer_init(appSupportDir.c_str(), cacheDir.c_str(), callbacks);
 

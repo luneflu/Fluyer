@@ -16,6 +16,7 @@ class MusicListCtrl : public wxScrolledWindow {
 public:
     MusicListCtrl(wxWindow* parent, wxWindowID id = wxID_ANY);
     void RefreshData(FluyerEngine* engine);
+    void OnCoverLoaded(uintptr_t index);
 
 private:
     void OnPaint(wxPaintEvent& evt);

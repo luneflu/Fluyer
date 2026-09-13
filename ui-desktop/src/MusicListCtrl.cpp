@@ -34,6 +34,11 @@ void MusicListCtrl::RefreshData(FluyerEngine* engine) {
     Refresh();
 }
 
+void MusicListCtrl::OnCoverLoaded(uintptr_t index) {
+    m_imageCache.erase(index);
+    Refresh();
+}
+
 void MusicListCtrl::OnSize(wxSizeEvent& evt) {
     Refresh();
     evt.Skip();

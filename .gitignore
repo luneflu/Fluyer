@@ -32,6 +32,4 @@ Makefile
 *.o
 *.obj
 
-# Temporary test data
-store.json
-
+Fluyer
