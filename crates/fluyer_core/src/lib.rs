@@ -127,6 +127,13 @@ impl FluyerEngine {
         self.player.shuffle_track();
     }
 
+    pub fn play_single_from_library(&self, index: usize) {
+        if let Some(track) = self.library.read().unwrap().get_by_index(index) {
+            self.player.clear();
+            self.player.add_track(vec![track.clone()]);
+        }
+    }
+
     pub fn play_all_from_library(&self, start_index: usize) {
         let music = self.library.read().unwrap().music_list.clone();
         if music.is_empty() {

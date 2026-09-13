@@ -447,6 +447,15 @@ impl MusicPlayer {
         self.emit_sync(false);
     }
 
+    pub fn get_current_track(&self) -> Option<MusicMetadata> {
+        let state = self.state.lock().unwrap();
+        if let Some(idx) = state.current_index {
+            state.track.get(idx).map(|item| item.metadata.clone())
+        } else {
+            None
+        }
+    }
+
     pub fn get_current_duration(&self) -> f64 {
         let current_stream = self.current_stream.load(Ordering::SeqCst);
         unsafe {

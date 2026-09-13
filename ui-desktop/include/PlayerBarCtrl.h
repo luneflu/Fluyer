@@ -11,6 +11,7 @@ public:
     void SetEngine(FluyerEngine* engine);
     void UpdateState(const FluyerPlayerState& state);
     void UpdateTrack(const wxString& title, const wxString& artist, const wxString& album, uintptr_t trackIdx);
+    void OnCoverLoaded();
 
 private:
     void OnPaint(wxPaintEvent& evt);

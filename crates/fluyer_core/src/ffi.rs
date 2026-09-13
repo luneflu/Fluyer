@@ -249,6 +249,53 @@ pub unsafe extern "C" fn fluyer_library_scan(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn fluyer_player_get_current_image(
+    engine: *mut FluyerEngine,
+    out_len: *mut usize,
+) -> *mut u8 {
+    if let Some(e) = engine.as_ref() {
+        if let Some(track) = e.player.get_current_track() {
+            let img = MusicMetadata::get_image_with_symphonia(&track.path).ok().or_else(|| {
+                let artist = track.artist.as_deref().unwrap_or("");
+                let album = track.album.as_deref();
+                let title = track.title.as_deref();
+                if let Some(cached) = e.cover_art.get_cached(artist, album, title) {
+                    Some(cached)
+                } else {
+                    let cover_service = Arc::clone(&e.cover_art);
+                    let sink = e.event_sink.clone();
+                    let artist_s = artist.to_string();
+                    let album_s = album.map(|s| s.to_string());
+                    let title_s = title.map(|s| s.to_string());
+                    e.runtime.spawn(async move {
+                        if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), title_s.as_deref()).await {
+                            if let Some(s) = sink {
+                                s.on_track_cover_loaded(0);
+                            }
+                        }
+                    });
+                    None
+                }
+            });
+
+            if let Some(bytes) = img {
+                if !out_len.is_null() {
+                    *out_len = bytes.len();
+                }
+                let mut b = bytes.into_boxed_slice();
+                let ptr = b.as_mut_ptr();
+                std::mem::forget(b);
+                return ptr;
+            }
+        }
+    }
+    if !out_len.is_null() {
+        *out_len = 0;
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn fluyer_library_get_count(engine: *mut FluyerEngine) -> usize {
     if let Some(e) = engine.as_ref() {
         e.library.read().unwrap().count()
@@ -303,7 +350,7 @@ pub unsafe extern "C" fn fluyer_library_get_album_json(
 #[no_mangle]
 pub unsafe extern "C" fn fluyer_library_play_index(engine: *mut FluyerEngine, index: usize) {
     if let Some(e) = engine.as_ref() {
-        e.play_all_from_library(index);
+        e.play_single_from_library(index);
     }
 }
 

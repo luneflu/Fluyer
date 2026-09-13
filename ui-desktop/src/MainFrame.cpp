@@ -69,6 +69,7 @@ void MainFrame::RefreshViews() {
 
 void MainFrame::OnTrackCoverLoaded(uintptr_t index) {
     if (m_musicList) m_musicList->OnCoverLoaded(index);
+    if (m_playerBar) m_playerBar->OnCoverLoaded();
 }
 
 void MainFrame::OnAlbumCoverLoaded(uintptr_t index) {

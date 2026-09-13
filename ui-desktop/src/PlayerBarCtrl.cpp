@@ -180,9 +180,9 @@ void PlayerBarCtrl::UpdateTrack(const wxString& title, const wxString& artist, c
     if (!m_album.empty()) sub += " • " + m_album;
     m_lblArtist->SetLabel(sub);
 
-    if (m_engine && trackIdx != static_cast<uintptr_t>(-1)) {
+    if (m_engine) {
         uintptr_t imgLen = 0;
-        uint8_t* bytes = fluyer_library_get_track_image(m_engine, trackIdx, &imgLen);
+        uint8_t* bytes = fluyer_player_get_current_image(m_engine, &imgLen);
         if (bytes && imgLen > 0) {
             wxMemoryInputStream stream(bytes, imgLen);
             wxImage img(stream);
@@ -198,6 +198,25 @@ void PlayerBarCtrl::UpdateTrack(const wxString& title, const wxString& artist, c
     }
 
     m_pillPanel->Layout();
+}
+
+void PlayerBarCtrl::OnCoverLoaded() {
+    if (m_engine) {
+        uintptr_t imgLen = 0;
+        uint8_t* bytes = fluyer_player_get_current_image(m_engine, &imgLen);
+        if (bytes && imgLen > 0) {
+            wxMemoryInputStream stream(bytes, imgLen);
+            wxImage img(stream);
+            if (img.IsOk()) {
+                double scaleFactor = GetContentScaleFactor();
+                int target = static_cast<int>(40 * scaleFactor);
+                wxImage scaled = img.Scale(target, target, wxIMAGE_QUALITY_HIGH);
+                m_coverThumb = wxBitmap(scaled, -1, scaleFactor);
+                m_coverView->SetBitmap(m_coverThumb);
+            }
+            fluyer_bytes_free(bytes, imgLen);
+        }
+    }
 }
 
 void PlayerBarCtrl::OnPlayPause(wxCommandEvent& WXUNUSED(evt)) {
