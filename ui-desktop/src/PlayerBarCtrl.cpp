@@ -1,7 +1,13 @@
 #include "PlayerBarCtrl.h"
+#include "Icons.h"
 #include <wx/dcbuffer.h>
+#include <wx/bmpbndl.h>
+#include <wx/statbmp.h>
+#include <wx/bmpbuttn.h>
 #include <iomanip>
 #include <sstream>
+
+using Icons::CreateSVGIcon;
 
 enum {
     ID_BTN_PLAY_PAUSE = 2001,
@@ -68,9 +74,14 @@ PlayerBarCtrl::PlayerBarCtrl(wxWindow* parent, wxWindowID id)
 
     // Column 1: Playback Controls (Previous, Play/Pause, Next)
     wxBoxSizer* leftCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
-    m_btnPrev = new wxButton(m_pillPanel, ID_BTN_PREV, "⏮", wxDefaultPosition, wxSize(36, 30));
-    m_btnPlayPause = new wxButton(m_pillPanel, ID_BTN_PLAY_PAUSE, "▶", wxDefaultPosition, wxSize(46, 32));
-    m_btnNext = new wxButton(m_pillPanel, ID_BTN_NEXT, "⏭", wxDefaultPosition, wxSize(36, 30));
+    m_btnPrev = new wxBitmapButton(m_pillPanel, ID_BTN_PREV, CreateSVGIcon(Icons::SKIP_BACK_CIRCLE, "#D0D0D0", wxSize(24, 24)), wxDefaultPosition, wxSize(36, 30), wxBORDER_NONE);
+    m_btnPrev->SetBackgroundColour(wxColour(24, 24, 24));
+
+    m_btnPlayPause = new wxBitmapButton(m_pillPanel, ID_BTN_PLAY_PAUSE, CreateSVGIcon(Icons::PLAY_CIRCLE, "#FFFFFF", wxSize(28, 28)), wxDefaultPosition, wxSize(46, 32), wxBORDER_NONE);
+    m_btnPlayPause->SetBackgroundColour(wxColour(24, 24, 24));
+
+    m_btnNext = new wxBitmapButton(m_pillPanel, ID_BTN_NEXT, CreateSVGIcon(Icons::SKIP_FORWARD_CIRCLE, "#D0D0D0", wxSize(24, 24)), wxDefaultPosition, wxSize(36, 30), wxBORDER_NONE);
+    m_btnNext->SetBackgroundColour(wxColour(24, 24, 24));
 
     leftCtrlSizer->Add(m_btnPrev, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 4);
     leftCtrlSizer->Add(m_btnPlayPause, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 4);
@@ -101,11 +112,13 @@ PlayerBarCtrl::PlayerBarCtrl(wxWindow* parent, wxWindowID id)
 
     // Column 3: Right Controls (Repeat, Shuffle, Volume Icon, Volume Slider)
     wxBoxSizer* rightExtraSizer = new wxBoxSizer(wxHORIZONTAL);
-    m_btnRepeat = new wxButton(m_pillPanel, ID_BTN_REPEAT, "🔁", wxDefaultPosition, wxSize(34, 28));
-    m_btnShuffle = new wxButton(m_pillPanel, ID_BTN_SHUFFLE, "🔀", wxDefaultPosition, wxSize(34, 28));
+    m_btnRepeat = new wxBitmapButton(m_pillPanel, ID_BTN_REPEAT, CreateSVGIcon(Icons::REPEAT, "#8C8C8C", wxSize(20, 20)), wxDefaultPosition, wxSize(34, 28), wxBORDER_NONE);
+    m_btnRepeat->SetBackgroundColour(wxColour(24, 24, 24));
+
+    m_btnShuffle = new wxBitmapButton(m_pillPanel, ID_BTN_SHUFFLE, CreateSVGIcon(Icons::SHUFFLE, "#8C8C8C", wxSize(20, 20)), wxDefaultPosition, wxSize(34, 28), wxBORDER_NONE);
+    m_btnShuffle->SetBackgroundColour(wxColour(24, 24, 24));
     
-    m_volIcon = new wxStaticText(m_pillPanel, wxID_ANY, "🔊");
-    m_volIcon->SetForegroundColour(wxColour(160, 160, 160));
+    m_volIcon = new wxStaticBitmap(m_pillPanel, wxID_ANY, CreateSVGIcon(Icons::SPEAKER_HIGH, "#A0A0A0", wxSize(18, 18)));
     m_volSlider = new wxSlider(m_pillPanel, ID_SLIDER_VOL, 100, 0, 100, wxDefaultPosition, wxSize(90, 18), wxSL_HORIZONTAL);
 
     rightExtraSizer->Add(m_btnRepeat, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
@@ -135,7 +148,8 @@ void PlayerBarCtrl::SetEngine(FluyerEngine* engine) {
 
 void PlayerBarCtrl::UpdateState(const FluyerPlayerState& state) {
     m_state = state;
-    m_btnPlayPause->SetLabel(state.is_playing ? "⏸" : "▶");
+    m_btnPlayPause->SetBitmap(state.is_playing ? CreateSVGIcon(Icons::PAUSE_CIRCLE, "#FFFFFF", wxSize(28, 28))
+                                              : CreateSVGIcon(Icons::PLAY_CIRCLE, "#FFFFFF", wxSize(28, 28)));
     
     if (state.duration_ms > 0) {
         m_lblTimePos->SetLabel(FormatTime(state.position_ms));
@@ -150,20 +164,17 @@ void PlayerBarCtrl::UpdateState(const FluyerPlayerState& state) {
     }
 
     if (state.is_shuffled) {
-        m_btnShuffle->SetForegroundColour(wxColour(30, 215, 96));
+        m_btnShuffle->SetBitmap(CreateSVGIcon(Icons::SHUFFLE, "#1ED760", wxSize(20, 20)));
     } else {
-        m_btnShuffle->SetForegroundColour(wxColour(180, 180, 180));
+        m_btnShuffle->SetBitmap(CreateSVGIcon(Icons::SHUFFLE, "#8C8C8C", wxSize(20, 20)));
     }
 
     if (state.repeat_mode == FluyerRepeatMode::All) {
-        m_btnRepeat->SetLabel("🔁");
-        m_btnRepeat->SetForegroundColour(wxColour(30, 215, 96));
+        m_btnRepeat->SetBitmap(CreateSVGIcon(Icons::REPEAT, "#1ED760", wxSize(20, 20)));
     } else if (state.repeat_mode == FluyerRepeatMode::One) {
-        m_btnRepeat->SetLabel("🔂");
-        m_btnRepeat->SetForegroundColour(wxColour(30, 215, 96));
+        m_btnRepeat->SetBitmap(CreateSVGIcon(Icons::REPEAT_ONCE, "#1ED760", wxSize(20, 20)));
     } else {
-        m_btnRepeat->SetLabel("🔁");
-        m_btnRepeat->SetForegroundColour(wxColour(180, 180, 180));
+        m_btnRepeat->SetBitmap(CreateSVGIcon(Icons::REPEAT, "#8C8C8C", wxSize(20, 20)));
     }
 
     m_pillPanel->Layout();
@@ -257,8 +268,13 @@ void PlayerBarCtrl::OnSeek(wxCommandEvent& WXUNUSED(evt)) {
 
 void PlayerBarCtrl::OnVolume(wxCommandEvent& WXUNUSED(evt)) {
     if (!m_engine) return;
-    float vol = static_cast<float>(m_volSlider->GetValue()) / 100.0f;
+    int val = m_volSlider->GetValue();
+    float vol = static_cast<float>(val) / 100.0f;
     fluyer_player_set_volume(m_engine, vol);
+    if (m_volIcon) {
+        m_volIcon->SetBitmap(val == 0 ? CreateSVGIcon(Icons::SPEAKER_X, "#A0A0A0", wxSize(18, 18))
+                                      : CreateSVGIcon(Icons::SPEAKER_HIGH, "#A0A0A0", wxSize(18, 18)));
+    }
 }
 
 void PlayerBarCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {

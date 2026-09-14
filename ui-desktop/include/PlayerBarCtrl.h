@@ -2,6 +2,8 @@
 #include <wx/wx.h>
 #include <wx/slider.h>
 #include <wx/mstream.h>
+#include <wx/bmpbndl.h>
+#include <wx/statbmp.h>
 #include "fluyer_core.h"
 
 class PlayerBarCtrl : public wxPanel {
@@ -49,7 +51,7 @@ private:
 
     wxButton* m_btnRepeat = nullptr;
     wxButton* m_btnShuffle = nullptr;
-    wxStaticText* m_volIcon = nullptr;
+    wxStaticBitmap* m_volIcon = nullptr;
     wxSlider* m_volSlider = nullptr;
 
     wxDECLARE_EVENT_TABLE();
