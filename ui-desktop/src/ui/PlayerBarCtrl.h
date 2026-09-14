@@ -1,18 +1,17 @@
 #pragma once
 #include <wx/wx.h>
 #include <wx/slider.h>
-#include <wx/mstream.h>
-#include <wx/bmpbndl.h>
 #include <wx/statbmp.h>
-#include "fluyer_core.h"
+#include <wx/bmpbuttn.h>
+#include "services/PlayerService.h"
+#include "services/ImageService.h"
 
 class PlayerBarCtrl : public wxPanel {
 public:
-    PlayerBarCtrl(wxWindow* parent, wxWindowID id = wxID_ANY);
+    PlayerBarCtrl(wxWindow* parent, PlayerService* playerService, ImageService* imageService, wxWindowID id = wxID_ANY);
 
-    void SetEngine(FluyerEngine* engine);
-    void UpdateState(const FluyerPlayerState& state);
-    void UpdateTrack(const wxString& title, const wxString& artist, const wxString& album, uintptr_t trackIdx);
+    void UpdateState();
+    void UpdateTrack();
     void OnCoverLoaded();
 
 private:
@@ -26,14 +25,8 @@ private:
     void OnSeek(wxCommandEvent& evt);
     void OnVolume(wxCommandEvent& evt);
 
-    FluyerEngine* m_engine = nullptr;
-    FluyerPlayerState m_state = { -1, 0, 0, false, FluyerRepeatMode::None, false };
-
-    wxString m_title = "No track playing";
-    wxString m_artist = "Fluyer";
-    wxString m_album = "";
-    wxBitmap m_coverThumb;
-    uintptr_t m_currentTrackIdx = static_cast<uintptr_t>(-1);
+    PlayerService* m_playerService = nullptr;
+    ImageService* m_imageService = nullptr;
 
     wxSlider* m_seekSlider = nullptr;
     wxStaticText* m_lblTimePos = nullptr;

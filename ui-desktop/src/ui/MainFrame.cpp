@@ -1,6 +1,5 @@
 #include "MainFrame.h"
 #include <wx/dirdlg.h>
-#include <nlohmann/json.hpp>
 
 enum {
     ID_OPEN_FOLDER = 1001,
@@ -11,9 +10,11 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
     EVT_MENU(wxID_EXIT, MainFrame::OnExit)
 wxEND_EVENT_TABLE()
 
-MainFrame::MainFrame(FluyerEngine* engine)
+MainFrame::MainFrame(LibraryService* libraryService, PlayerService* playerService, ImageService* imageService)
     : wxFrame(nullptr, wxID_ANY, "Fluyer Native", wxDefaultPosition, wxSize(960, 720)),
-      m_engine(engine) {
+      m_libraryService(libraryService),
+      m_playerService(playerService),
+      m_imageService(imageService) {
     
     // Menu bar
     wxMenuBar* menuBar = new wxMenuBar();
@@ -34,7 +35,7 @@ MainFrame::MainFrame(FluyerEngine* engine)
     wxPanel* topPanel = new wxPanel(splitter);
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
 
-    m_albumList = new AlbumListCtrl(topPanel);
+    m_albumList = new AlbumListCtrl(topPanel, m_libraryService, m_imageService);
     topSizer->Add(m_albumList, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
     topPanel->SetSizer(topSizer);
 
@@ -42,15 +43,14 @@ MainFrame::MainFrame(FluyerEngine* engine)
     wxPanel* bottomPanel = new wxPanel(splitter);
     wxBoxSizer* bottomSizer = new wxBoxSizer(wxVERTICAL);
 
-    m_musicList = new MusicListCtrl(bottomPanel);
+    m_musicList = new MusicListCtrl(bottomPanel, m_libraryService, m_imageService);
     bottomSizer->Add(m_musicList, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
     bottomPanel->SetSizer(bottomSizer);
 
     splitter->SplitHorizontally(topPanel, bottomPanel, 220);
 
     // Player bar below music list
-    m_playerBar = new PlayerBarCtrl(this);
-    m_playerBar->SetEngine(m_engine);
+    m_playerBar = new PlayerBarCtrl(this, m_playerService, m_imageService);
 
     rootSizer->Add(splitter, 1, wxEXPAND);
     rootSizer->Add(m_playerBar, 0, wxEXPAND);
@@ -59,12 +59,11 @@ MainFrame::MainFrame(FluyerEngine* engine)
     RefreshViews();
 }
 
-MainFrame::~MainFrame() {
-}
+MainFrame::~MainFrame() = default;
 
 void MainFrame::RefreshViews() {
-    if (m_albumList) m_albumList->RefreshData(m_engine);
-    if (m_musicList) m_musicList->RefreshData(m_engine);
+    if (m_albumList) m_albumList->RefreshData();
+    if (m_musicList) m_musicList->RefreshData();
 }
 
 void MainFrame::OnTrackCoverLoaded(uintptr_t index) {
@@ -77,33 +76,22 @@ void MainFrame::OnAlbumCoverLoaded(uintptr_t index) {
 }
 
 void MainFrame::OnPlayerStateChanged(const FluyerPlayerState& state) {
-    if (m_playerBar) m_playerBar->UpdateState(state);
+    if (m_playerService) m_playerService->UpdateState(state);
+    if (m_playerBar) m_playerBar->UpdateState();
 }
 
-void MainFrame::OnTrackChanged(const wxString& jsonMeta, uintptr_t index) {
-    wxString title = "Unknown Title";
-    wxString artist = "Unknown Artist";
-    wxString album = "";
-
-    try {
-        auto j = nlohmann::json::parse(jsonMeta.ToStdString());
-        if (j.contains("title") && !j["title"].is_null()) title = j["title"].get<std::string>();
-        if (j.contains("artist") && !j["artist"].is_null()) artist = j["artist"].get<std::string>();
-        if (j.contains("album") && !j["album"].is_null()) album = j["album"].get<std::string>();
-    } catch (...) {}
-
-    if (m_playerBar) {
-        m_playerBar->UpdateTrack(title, artist, album, index);
-    }
+void MainFrame::OnTrackChanged(const std::string& jsonMeta, uintptr_t index) {
+    if (m_playerService) m_playerService->UpdateTrack(jsonMeta, index);
+    if (m_playerBar) m_playerBar->UpdateTrack();
 }
 
 void MainFrame::OnOpenFolder(wxCommandEvent& WXUNUSED(evt)) {
     wxDirDialog dlg(this, "Choose music directory to scan", "", wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
     if (dlg.ShowModal() == wxID_OK) {
         wxString path = dlg.GetPath();
-        const char* c_path = path.c_str();
-        const char* paths[] = { c_path };
-        fluyer_library_scan(m_engine, paths, 1);
+        if (m_libraryService) {
+            m_libraryService->ScanDirectories({ path.ToStdString() });
+        }
     }
 }
 

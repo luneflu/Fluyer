@@ -1,13 +1,7 @@
 #include "MusicListCtrl.h"
-#include "Log.h"
+#include "common/Log.h"
 #include <wx/dcbuffer.h>
-#include <wx/graphics.h>
-#include <nlohmann/json.hpp>
 #include <algorithm>
-#include <iomanip>
-#include <sstream>
-
-using json_t = nlohmann::json;
 
 wxBEGIN_EVENT_TABLE(MusicListCtrl, wxScrolledWindow)
     EVT_PAINT(MusicListCtrl::OnPaint)
@@ -16,30 +10,25 @@ wxBEGIN_EVENT_TABLE(MusicListCtrl, wxScrolledWindow)
     EVT_MOUSEWHEEL(MusicListCtrl::OnMouseWheel)
 wxEND_EVENT_TABLE()
 
-MusicListCtrl::MusicListCtrl(wxWindow* parent, wxWindowID id)
-    : wxScrolledWindow(parent, id, wxDefaultPosition, wxDefaultSize, wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE) {
+MusicListCtrl::MusicListCtrl(wxWindow* parent, LibraryService* libraryService, ImageService* imageService, wxWindowID id)
+    : wxScrolledWindow(parent, id, wxDefaultPosition, wxDefaultSize, wxNO_BORDER | wxFULL_REPAINT_ON_RESIZE),
+      m_libraryService(libraryService),
+      m_imageService(imageService) {
     ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(wxColour(14, 14, 14));
 }
 
-void MusicListCtrl::RefreshData(FluyerEngine* engine) {
-    m_engine = engine;
-    m_imageCache.clear();
-    m_metaCache.clear();
+void MusicListCtrl::RefreshData() {
     m_scrollOffsetY = 0;
-
-    if (m_engine) {
-        m_trackCount = fluyer_library_get_count(m_engine);
-    } else {
-        m_trackCount = 0;
-    }
-
+    m_trackCount = m_libraryService ? m_libraryService->GetTrackCount() : 0;
     Refresh();
 }
 
 void MusicListCtrl::OnCoverLoaded(uintptr_t index) {
-    m_imageCache.erase(index);
+    if (m_imageService) {
+        m_imageService->InvalidateTrackCover(index);
+    }
     Refresh();
 }
 
@@ -72,8 +61,8 @@ void MusicListCtrl::OnLeftDown(wxMouseEvent& evt) {
     if (clickedCol >= 0 && clickedCol < colCount && clickedRow >= 0) {
         size_t trackIdx = clickedRow * colCount + clickedCol;
         FluyerLog::Info("UI", "Clicked track index " + std::to_string(trackIdx));
-        if (trackIdx < m_trackCount && m_engine) {
-            fluyer_library_play_index(m_engine, trackIdx);
+        if (trackIdx < m_trackCount && m_libraryService) {
+            m_libraryService->PlayTrack(trackIdx);
         }
     }
     evt.Skip();
@@ -85,7 +74,7 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
     dc.SetBackground(wxBrush(wxColour(14, 14, 14)));
     dc.Clear();
 
-    if (m_trackCount == 0 || !m_engine) return;
+    if (m_trackCount == 0 || !m_libraryService) return;
 
     int viewW = GetClientSize().GetWidth();
     int viewH = GetClientSize().GetHeight();
@@ -98,6 +87,7 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
     int startRow = std::max(0, (startPixelY - PADDING) / ITEM_HEIGHT);
     int endRow = (endPixelY - PADDING) / ITEM_HEIGHT + 1;
 
+    double scaleFactor = GetContentScaleFactor();
     wxFont titleFont = wxFontInfo(wxSize(0, 13)).Bold().Family(wxFONTFAMILY_DEFAULT);
     wxFont subFont = wxFontInfo(wxSize(0, 11)).Family(wxFONTFAMILY_DEFAULT);
 
@@ -109,77 +99,35 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
             int cellX = PADDING + col * colWidth;
             int cellY = PADDING + row * ITEM_HEIGHT - m_scrollOffsetY;
 
-            // Metadata cache
-            if (m_metaCache.find(idx) == m_metaCache.end()) {
-                char* json = fluyer_library_get_track_json(m_engine, idx);
-                MusicTrackItem item = { "Unknown Title", "Unknown Artist", "Unknown Album", "0:00" };
-                if (json) {
-                    try {
-                        auto j = json_t::parse(json);
-                        if (j.contains("title") && !j["title"].is_null()) {
-                            item.title = j["title"].get<std::string>();
-                        }
-                        if (j.contains("artist") && !j["artist"].is_null()) {
-                            item.artist = j["artist"].get<std::string>();
-                        }
-                        if (j.contains("album") && !j["album"].is_null()) {
-                            item.album = j["album"].get<std::string>();
-                        }
-                        if (j.contains("duration") && !j["duration"].is_null()) {
-                            uint64_t dur_ms = j["duration"].get<uint64_t>();
-                            uint64_t total_sec = dur_ms / 1000;
-                            std::ostringstream ss;
-                            ss << (total_sec / 60) << ":" << std::setw(2) << std::setfill('0') << (total_sec % 60);
-                            item.duration = ss.str();
-                        }
-                    } catch (...) {}
-                    fluyer_string_free(json);
-                }
-                m_metaCache[idx] = item;
+            Track track = m_libraryService->GetTrack(idx);
+            wxBitmap thumb;
+            if (m_imageService) {
+                thumb = m_imageService->GetTrackImage(idx, THUMB_SIZE, scaleFactor);
             }
 
-            // Image cache
-            if (m_imageCache.find(idx) == m_imageCache.end()) {
-                uintptr_t imgLen = 0;
-                uint8_t* bytes = fluyer_library_get_track_image(m_engine, idx, &imgLen);
-                if (bytes && imgLen > 0) {
-                    wxMemoryInputStream stream(bytes, imgLen);
-                    wxImage img(stream);
-                    if (img.IsOk()) {
-                        double scaleFactor = GetContentScaleFactor();
-                        int targetW = static_cast<int>(THUMB_SIZE * scaleFactor);
-                        int targetH = static_cast<int>(THUMB_SIZE * scaleFactor);
-                        wxImage scaled = img.Scale(targetW, targetH, wxIMAGE_QUALITY_HIGH);
-                        m_imageCache[idx] = wxBitmap(scaled, -1, scaleFactor);
-                    }
-                    fluyer_bytes_free(bytes, imgLen);
-                }
-            }
-
-            // Draw track card background
+            // Card background
             dc.SetBrush(wxBrush(wxColour(22, 22, 22)));
             dc.SetPen(wxPen(wxColour(32, 32, 32)));
             dc.DrawRoundedRectangle(cellX, cellY, colWidth - 8, ITEM_HEIGHT - 6, 6.0);
 
-            // Draw thumbnail
+            // Thumbnail
             int thumbX = cellX + 6;
             int thumbY = cellY + 4;
-            if (m_imageCache.find(idx) != m_imageCache.end() && m_imageCache[idx].IsOk()) {
-                dc.DrawBitmap(m_imageCache[idx], thumbX, thumbY, false);
+            if (thumb.IsOk()) {
+                dc.DrawBitmap(thumb, thumbX, thumbY, false);
             } else {
                 dc.SetBrush(wxBrush(wxColour(38, 38, 38)));
                 dc.SetPen(wxPen(wxColour(50, 50, 50)));
                 dc.DrawRoundedRectangle(thumbX, thumbY, THUMB_SIZE, THUMB_SIZE, 4.0);
             }
 
-            // Draw track metadata text
-            const auto& item = m_metaCache[idx];
+            // Track metadata text
             int textX = thumbX + THUMB_SIZE + 8;
             int textMaxW = colWidth - THUMB_SIZE - 60;
 
             dc.SetFont(titleFont);
             dc.SetTextForeground(wxColour(235, 235, 235));
-            wxString tStr = item.title;
+            wxString tStr = wxString::FromUTF8(track.title);
             if (dc.GetTextExtent(tStr).GetWidth() > textMaxW && tStr.length() > 20) {
                 tStr = tStr.substr(0, 18) + "...";
             }
@@ -187,7 +135,7 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
 
             dc.SetFont(subFont);
             dc.SetTextForeground(wxColour(150, 150, 150));
-            wxString subStr = item.artist + " • " + item.album;
+            wxString subStr = wxString::FromUTF8(track.artist) + " • " + wxString::FromUTF8(track.album);
             if (dc.GetTextExtent(subStr).GetWidth() > textMaxW && subStr.length() > 24) {
                 subStr = subStr.substr(0, 22) + "...";
             }
@@ -195,7 +143,7 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
 
             // Duration on right
             dc.SetTextForeground(wxColour(110, 110, 110));
-            dc.DrawText(item.duration, cellX + colWidth - 48, cellY + 18);
+            dc.DrawText(wxString::FromUTF8(track.FormatDuration()), cellX + colWidth - 48, cellY + 18);
         }
     }
 }

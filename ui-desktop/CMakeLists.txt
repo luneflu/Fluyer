@@ -17,16 +17,19 @@ FetchContent_MakeAvailable(json)
 set(ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 include_directories(
-    include
+    src
     ${ROOT_DIR}/crates/fluyer_core/include
 )
 
 set(SOURCES
     src/main.cpp
-    src/MainFrame.cpp
-    src/AlbumListCtrl.cpp
-    src/MusicListCtrl.cpp
-    src/PlayerBarCtrl.cpp
+    src/services/LibraryService.cpp
+    src/services/PlayerService.cpp
+    src/services/ImageService.cpp
+    src/ui/MainFrame.cpp
+    src/ui/AlbumListCtrl.cpp
+    src/ui/MusicListCtrl.cpp
+    src/ui/PlayerBarCtrl.cpp
 )
 
 add_executable(FluyerApp ${SOURCES})
