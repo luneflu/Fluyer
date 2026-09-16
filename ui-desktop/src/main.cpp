@@ -105,6 +105,7 @@ bool FluyerApp::OnInit() {
     m_imageService.SetEngine(m_engine);
 
     m_mainFrame = new MainFrame(&m_libraryService, &m_playerService, &m_imageService);
+    m_mainFrame->Maximize(true);
     m_mainFrame->Show(true);
     m_mainFrame->RefreshViews();
 
