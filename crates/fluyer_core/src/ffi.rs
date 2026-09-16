@@ -227,6 +227,22 @@ pub unsafe extern "C" fn fluyer_player_shuffle(engine: *mut FluyerEngine) {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn fluyer_player_get_position(engine: *mut FluyerEngine) -> u64 {
+    if let Some(e) = engine.as_ref() {
+        e.player.get_sync_info(false).position_ms()
+    } else {
+        0
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_player_request_sync(engine: *mut FluyerEngine) {
+    if let Some(e) = engine.as_ref() {
+        e.player.emit_sync(false);
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn fluyer_library_scan(
     engine: *mut FluyerEngine,
     paths: *const *const c_char,

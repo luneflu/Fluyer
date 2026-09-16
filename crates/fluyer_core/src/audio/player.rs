@@ -335,17 +335,16 @@ impl MusicPlayer {
     }
 
     pub fn play(&self) {
-        let (has_track, is_ended) = {
+        let (has_track, should_restart) = {
             let state = self.state.lock().unwrap();
-            let is_ended = state.current_index.is_some()
-                && state.current_index == Some(0)
+            let should_restart = (state.current_index.is_none() || state.current_index == Some(0))
                 && self.current_stream.load(Ordering::SeqCst) == 0;
-            (!state.track.is_empty(), is_ended)
+            (!state.track.is_empty(), should_restart)
         };
 
-        if has_track && is_ended {
+        if has_track && should_restart {
             self.goto_track(0);
-        } else {
+        } else if has_track {
             self.play_pause(true);
         }
     }
@@ -920,6 +919,7 @@ impl MusicPlayer {
 
     fn play_pause(&self, play: bool) {
         Self::play_pause_inner(&self.bass_mixer, &self.current_stream, play);
+        self.emit_sync(false);
     }
 
     fn play_pause_inner(bass_mixer: &Arc<AtomicU32>, _current_stream: &Arc<AtomicU32>, play: bool) {
@@ -1128,11 +1128,11 @@ impl MusicPlayer {
             let c_path = match CString::new(music.path.as_str()) {
                 Ok(p) => p,
                 Err(e) => {
-                    eprintln!("[Player] Invalid path string: {}", e);
+                    crate::flog_err!("Player", "Invalid path string: {}", e);
                     return false;
                 }
             };
-            eprintln!("[Player] Calling BASS_StreamCreateFile with path: '{}'", music.path);
+            crate::flog!("Player", "Calling BASS_StreamCreateFile with path: '{}'", music.path);
             (BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT, c_path.into_raw() as *const std::ffi::c_void)
         };
 

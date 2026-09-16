@@ -12,7 +12,8 @@ enum {
     ID_BTN_SHUFFLE,
     ID_BTN_REPEAT,
     ID_SLIDER_SEEK,
-    ID_SLIDER_VOL
+    ID_SLIDER_VOL,
+    ID_TIMER_PROGRESS
 };
 
 wxBEGIN_EVENT_TABLE(PlayerBarCtrl, wxPanel)
@@ -25,12 +26,14 @@ wxBEGIN_EVENT_TABLE(PlayerBarCtrl, wxPanel)
     EVT_BUTTON(ID_BTN_REPEAT, PlayerBarCtrl::OnRepeat)
     EVT_SLIDER(ID_SLIDER_SEEK, PlayerBarCtrl::OnSeek)
     EVT_SLIDER(ID_SLIDER_VOL, PlayerBarCtrl::OnVolume)
+    EVT_TIMER(ID_TIMER_PROGRESS, PlayerBarCtrl::OnTimer)
 wxEND_EVENT_TABLE()
 
 PlayerBarCtrl::PlayerBarCtrl(wxWindow* parent, PlayerService* playerService, ImageService* imageService, wxWindowID id)
     : wxPanel(parent, id, wxDefaultPosition, wxSize(-1, 108), wxNO_BORDER),
       m_playerService(playerService),
-      m_imageService(imageService) {
+      m_imageService(imageService),
+      m_progressTimer(this, ID_TIMER_PROGRESS) {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(wxColour(14, 14, 14));
 
@@ -128,11 +131,40 @@ PlayerBarCtrl::PlayerBarCtrl(wxWindow* parent, PlayerService* playerService, Ima
     outerSizer->Add(m_pillPanel, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
 
     SetSizer(outerSizer);
+    UpdateState();
+}
+
+PlayerBarCtrl::~PlayerBarCtrl() {
+    if (m_progressTimer.IsRunning()) {
+        m_progressTimer.Stop();
+    }
 }
 
 void PlayerBarCtrl::OnSize(wxSizeEvent& evt) {
     Refresh();
     evt.Skip();
+}
+
+void PlayerBarCtrl::UpdateProgress() {
+    if (!m_playerService) return;
+    const auto& state = m_playerService->GetState();
+
+    if (state.duration_ms > 0) {
+        uint64_t pos = m_playerService->GetPosition();
+        m_lblTimePos->SetLabel(wxString::FromUTF8(PlayerService::FormatTime(pos)));
+        m_lblTimeDur->SetLabel(wxString::FromUTF8(PlayerService::FormatTime(state.duration_ms)));
+
+        int sliderPos = static_cast<int>((static_cast<double>(pos) / state.duration_ms) * 1000.0);
+        m_seekSlider->SetValue(std::clamp(sliderPos, 0, 1000));
+    } else {
+        m_lblTimePos->SetLabel("0:00");
+        m_lblTimeDur->SetLabel("0:00");
+        m_seekSlider->SetValue(0);
+    }
+}
+
+void PlayerBarCtrl::OnTimer(wxTimerEvent& WXUNUSED(evt)) {
+    UpdateProgress();
 }
 
 void PlayerBarCtrl::UpdateState() {
@@ -141,21 +173,23 @@ void PlayerBarCtrl::UpdateState() {
 
     m_btnPlayPause->SetBitmap(state.is_playing ? CreateSVGIcon(Icons::PAUSE_CIRCLE, "#FFFFFF", wxSize(28, 28))
                                               : CreateSVGIcon(Icons::PLAY_CIRCLE, "#FFFFFF", wxSize(28, 28)));
+    m_btnPlayPause->Refresh();
 
-    if (state.duration_ms > 0) {
-        m_lblTimePos->SetLabel(wxString::FromUTF8(PlayerService::FormatTime(state.position_ms)));
-        m_lblTimeDur->SetLabel(wxString::FromUTF8(PlayerService::FormatTime(state.duration_ms)));
-
-        int pos = static_cast<int>((static_cast<double>(state.position_ms) / state.duration_ms) * 1000.0);
-        m_seekSlider->SetValue(std::clamp(pos, 0, 1000));
+    if (state.is_playing) {
+        if (!m_progressTimer.IsRunning()) {
+            m_progressTimer.Start(250);
+        }
     } else {
-        m_lblTimePos->SetLabel("0:00");
-        m_lblTimeDur->SetLabel("0:00");
-        m_seekSlider->SetValue(0);
+        if (m_progressTimer.IsRunning()) {
+            m_progressTimer.Stop();
+        }
     }
+
+    UpdateProgress();
 
     m_btnShuffle->SetBitmap(state.is_shuffled ? CreateSVGIcon(Icons::SHUFFLE, "#1ED760", wxSize(20, 20))
                                               : CreateSVGIcon(Icons::SHUFFLE, "#8C8C8C", wxSize(20, 20)));
+    m_btnShuffle->Refresh();
 
     if (state.repeat_mode == FluyerRepeatMode::All) {
         m_btnRepeat->SetBitmap(CreateSVGIcon(Icons::REPEAT, "#1ED760", wxSize(20, 20)));
@@ -164,6 +198,7 @@ void PlayerBarCtrl::UpdateState() {
     } else {
         m_btnRepeat->SetBitmap(CreateSVGIcon(Icons::REPEAT, "#8C8C8C", wxSize(20, 20)));
     }
+    m_btnRepeat->Refresh();
 
     m_pillPanel->Layout();
 }
@@ -213,7 +248,13 @@ void PlayerBarCtrl::OnRepeat(wxCommandEvent& WXUNUSED(evt)) {
 void PlayerBarCtrl::OnSeek(wxCommandEvent& WXUNUSED(evt)) {
     if (!m_playerService) return;
     int val = m_seekSlider->GetValue();
-    m_playerService->SeekPercent(static_cast<float>(val) / 1000.0f);
+    float pct = static_cast<float>(val) / 1000.0f;
+    const auto& state = m_playerService->GetState();
+    if (state.duration_ms > 0) {
+        uint64_t targetPos = static_cast<uint64_t>(pct * state.duration_ms);
+        m_lblTimePos->SetLabel(wxString::FromUTF8(PlayerService::FormatTime(targetPos)));
+    }
+    m_playerService->SeekPercent(pct);
 }
 
 void PlayerBarCtrl::OnVolume(wxCommandEvent& WXUNUSED(evt)) {

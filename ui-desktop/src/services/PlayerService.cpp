@@ -60,8 +60,19 @@ void PlayerService::SetVolume(float volume) {
     if (m_engine) fluyer_player_set_volume(m_engine, volume);
 }
 
+void PlayerService::RequestSync() {
+    if (m_engine) fluyer_player_request_sync(m_engine);
+}
+
 void PlayerService::UpdateState(const FluyerPlayerState& state) {
     m_state = state;
+}
+
+uint64_t PlayerService::GetPosition() const {
+    if (m_engine) {
+        return fluyer_player_get_position(m_engine);
+    }
+    return m_state.position_ms;
 }
 
 void PlayerService::UpdateTrack(const std::string& jsonMeta, uintptr_t index) {

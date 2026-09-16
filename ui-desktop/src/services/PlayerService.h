@@ -20,10 +20,12 @@ public:
     void Seek(uint64_t position_ms);
     void SeekPercent(float percent0to1);
     void SetVolume(float volume);
+    void RequestSync();
 
     void UpdateState(const FluyerPlayerState& state);
     void UpdateTrack(const std::string& jsonMeta, uintptr_t index);
 
+    uint64_t GetPosition() const;
     const FluyerPlayerState& GetState() const { return m_state; }
     const Track& GetCurrentTrack() const { return m_currentTrack; }
     uintptr_t GetCurrentTrackIndex() const { return m_currentTrackIndex; }
