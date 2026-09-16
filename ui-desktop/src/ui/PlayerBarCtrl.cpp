@@ -63,17 +63,20 @@ PlayerBarCtrl::PlayerBarCtrl(wxWindow* parent, PlayerService* playerService, Ima
 
     // Column 1: Playback Controls (Previous, Play/Pause, Next)
     wxBoxSizer* leftCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
-    m_btnPrev = new wxBitmapButton(m_pillPanel, ID_BTN_PREV, CreateSVGIcon(Icons::SKIP_BACK_CIRCLE, "#D0D0D0", wxSize(24, 24)), wxDefaultPosition, wxSize(36, 30), wxBORDER_NONE);
+    m_btnPrev = new wxBitmapButton(m_pillPanel, ID_BTN_PREV, CreateSVGIcon(Icons::SKIP_BACK_CIRCLE, "#D0D0D0", wxSize(24, 24)), wxDefaultPosition, wxSize(24, 24), wxBORDER_NONE);
     m_btnPrev->SetBackgroundColour(wxColour(24, 24, 24));
+    m_btnPrev->SetBitmapMargins(0, 0);
 
-    m_btnPlayPause = new wxBitmapButton(m_pillPanel, ID_BTN_PLAY_PAUSE, CreateSVGIcon(Icons::PLAY_CIRCLE, "#FFFFFF", wxSize(28, 28)), wxDefaultPosition, wxSize(46, 32), wxBORDER_NONE);
+    m_btnPlayPause = new wxBitmapButton(m_pillPanel, ID_BTN_PLAY_PAUSE, CreateSVGIcon(Icons::PLAY_CIRCLE, "#FFFFFF", wxSize(28, 28)), wxDefaultPosition, wxSize(28, 28), wxBORDER_NONE);
     m_btnPlayPause->SetBackgroundColour(wxColour(24, 24, 24));
+    m_btnPlayPause->SetBitmapMargins(0, 0);
 
-    m_btnNext = new wxBitmapButton(m_pillPanel, ID_BTN_NEXT, CreateSVGIcon(Icons::SKIP_FORWARD_CIRCLE, "#D0D0D0", wxSize(24, 24)), wxDefaultPosition, wxSize(36, 30), wxBORDER_NONE);
+    m_btnNext = new wxBitmapButton(m_pillPanel, ID_BTN_NEXT, CreateSVGIcon(Icons::SKIP_FORWARD_CIRCLE, "#D0D0D0", wxSize(24, 24)), wxDefaultPosition, wxSize(24, 24), wxBORDER_NONE);
     m_btnNext->SetBackgroundColour(wxColour(24, 24, 24));
+    m_btnNext->SetBitmapMargins(0, 0);
 
-    leftCtrlSizer->Add(m_btnPrev, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 4);
-    leftCtrlSizer->Add(m_btnPlayPause, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 4);
+    leftCtrlSizer->Add(m_btnPrev, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
+    leftCtrlSizer->Add(m_btnPlayPause, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
     leftCtrlSizer->Add(m_btnNext, 0, wxALIGN_CENTER_VERTICAL, 0);
 
     // Column 2: Track Info
@@ -99,11 +102,13 @@ PlayerBarCtrl::PlayerBarCtrl(wxWindow* parent, PlayerService* playerService, Ima
 
     // Column 3: Secondary Controls
     wxBoxSizer* rightExtraSizer = new wxBoxSizer(wxHORIZONTAL);
-    m_btnRepeat = new wxBitmapButton(m_pillPanel, ID_BTN_REPEAT, CreateSVGIcon(Icons::REPEAT, "#8C8C8C", wxSize(20, 20)), wxDefaultPosition, wxSize(34, 28), wxBORDER_NONE);
+    m_btnRepeat = new wxBitmapButton(m_pillPanel, ID_BTN_REPEAT, CreateSVGIcon(Icons::REPEAT, "#8C8C8C", wxSize(20, 20)), wxDefaultPosition, wxSize(20, 20), wxBORDER_NONE);
     m_btnRepeat->SetBackgroundColour(wxColour(24, 24, 24));
+    m_btnRepeat->SetBitmapMargins(0, 0);
 
-    m_btnShuffle = new wxBitmapButton(m_pillPanel, ID_BTN_SHUFFLE, CreateSVGIcon(Icons::SHUFFLE, "#8C8C8C", wxSize(20, 20)), wxDefaultPosition, wxSize(34, 28), wxBORDER_NONE);
+    m_btnShuffle = new wxBitmapButton(m_pillPanel, ID_BTN_SHUFFLE, CreateSVGIcon(Icons::SHUFFLE, "#8C8C8C", wxSize(20, 20)), wxDefaultPosition, wxSize(20, 20), wxBORDER_NONE);
     m_btnShuffle->SetBackgroundColour(wxColour(24, 24, 24));
+    m_btnShuffle->SetBitmapMargins(0, 0);
     
     m_volIcon = new wxStaticBitmap(m_pillPanel, wxID_ANY, CreateSVGIcon(Icons::SPEAKER_HIGH, "#A0A0A0", wxSize(18, 18)));
     m_volSlider = new wxSlider(m_pillPanel, ID_SLIDER_VOL, 100, 0, 100, wxDefaultPosition, wxSize(90, 18), wxSL_HORIZONTAL);
