@@ -147,4 +147,55 @@ impl FluyerEngine {
     pub fn add_track_to_queue(&self, track: MusicMetadata) {
         self.player.add_track(vec![track]);
     }
+
+    pub fn resolve_track_cover(&self, track: &MusicMetadata, notify_index: Option<usize>) -> Option<Vec<u8>> {
+        MusicMetadata::get_image_with_symphonia(&track.path).ok().or_else(|| {
+            let artist = track.artist.as_deref().unwrap_or("");
+            let album = track.album.as_deref();
+            let title = track.title.as_deref();
+            if let Some(cached) = self.cover_art.get_cached(artist, album, title) {
+                Some(cached)
+            } else {
+                let cover_service = Arc::clone(&self.cover_art);
+                let sink = self.event_sink.clone();
+                let artist_s = artist.to_string();
+                let album_s = album.map(|s| s.to_string());
+                let title_s = title.map(|s| s.to_string());
+                self.runtime.spawn(async move {
+                    if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), title_s.as_deref()).await {
+                        if let (Some(s), Some(idx)) = (sink, notify_index) {
+                            s.on_track_cover_loaded(idx);
+                        }
+                    }
+                });
+                None
+            }
+        })
+    }
+
+    pub fn resolve_album_cover(&self, album: &[MusicMetadata], notify_index: Option<usize>) -> Option<Vec<u8>> {
+        let first_track = album.first()?;
+        MusicMetadata::get_image_with_symphonia(&first_track.path).ok().or_else(|| {
+            let artist = first_track.album_artist.as_deref()
+                .or(first_track.artist.as_deref())
+                .unwrap_or("");
+            let album_name = first_track.album.as_deref();
+            if let Some(cached) = self.cover_art.get_cached(artist, album_name, None) {
+                Some(cached)
+            } else {
+                let cover_service = Arc::clone(&self.cover_art);
+                let sink = self.event_sink.clone();
+                let artist_s = artist.to_string();
+                let album_s = album_name.map(|s| s.to_string());
+                self.runtime.spawn(async move {
+                    if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), None).await {
+                        if let (Some(s), Some(idx)) = (sink, notify_index) {
+                            s.on_album_cover_loaded(idx);
+                        }
+                    }
+                });
+                None
+            }
+        })
+    }
 }

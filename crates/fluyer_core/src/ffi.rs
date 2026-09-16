@@ -1,3 +1,5 @@
+#![allow(clippy::missing_safety_doc)]
+
 use crate::audio::{MusicPlayerSync, RepeatMode};
 use crate::events::EventSink;
 use crate::metadata::MusicMetadata;
@@ -264,51 +266,30 @@ pub unsafe extern "C" fn fluyer_library_scan(
     }
 }
 
+unsafe fn raw_bytes_into_ptr(bytes: Option<Vec<u8>>, out_len: *mut usize) -> *mut u8 {
+    if let Some(bytes) = bytes {
+        if !out_len.is_null() {
+            *out_len = bytes.len();
+        }
+        let boxed = bytes.into_boxed_slice();
+        Box::into_raw(boxed) as *mut u8
+    } else {
+        if !out_len.is_null() {
+            *out_len = 0;
+        }
+        std::ptr::null_mut()
+    }
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn fluyer_player_get_current_image(
     engine: *mut FluyerEngine,
     out_len: *mut usize,
 ) -> *mut u8 {
-    if let Some(e) = engine.as_ref() {
-        if let Some(track) = e.player.get_current_track() {
-            let img = MusicMetadata::get_image_with_symphonia(&track.path).ok().or_else(|| {
-                let artist = track.artist.as_deref().unwrap_or("");
-                let album = track.album.as_deref();
-                let title = track.title.as_deref();
-                if let Some(cached) = e.cover_art.get_cached(artist, album, title) {
-                    Some(cached)
-                } else {
-                    let cover_service = Arc::clone(&e.cover_art);
-                    let sink = e.event_sink.clone();
-                    let artist_s = artist.to_string();
-                    let album_s = album.map(|s| s.to_string());
-                    let title_s = title.map(|s| s.to_string());
-                    e.runtime.spawn(async move {
-                        if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), title_s.as_deref()).await {
-                            if let Some(s) = sink {
-                                s.on_track_cover_loaded(0);
-                            }
-                        }
-                    });
-                    None
-                }
-            });
-
-            if let Some(bytes) = img {
-                if !out_len.is_null() {
-                    *out_len = bytes.len();
-                }
-                let mut b = bytes.into_boxed_slice();
-                let ptr = b.as_mut_ptr();
-                std::mem::forget(b);
-                return ptr;
-            }
-        }
-    }
-    if !out_len.is_null() {
-        *out_len = 0;
-    }
-    std::ptr::null_mut()
+    let bytes = engine
+        .as_ref()
+        .and_then(|e| e.player.get_current_track().and_then(|t| e.resolve_track_cover(&t, Some(0))));
+    raw_bytes_into_ptr(bytes, out_len)
 }
 
 #[no_mangle]
@@ -376,44 +357,14 @@ pub unsafe extern "C" fn fluyer_library_get_track_image(
     index: usize,
     out_len: *mut usize,
 ) -> *mut u8 {
-    if let Some(e) = engine.as_ref() {
-        if let Some(track) = e.library.read().unwrap().get_by_index(index) {
-            let img = MusicMetadata::get_image_with_symphonia(&track.path).ok().or_else(|| {
-                let artist = track.artist.as_deref().unwrap_or("");
-                let album = track.album.as_deref();
-                let title = track.title.as_deref();
-                if let Some(cached) = e.cover_art.get_cached(artist, album, title) {
-                    Some(cached)
-                } else {
-                    let cover_service = Arc::clone(&e.cover_art);
-                    let sink = e.event_sink.clone();
-                    let artist_s = artist.to_string();
-                    let album_s = album.map(|s| s.to_string());
-                    let title_s = title.map(|s| s.to_string());
-                    e.runtime.spawn(async move {
-                        if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), title_s.as_deref()).await {
-                            if let Some(s) = sink {
-                                s.on_track_cover_loaded(index);
-                            }
-                        }
-                    });
-                    None
-                }
-            });
-
-            if let Some(bytes) = img {
-                if !out_len.is_null() {
-                    *out_len = bytes.len();
-                }
-                let boxed = bytes.into_boxed_slice();
-                return Box::into_raw(boxed) as *mut u8;
-            }
-        }
-    }
-    if !out_len.is_null() {
-        *out_len = 0;
-    }
-    std::ptr::null_mut()
+    let bytes = engine.as_ref().and_then(|e| {
+        e.library
+            .read()
+            .unwrap()
+            .get_by_index(index)
+            .and_then(|t| e.resolve_track_cover(&t, Some(index)))
+    });
+    raw_bytes_into_ptr(bytes, out_len)
 }
 
 #[no_mangle]
@@ -422,46 +373,14 @@ pub unsafe extern "C" fn fluyer_library_get_album_image(
     index: usize,
     out_len: *mut usize,
 ) -> *mut u8 {
-    if let Some(e) = engine.as_ref() {
-        if let Some(album) = e.library.read().unwrap().album_get_by_index(index) {
-            if let Some(first_track) = album.first() {
-                let img = MusicMetadata::get_image_with_symphonia(&first_track.path).ok().or_else(|| {
-                    let artist = first_track.album_artist.as_deref()
-                        .or(first_track.artist.as_deref())
-                        .unwrap_or("");
-                    let album_name = first_track.album.as_deref();
-                    if let Some(cached) = e.cover_art.get_cached(artist, album_name, None) {
-                        Some(cached)
-                    } else {
-                        let cover_service = Arc::clone(&e.cover_art);
-                        let sink = e.event_sink.clone();
-                        let artist_s = artist.to_string();
-                        let album_s = album_name.map(|s| s.to_string());
-                        e.runtime.spawn(async move {
-                            if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), None).await {
-                                if let Some(s) = sink {
-                                    s.on_album_cover_loaded(index);
-                                }
-                            }
-                        });
-                        None
-                    }
-                });
-
-                if let Some(bytes) = img {
-                    if !out_len.is_null() {
-                        *out_len = bytes.len();
-                    }
-                    let boxed = bytes.into_boxed_slice();
-                    return Box::into_raw(boxed) as *mut u8;
-                }
-            }
-        }
-    }
-    if !out_len.is_null() {
-        *out_len = 0;
-    }
-    std::ptr::null_mut()
+    let bytes = engine.as_ref().and_then(|e| {
+        e.library
+            .read()
+            .unwrap()
+            .album_get_by_index(index)
+            .and_then(|a| e.resolve_album_cover(&a, Some(index)))
+    });
+    raw_bytes_into_ptr(bytes, out_len)
 }
 
 #[no_mangle]

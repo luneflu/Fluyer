@@ -1,28 +1,13 @@
+use super::bass::*;
+use super::queue::{PlaybackQueue, RepeatMode};
 use crate::events::EventSink;
 use crate::metadata::MusicMetadata;
-use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use std::ffi::CString;
 use std::path::PathBuf;
 use std::ptr;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
-
-use super::bass::*;
-
-#[derive(Clone, Debug)]
-pub struct TrackItem {
-    pub metadata: MusicMetadata,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
-#[repr(u8)]
-pub enum RepeatMode {
-    #[default]
-    None = 0,
-    All = 1,
-    One = 2,
-}
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -53,36 +38,10 @@ impl MusicPlayerSync {
     }
 }
 
-#[derive(Debug, Clone, Default)]
-struct PlayerState {
-    track: Vec<TrackItem>,
-    original_track: Option<Vec<TrackItem>>,
-    current_index: Option<usize>,
-    repeat_mode: RepeatMode,
-}
-
-impl PlayerState {
-    fn get_next_index(&mut self, from_user: bool) -> Option<usize> {
-        match (self.current_index, self.repeat_mode) {
-            (Some(current), RepeatMode::One) if !from_user => Some(current),
-            (Some(current), _) => {
-                if current + 1 < self.track.len() {
-                    Some(current + 1)
-                } else if self.repeat_mode == RepeatMode::All {
-                    Some(0)
-                } else {
-                    None
-                }
-            }
-            _ => None,
-        }
-    }
-}
-
 pub struct MusicPlayer {
     bass_mixer: Arc<AtomicU32>,
     current_stream: Arc<AtomicU32>,
-    state: Arc<Mutex<PlayerState>>,
+    queue: Arc<Mutex<PlaybackQueue>>,
     temp_wav_path: Arc<Mutex<Option<PathBuf>>>,
     event_sink: Option<Arc<dyn EventSink>>,
 }
@@ -90,7 +49,7 @@ pub struct MusicPlayer {
 struct SyncData {
     bass_mixer: Arc<AtomicU32>,
     current_stream: Arc<AtomicU32>,
-    state: Arc<Mutex<PlayerState>>,
+    queue: Arc<Mutex<PlaybackQueue>>,
     temp_wav_path: Arc<Mutex<Option<PathBuf>>>,
     event_sink: Option<Arc<dyn EventSink>>,
 }
@@ -108,7 +67,7 @@ extern "C" fn end_sync_callback(
     let sync_data = unsafe { &*(user as *const SyncData) };
     let bm = Arc::clone(&sync_data.bass_mixer);
     let cs_arc = Arc::clone(&sync_data.current_stream);
-    let st = Arc::clone(&sync_data.state);
+    let q_arc = Arc::clone(&sync_data.queue);
     let twp = Arc::clone(&sync_data.temp_wav_path);
     let sink = sync_data.event_sink.clone();
 
@@ -122,26 +81,29 @@ extern "C" fn end_sync_callback(
         }
 
         let next_index = {
-            let mut state = match st.lock() {
+            let q = match q_arc.lock() {
                 Ok(s) => s,
                 Err(e) => {
-                    log::error!("Failed to lock player state: {}", e);
+                    log::error!("Failed to lock player queue: {}", e);
                     return;
                 }
             };
-            state.get_next_index(false)
+            q.next_index(false)
         };
 
         if let Some(index) = next_index {
             let (music, total_count) = {
-                let state = match st.lock() {
+                let q = match q_arc.lock() {
                     Ok(s) => s,
                     Err(e) => {
-                        log::error!("Failed to lock player state: {}", e);
+                        log::error!("Failed to lock player queue: {}", e);
                         return;
                     }
                 };
-                (state.track[index].metadata.clone(), state.track.len())
+                match q.get(index) {
+                    Some(m) => (m, q.len()),
+                    None => return,
+                }
             };
 
             unsafe {
@@ -153,18 +115,18 @@ extern "C" fn end_sync_callback(
             if MusicPlayer::load_music_inner(
                 &bm,
                 &cs_arc,
-                &st,
+                &q_arc,
                 &twp,
                 sink.as_ref(),
                 music,
                 index,
                 total_count,
             ) {
-                if let Ok(mut state) = st.lock() {
-                    state.current_index = Some(index);
+                if let Ok(mut q) = q_arc.lock() {
+                    q.set_current_index(Some(index));
                 }
                 MusicPlayer::play_pause_inner(&bm, &cs_arc, true);
-                MusicPlayer::emit_sync_inner(&bm, &cs_arc, &st, sink.as_deref(), true);
+                MusicPlayer::emit_sync_inner(&bm, &cs_arc, &q_arc, sink.as_deref(), true);
             }
         } else {
             std::thread::sleep(std::time::Duration::from_millis(500));
@@ -175,18 +137,14 @@ extern "C" fn end_sync_callback(
             }
 
             let first = {
-                let state = match st.lock() {
+                let q = match q_arc.lock() {
                     Ok(s) => s,
                     Err(e) => {
-                        log::error!("Failed to lock player state: {}", e);
+                        log::error!("Failed to lock player queue: {}", e);
                         return;
                     }
                 };
-                if state.track.is_empty() {
-                    None
-                } else {
-                    Some((state.track[0].metadata.clone(), state.track.len()))
-                }
+                q.get(0).map(|m| (m, q.len()))
             };
 
             if let Some((music, total_count)) = first {
@@ -199,7 +157,7 @@ extern "C" fn end_sync_callback(
                 if MusicPlayer::load_music_inner(
                     &bm,
                     &cs_arc,
-                    &st,
+                    &q_arc,
                     &twp,
                     sink.as_ref(),
                     music,
@@ -214,15 +172,15 @@ extern "C" fn end_sync_callback(
                         }
                     }
 
-                    if let Ok(mut state) = st.lock() {
-                        state.current_index = Some(0);
+                    if let Ok(mut q) = q_arc.lock() {
+                        q.set_current_index(Some(0));
                     }
-                    MusicPlayer::emit_sync_inner(&bm, &cs_arc, &st, sink.as_deref(), false);
+                    MusicPlayer::emit_sync_inner(&bm, &cs_arc, &q_arc, sink.as_deref(), false);
                 }
             } else {
                 MusicPlayer::stop_stream(&bm, &cs_arc, &twp);
-                if let Ok(mut state) = st.lock() {
-                    state.current_index = None;
+                if let Ok(mut q) = q_arc.lock() {
+                    q.set_current_index(None);
                 }
             }
         }
@@ -245,7 +203,7 @@ impl MusicPlayer {
         let player = Self {
             bass_mixer: Arc::new(AtomicU32::new(0)),
             current_stream: Arc::new(AtomicU32::new(0)),
-            state: Arc::new(Mutex::new(PlayerState::default())),
+            queue: Arc::new(Mutex::new(PlaybackQueue::default())),
             temp_wav_path: Arc::new(Mutex::new(None)),
             event_sink,
         };
@@ -336,10 +294,10 @@ impl MusicPlayer {
 
     pub fn play(&self) {
         let (has_track, should_restart) = {
-            let state = self.state.lock().unwrap();
-            let should_restart = (state.current_index.is_none() || state.current_index == Some(0))
+            let q = self.queue.lock().unwrap();
+            let should_restart = (q.current_index().is_none() || q.current_index() == Some(0))
                 && self.current_stream.load(Ordering::SeqCst) == 0;
-            (!state.track.is_empty(), should_restart)
+            (!q.is_empty(), should_restart)
         };
 
         if has_track && should_restart {
@@ -375,54 +333,23 @@ impl MusicPlayer {
     }
 
     pub fn queue_count(&self) -> usize {
-        self.state.lock().map(|s| s.track.len()).unwrap_or(0)
+        self.queue.lock().map(|q| q.len()).unwrap_or(0)
     }
 
     pub fn queue_get_by_index(&self, index: usize) -> Option<MusicMetadata> {
-        self.state
-            .lock()
-            .ok()
-            .and_then(|s| s.track.get(index).map(|p| p.metadata.clone()))
+        self.queue.lock().ok().and_then(|q| q.get(index))
     }
 
     pub fn shuffle_track(&self) {
-        if let Ok(mut state) = self.state.lock() {
-            if state.original_track.is_some() {
-                if let Some(original) = state.original_track.take() {
-                    let current_meta = state
-                        .current_index
-                        .and_then(|i| state.track.get(i))
-                        .map(|t| t.metadata.clone());
-
-                    state.track = original;
-
-                    if let Some(meta) = current_meta {
-                        state.current_index =
-                            state.track.iter().position(|t| t.metadata.id == meta.id);
-                    }
-                }
-            } else {
-                let len = state.track.len();
-                if len > 0 {
-                    state.original_track = Some(state.track.clone());
-                    let mut r = rand::rng();
-                    if let Some(current) = state.current_index {
-                        let current_item = state.track.remove(current);
-                        state.track.shuffle(&mut r);
-                        state.track.insert(0, current_item);
-                        state.current_index = Some(0);
-                    } else {
-                        state.track.shuffle(&mut r);
-                    }
-                }
-            }
+        if let Ok(mut q) = self.queue.lock() {
+            q.shuffle();
         }
         self.emit_sync(false);
     }
 
     pub fn set_repeat_mode(&self, mode: RepeatMode) {
-        if let Ok(mut state) = self.state.lock() {
-            state.repeat_mode = mode;
+        if let Ok(mut q) = self.queue.lock() {
+            q.set_repeat_mode(mode);
         }
         self.emit_sync(false);
     }
@@ -447,12 +374,7 @@ impl MusicPlayer {
     }
 
     pub fn get_current_track(&self) -> Option<MusicMetadata> {
-        let state = self.state.lock().unwrap();
-        if let Some(idx) = state.current_index {
-            state.track.get(idx).map(|item| item.metadata.clone())
-        } else {
-            None
-        }
+        self.queue.lock().ok().and_then(|q| q.current_track())
     }
 
     pub fn get_current_duration(&self) -> f64 {
@@ -501,13 +423,13 @@ impl MusicPlayer {
         };
 
         let (index, repeat_mode, is_shuffled) = self
-            .state
+            .queue
             .lock()
-            .map(|s| {
+            .map(|q| {
                 (
-                    s.current_index.map(|i| i as i64).unwrap_or(-1),
-                    s.repeat_mode,
-                    s.original_track.is_some(),
+                    q.current_index().map(|i| i as i64).unwrap_or(-1),
+                    q.repeat_mode(),
+                    q.is_shuffled(),
                 )
             })
             .unwrap_or((-1, RepeatMode::None, false));
@@ -530,75 +452,36 @@ impl MusicPlayer {
     }
 
     pub fn add_track_no_auto_play(&self, track: Vec<MusicMetadata>) -> bool {
-        let mut state = match self.state.lock() {
+        let mut q = match self.queue.lock() {
             Ok(s) => s,
             Err(e) => {
-                log::error!("Failed to lock player state: {}", e);
+                log::error!("Failed to lock player queue: {}", e);
                 return false;
             }
         };
-        let was_empty = state.track.is_empty();
-        let mut items = Vec::with_capacity(track.len());
-        for music in track {
-            items.push(TrackItem { metadata: music });
-        }
-
-        if let Some(ref mut original) = state.original_track {
-            original.extend(items.clone());
-            let cur_idx = state.current_index.unwrap_or(0);
-            if cur_idx < state.track.len() {
-                let insert_pos = cur_idx + 1;
-                state.track.splice(insert_pos..insert_pos, items);
-                let mut rng = rand::rng();
-                state.track[insert_pos..].shuffle(&mut rng);
-            } else {
-                state.track.extend(items);
-            }
-        } else {
-            state.track.extend(items);
-        }
-
-        was_empty
+        q.add_tracks(track)
     }
 
     pub fn remove_track(&self, index: usize) {
-        let mut state = match self.state.lock() {
-            Ok(s) => s,
-            Err(e) => {
-                log::error!("Failed to lock player state: {}", e);
-                return;
-            }
+        let is_current = {
+            let mut q = match self.queue.lock() {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("Failed to lock player queue: {}", e);
+                    return;
+                }
+            };
+            let (_, is_curr) = q.remove_track(index);
+            is_curr
         };
 
-        if index >= state.track.len() {
-            return;
-        }
-
-        let removed = state.track.remove(index);
-
-        if let Some(ref mut original) = state.original_track {
-            if let Some(orig_idx) = original
-                .iter()
-                .position(|t| t.metadata.id == removed.metadata.id)
-            {
-                original.remove(orig_idx);
-            }
-        }
-
-        if let Some(current) = state.current_index {
-            if current == index {
-                state.current_index = None;
-                drop(state);
-                self.stop_current_stream();
-                return;
-            } else if index < current {
-                state.current_index = Some(current - 1);
-            }
+        if is_current {
+            self.stop_current_stream();
         }
     }
 
     pub fn goto_track(&self, index: usize) {
-        let state_arc = Arc::clone(&self.state);
+        let queue_arc = Arc::clone(&self.queue);
         let bass_mixer = Arc::clone(&self.bass_mixer);
         let current_stream = Arc::clone(&self.current_stream);
         let temp_wav_path = Arc::clone(&self.temp_wav_path);
@@ -606,18 +489,18 @@ impl MusicPlayer {
 
         std::thread::spawn(move || {
             let (music, total_count) = {
-                let state = match state_arc.lock() {
+                let q = match queue_arc.lock() {
                     Ok(s) => s,
                     Err(e) => {
-                        crate::flog_err!("Player", "Failed to lock player state: {}", e);
+                        crate::flog_err!("Player", "Failed to lock player queue: {}", e);
                         return;
                     }
                 };
-                if index >= state.track.len() {
-                    crate::flog_err!("Player", "index {} out of bounds (len: {})", index, state.track.len());
+                if index >= q.len() {
+                    crate::flog_err!("Player", "index {} out of bounds (len: {})", index, q.len());
                     return;
                 }
-                (state.track[index].metadata.clone(), state.track.len())
+                (q.get(index).unwrap(), q.len())
             };
 
             crate::flog!("Player", "Playing track: '{}' from path: '{}'", music.title.as_deref().unwrap_or("?"), music.path);
@@ -627,18 +510,18 @@ impl MusicPlayer {
             if Self::load_music_inner(
                 &bass_mixer,
                 &current_stream,
-                &state_arc,
+                &queue_arc,
                 &temp_wav_path,
                 sink.as_ref(),
                 music,
                 index,
                 total_count,
             ) {
-                if let Ok(mut state) = state_arc.lock() {
-                    state.current_index = Some(index);
+                if let Ok(mut q) = queue_arc.lock() {
+                    q.set_current_index(Some(index));
                 }
                 Self::play_pause_inner(&bass_mixer, &current_stream, true);
-                Self::emit_sync_inner(&bass_mixer, &current_stream, &state_arc, sink.as_deref(), true);
+                Self::emit_sync_inner(&bass_mixer, &current_stream, &queue_arc, sink.as_deref(), true);
                 crate::flog!("Player", "Playback started");
             } else {
                 crate::flog_err!("Player", "load_music_inner failed");
@@ -647,7 +530,7 @@ impl MusicPlayer {
     }
 
     pub fn play_next(&self, from_user: bool) {
-        let state_arc = Arc::clone(&self.state);
+        let queue_arc = Arc::clone(&self.queue);
         let bass_mixer = Arc::clone(&self.bass_mixer);
         let current_stream = Arc::clone(&self.current_stream);
         let temp_wav_path = Arc::clone(&self.temp_wav_path);
@@ -655,26 +538,29 @@ impl MusicPlayer {
 
         std::thread::spawn(move || {
             let next_index = {
-                let mut state = match state_arc.lock() {
+                let q = match queue_arc.lock() {
                     Ok(s) => s,
                     Err(e) => {
-                        log::error!("Failed to lock player state: {}", e);
+                        log::error!("Failed to lock player queue: {}", e);
                         return;
                     }
                 };
-                state.get_next_index(from_user)
+                q.next_index(from_user)
             };
 
             if let Some(index) = next_index {
                 let (music, total_count) = {
-                    let state = match state_arc.lock() {
+                    let q = match queue_arc.lock() {
                         Ok(s) => s,
                         Err(e) => {
-                            log::error!("Failed to lock player state: {}", e);
+                            log::error!("Failed to lock player queue: {}", e);
                             return;
                         }
                     };
-                    (state.track[index].metadata.clone(), state.track.len())
+                    match q.get(index) {
+                        Some(m) => (m, q.len()),
+                        None => return,
+                    }
                 };
 
                 let bm = bass_mixer.load(Ordering::SeqCst);
@@ -693,39 +579,35 @@ impl MusicPlayer {
                 if Self::load_music_inner(
                     &bass_mixer,
                     &current_stream,
-                    &state_arc,
+                    &queue_arc,
                     &temp_wav_path,
                     sink.as_ref(),
                     music,
                     index,
                     total_count,
                 ) {
-                    if let Ok(mut state) = state_arc.lock() {
-                        state.current_index = Some(index);
+                    if let Ok(mut q) = queue_arc.lock() {
+                        q.set_current_index(Some(index));
                     }
                     Self::play_pause_inner(&bass_mixer, &current_stream, true);
                     Self::emit_sync_inner(
                         &bass_mixer,
                         &current_stream,
-                        &state_arc,
+                        &queue_arc,
                         sink.as_deref(),
                         true,
                     );
                 }
             } else if !from_user {
                 let first = {
-                    let state = match state_arc.lock() {
+                    let q = match queue_arc.lock() {
                         Ok(s) => s,
                         Err(e) => {
-                            log::error!("Failed to lock player state: {}", e);
+                            log::error!("Failed to lock player queue: {}", e);
                             return;
                         }
                     };
-                    if state.track.is_empty() {
-                        None
-                    } else {
-                        Some((state.track[0].metadata.clone(), state.track.len()))
-                    }
+                    q.get(0).map(|m| (m, q.len()))
                 };
 
                 if let Some((music, total_count)) = first {
@@ -741,7 +623,7 @@ impl MusicPlayer {
                     if Self::load_music_inner(
                         &bass_mixer,
                         &current_stream,
-                        &state_arc,
+                        &queue_arc,
                         &temp_wav_path,
                         sink.as_ref(),
                         music,
@@ -756,32 +638,32 @@ impl MusicPlayer {
                             }
                         }
 
-                        if let Ok(mut state) = state_arc.lock() {
-                            state.current_index = Some(0);
+                        if let Ok(mut q) = queue_arc.lock() {
+                            q.set_current_index(Some(0));
                         }
                         Self::emit_sync_inner(
                             &bass_mixer,
                             &current_stream,
-                            &state_arc,
+                            &queue_arc,
                             sink.as_deref(),
                             false,
                         );
                     }
                 } else {
                     Self::stop_stream(&bass_mixer, &current_stream, &temp_wav_path);
-                    if let Ok(mut state) = state_arc.lock() {
-                        state.current_index = None;
+                    if let Ok(mut q) = queue_arc.lock() {
+                        q.set_current_index(None);
                     }
                 }
             } else {
                 Self::stop_stream(&bass_mixer, &current_stream, &temp_wav_path);
-                if let Ok(mut state) = state_arc.lock() {
-                    state.current_index = Some(0);
+                if let Ok(mut q) = queue_arc.lock() {
+                    q.set_current_index(Some(0));
                 }
                 Self::emit_sync_inner(
                     &bass_mixer,
                     &current_stream,
-                    &state_arc,
+                    &queue_arc,
                     sink.as_deref(),
                     false,
                 );
@@ -790,7 +672,7 @@ impl MusicPlayer {
     }
 
     pub fn play_previous(&self) {
-        let state_arc = Arc::clone(&self.state);
+        let queue_arc = Arc::clone(&self.queue);
         let bass_mixer = Arc::clone(&self.bass_mixer);
         let current_stream = Arc::clone(&self.current_stream);
         let temp_wav_path = Arc::clone(&self.temp_wav_path);
@@ -798,39 +680,29 @@ impl MusicPlayer {
 
         std::thread::spawn(move || {
             let prev_index = {
-                let state = match state_arc.lock() {
+                let q = match queue_arc.lock() {
                     Ok(s) => s,
                     Err(e) => {
-                        log::error!("Failed to lock player state: {}", e);
+                        log::error!("Failed to lock player queue: {}", e);
                         return;
                     }
                 };
-                match state.current_index {
-                    Some(current) => {
-                        if current == 0 && state.repeat_mode == RepeatMode::None {
-                            Some(0)
-                        } else if current > 0 {
-                            Some(current - 1)
-                        } else if !state.track.is_empty() {
-                            Some(state.track.len() - 1)
-                        } else {
-                            None
-                        }
-                    }
-                    _ => None,
-                }
+                q.prev_index()
             };
 
             if let Some(index) = prev_index {
                 let (music, total_count) = {
-                    let state = match state_arc.lock() {
+                    let q = match queue_arc.lock() {
                         Ok(s) => s,
                         Err(e) => {
-                            log::error!("Failed to lock player state: {}", e);
+                            log::error!("Failed to lock player queue: {}", e);
                             return;
                         }
                     };
-                    (state.track[index].metadata.clone(), state.track.len())
+                    match q.get(index) {
+                        Some(m) => (m, q.len()),
+                        None => return,
+                    }
                 };
 
                 Self::stop_stream(&bass_mixer, &current_stream, &temp_wav_path);
@@ -838,21 +710,21 @@ impl MusicPlayer {
                 if Self::load_music_inner(
                     &bass_mixer,
                     &current_stream,
-                    &state_arc,
+                    &queue_arc,
                     &temp_wav_path,
                     sink.as_ref(),
                     music,
                     index,
                     total_count,
                 ) {
-                    if let Ok(mut state) = state_arc.lock() {
-                        state.current_index = Some(index);
+                    if let Ok(mut q) = queue_arc.lock() {
+                        q.set_current_index(Some(index));
                     }
                     Self::play_pause_inner(&bass_mixer, &current_stream, true);
                     Self::emit_sync_inner(
                         &bass_mixer,
                         &current_stream,
-                        &state_arc,
+                        &queue_arc,
                         sink.as_deref(),
                         true,
                     );
@@ -862,34 +734,8 @@ impl MusicPlayer {
     }
 
     pub fn moveto_track(&self, from: usize, to: usize) {
-        {
-            let mut state = match self.state.lock() {
-                Ok(s) => s,
-                Err(e) => {
-                    log::error!("Failed to lock player state: {}", e);
-                    return;
-                }
-            };
-
-            if from >= state.track.len() || to >= state.track.len() {
-                return;
-            }
-
-            let item = state.track.remove(from);
-            state.track.insert(to, item);
-            state.original_track = None;
-
-            if let Some(current) = state.current_index {
-                state.current_index = Some(if current == from {
-                    to
-                } else if from < current && to >= current {
-                    current - 1
-                } else if from > current && to <= current {
-                    current + 1
-                } else {
-                    current
-                });
-            }
+        if let Ok(mut q) = self.queue.lock() {
+            q.move_track(from, to);
         }
         self.emit_sync(false);
     }
@@ -911,7 +757,7 @@ impl MusicPlayer {
         Self::emit_sync_inner(
             &self.bass_mixer,
             &self.current_stream,
-            &self.state,
+            &self.queue,
             self.event_sink.as_deref(),
             is_reset,
         );
@@ -948,10 +794,8 @@ impl MusicPlayer {
         }
 
         self.stop_current_stream();
-        if let Ok(mut state) = self.state.lock() {
-            state.track.clear();
-            state.original_track = None;
-            state.current_index = None;
+        if let Ok(mut q) = self.queue.lock() {
+            q.clear();
         }
     }
 
@@ -995,7 +839,7 @@ impl MusicPlayer {
     fn emit_sync_inner(
         bass_mixer: &Arc<AtomicU32>,
         current_stream: &Arc<AtomicU32>,
-        state: &Arc<Mutex<PlayerState>>,
+        queue: &Arc<Mutex<PlaybackQueue>>,
         sink: Option<&dyn EventSink>,
         is_reset: bool,
     ) {
@@ -1032,13 +876,13 @@ impl MusicPlayer {
             }
         };
 
-        let (index, repeat_mode, is_shuffled) = state
+        let (index, repeat_mode, is_shuffled) = queue
             .lock()
-            .map(|s| {
+            .map(|q| {
                 (
-                    s.current_index.map(|i| i as i64).unwrap_or(-1),
-                    s.repeat_mode,
-                    s.original_track.is_some(),
+                    q.current_index().map(|i| i as i64).unwrap_or(-1),
+                    q.repeat_mode(),
+                    q.is_shuffled(),
                 )
             })
             .unwrap_or((-1, RepeatMode::None, false));
@@ -1061,7 +905,7 @@ impl MusicPlayer {
         stream: u32,
         bass_mixer: &Arc<AtomicU32>,
         current_stream: &Arc<AtomicU32>,
-        state: &Arc<Mutex<PlayerState>>,
+        queue: &Arc<Mutex<PlaybackQueue>>,
         temp_wav_path: &Arc<Mutex<Option<PathBuf>>>,
         event_sink: Option<&Arc<dyn EventSink>>,
     ) {
@@ -1072,7 +916,7 @@ impl MusicPlayer {
         let sync_data = Box::into_raw(Box::new(SyncData {
             bass_mixer: Arc::clone(bass_mixer),
             current_stream: Arc::clone(current_stream),
-            state: Arc::clone(state),
+            queue: Arc::clone(queue),
             temp_wav_path: Arc::clone(temp_wav_path),
             event_sink: event_sink.cloned(),
         }));
@@ -1095,10 +939,11 @@ impl MusicPlayer {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn load_music_inner(
         bass_mixer: &Arc<AtomicU32>,
         current_stream: &Arc<AtomicU32>,
-        state: &Arc<Mutex<PlayerState>>,
+        queue: &Arc<Mutex<PlaybackQueue>>,
         temp_wav_path: &Arc<Mutex<Option<PathBuf>>>,
         sink: Option<&Arc<dyn EventSink>>,
         music: MusicMetadata,
@@ -1111,8 +956,6 @@ impl MusicPlayer {
             return false;
         }
 
-        // On macOS/Linux, BASS_StreamCreateFile expects UTF-8 char* without BASS_UNICODE.
-        // BASS_UNICODE instructs BASS on Windows to expect UTF-16 wchar_t*.
         #[cfg(target_os = "windows")]
         let (flags, path_ptr) = {
             use std::os::windows::ffi::OsStrExt;
@@ -1148,7 +991,6 @@ impl MusicPlayer {
 
         #[cfg(not(target_os = "windows"))]
         unsafe {
-            // Reclaim CString memory after BASS creates stream
             drop(CString::from_raw(path_ptr as *mut std::ffi::c_char));
         };
 
@@ -1167,7 +1009,7 @@ impl MusicPlayer {
             stream,
             bass_mixer,
             current_stream,
-            state,
+            queue,
             temp_wav_path,
             sink,
         );

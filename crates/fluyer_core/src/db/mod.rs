@@ -1,4 +1,5 @@
 pub mod migrations;
+pub mod repo;
 
 use migrations::DATABASE_MIGRATIONS;
 use rusqlite::Connection;
@@ -20,7 +21,7 @@ impl Database {
         let mut conn = Connection::open(db_path)
             .map_err(|e| format!("Failed to open database at {:?}: {}", db_path, e))?;
 
-        conn.pragma_update_and_check(None, "journal_mode", &"WAL", |_| Ok(()))
+        conn.pragma_update_and_check(None, "journal_mode", "WAL", |_| Ok(()))
             .map_err(|e| format!("Failed to set WAL journal mode: {}", e))?;
 
         DATABASE_MIGRATIONS
