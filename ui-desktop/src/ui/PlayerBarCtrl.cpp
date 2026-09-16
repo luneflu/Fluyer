@@ -113,9 +113,11 @@ PlayerBarCtrl::PlayerBarCtrl(wxWindow* parent, PlayerService* playerService, Ima
     rightExtraSizer->Add(m_volIcon, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 4);
     rightExtraSizer->Add(m_volSlider, 0, wxALIGN_CENTER_VERTICAL, 0);
 
-    pillSizer->Add(leftCtrlSizer, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, 12);
-    pillSizer->Add(centerTrackSizer, 2, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 8);
-    pillSizer->Add(rightExtraSizer, 1, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL | wxRIGHT, 12);
+    pillSizer->Add(leftCtrlSizer, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 12);
+    pillSizer->AddStretchSpacer(1);
+    pillSizer->Add(centerTrackSizer, 0, wxALIGN_CENTER, 8);
+    pillSizer->AddStretchSpacer(1);
+    pillSizer->Add(rightExtraSizer, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 12);
 
     m_pillPanel->SetSizer(pillSizer);
     outerSizer->Add(m_pillPanel, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
