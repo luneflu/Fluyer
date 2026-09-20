@@ -16,7 +16,7 @@ Makefile
 .ninja_*
 
 # IDEs & Editor metadata
-.vscode/
+# .vscode/
 .idea/
 *.swp
 *.swo
