@@ -22,10 +22,10 @@ private:
     uintptr_t m_albumCount = 0;
     int m_scrollOffsetX = 0;
 
-    static constexpr int ITEM_WIDTH = 150;
-    static constexpr int ITEM_HEIGHT = 190;
-    static constexpr int ITEM_SPACING = 14;
-    static constexpr int COVER_SIZE = 140;
+    int GetItemWidth() const;
+    int GetItemHeight() const;
+
+    wxSize DoGetBestClientSize() const override;
 
     wxDECLARE_EVENT_TABLE();
 };

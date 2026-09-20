@@ -27,32 +27,17 @@ MainFrame::MainFrame(LibraryService* libraryService, PlayerService* playerServic
 
     wxBoxSizer* rootSizer = new wxBoxSizer(wxVERTICAL);
 
-    // Splitter window: Albums top, Music bottom
-    wxSplitterWindow* splitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3D);
-    splitter->SetMinimumPaneSize(150);
+    // Top: Album list
+    m_albumList = new AlbumListCtrl(this, m_libraryService, m_imageService);
 
-    // Top: Album list container
-    wxPanel* topPanel = new wxPanel(splitter);
-    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+    // Middle: Music list
+    m_musicList = new MusicListCtrl(this, m_libraryService, m_imageService);
 
-    m_albumList = new AlbumListCtrl(topPanel, m_libraryService, m_imageService);
-    topSizer->Add(m_albumList, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-    topPanel->SetSizer(topSizer);
-
-    // Bottom: Music list container
-    wxPanel* bottomPanel = new wxPanel(splitter);
-    wxBoxSizer* bottomSizer = new wxBoxSizer(wxVERTICAL);
-
-    m_musicList = new MusicListCtrl(bottomPanel, m_libraryService, m_imageService);
-    bottomSizer->Add(m_musicList, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
-    bottomPanel->SetSizer(bottomSizer);
-
-    splitter->SplitHorizontally(topPanel, bottomPanel, 220);
-
-    // Player bar below music list
+    // Bottom: Player bar
     m_playerBar = new PlayerBarCtrl(this, m_playerService, m_imageService);
 
-    rootSizer->Add(splitter, 1, wxEXPAND);
+    rootSizer->Add(m_albumList, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+    rootSizer->Add(m_musicList, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
     rootSizer->Add(m_playerBar, 0, wxEXPAND);
     SetSizer(rootSizer);
 

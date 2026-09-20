@@ -3,6 +3,27 @@
 #include <wx/settings.h>
 #include <algorithm>
 
+struct ResponsiveRule {
+    int minWidth;
+    double minDpr;
+    double widthRatio;
+};
+
+static constexpr ResponsiveRule RESPONSIVE_RULES[] = {
+    { 1536, 1.01, 0.142857 }, // hdpi 2xl → 14.2857%
+    { 1280, 1.01, 0.16667 },  // xl-hdpi → 16.6667%
+    { 1024, 1.01, 0.2 },      // lg-hdpi → 20%
+    { 768,  1.01, 0.25 },     // md-hdpi → 25%
+    { 640,  1.01, 0.33334 },  // sm-hdpi → 33.3334%
+
+    { 1536, 0.0,  0.125 },    // 2xl → 12.5%
+    { 1440, 0.0,  0.142857 }, // 1440 → 14.2857%
+    { 1280, 0.0,  0.16667 },  // xl → 16.6667%
+    { 1024, 0.0,  0.2 },      // lg → 20%
+    { 768,  0.0,  0.25 },     // md → 25%
+    { 640,  0.0,  0.33334 }   // sm → 33.3334%
+};
+
 wxBEGIN_EVENT_TABLE(AlbumListCtrl, wxScrolledWindow)
     EVT_PAINT(AlbumListCtrl::OnPaint)
     EVT_SIZE(AlbumListCtrl::OnSize)
@@ -18,9 +39,43 @@ AlbumListCtrl::AlbumListCtrl(wxWindow* parent, LibraryService* libraryService, I
     SetBackgroundStyle(wxBG_STYLE_PAINT);
 }
 
+int AlbumListCtrl::GetItemWidth() const {
+    int width = GetClientSize().GetWidth();
+    if (width <= 0 && GetParent()) {
+        width = GetParent()->GetClientSize().GetWidth();
+    }
+    double dpr = GetContentScaleFactor();
+
+    for (const auto& rule : RESPONSIVE_RULES) {
+        if (width >= rule.minWidth && dpr >= rule.minDpr) {
+            return std::max(1, static_cast<int>(rule.widthRatio * width));
+        }
+    }
+    return std::max(1, static_cast<int>(0.5 * width));
+}
+
+int AlbumListCtrl::GetItemHeight() const {
+    if (m_albumCount == 0) return 0;
+    int width = GetClientSize().GetWidth();
+    if (width <= 0 && GetParent()) {
+        width = GetParent()->GetClientSize().GetWidth();
+    }
+    int itemWidth = GetItemWidth();
+    int extra = (width > 640) ? 52 : 44;
+    return itemWidth + extra;
+}
+
+wxSize AlbumListCtrl::DoGetBestClientSize() const {
+    return wxSize(wxDefaultCoord, GetItemHeight());
+}
+
 void AlbumListCtrl::RefreshData() {
     m_scrollOffsetX = 0;
     m_albumCount = m_libraryService ? m_libraryService->GetAlbumCount() : 0;
+    SetMinSize(wxSize(-1, GetItemHeight()));
+    if (GetParent()) {
+        GetParent()->Layout();
+    }
     Refresh();
 }
 
@@ -32,22 +87,33 @@ void AlbumListCtrl::OnCoverLoaded(uintptr_t index) {
 }
 
 void AlbumListCtrl::OnSize(wxSizeEvent& evt) {
+    int itemWidth = GetItemWidth();
+    int itemHeight = GetItemHeight();
+    SetMinSize(wxSize(-1, itemHeight));
+    int totalWidth = static_cast<int>(m_albumCount) * itemWidth;
+    int maxScroll = std::max(0, totalWidth - GetClientSize().GetWidth());
+    m_scrollOffsetX = std::clamp(m_scrollOffsetX, 0, maxScroll);
     Refresh();
     evt.Skip();
 }
 
 void AlbumListCtrl::OnMouseWheel(wxMouseEvent& evt) {
-    int maxScroll = std::max(0, static_cast<int>(m_albumCount) * (ITEM_WIDTH + ITEM_SPACING) - GetClientSize().GetWidth() + ITEM_SPACING * 2);
+    int itemWidth = GetItemWidth();
+    int totalWidth = static_cast<int>(m_albumCount) * itemWidth;
+    int maxScroll = std::max(0, totalWidth - GetClientSize().GetWidth());
     int delta = evt.GetWheelRotation();
     m_scrollOffsetX = std::clamp(m_scrollOffsetX - delta, 0, maxScroll);
     Refresh();
 }
 
 void AlbumListCtrl::OnLeftDown(wxMouseEvent& evt) {
-    int x = evt.GetX() + m_scrollOffsetX;
-    int clickedIdx = (x - ITEM_SPACING) / (ITEM_WIDTH + ITEM_SPACING);
-    if (clickedIdx >= 0 && clickedIdx < static_cast<int>(m_albumCount)) {
-        // Future: Filter or play album tracks
+    int itemWidth = GetItemWidth();
+    if (itemWidth > 0) {
+        int x = evt.GetX() + m_scrollOffsetX;
+        int clickedIdx = x / itemWidth;
+        if (clickedIdx >= 0 && clickedIdx < static_cast<int>(m_albumCount)) {
+            // Future: Filter or play album tracks
+        }
     }
     evt.Skip();
 }
@@ -60,47 +126,66 @@ void AlbumListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
 
     if (m_albumCount == 0 || !m_libraryService) return;
 
+    int itemWidth = GetItemWidth();
+    if (itemWidth <= 0) return;
+
     int viewW = GetClientSize().GetWidth();
     int startPixelX = m_scrollOffsetX;
     int endPixelX = startPixelX + viewW;
 
-    int startIdx = std::max(0, (startPixelX - ITEM_SPACING) / (ITEM_WIDTH + ITEM_SPACING));
-    int endIdx = std::min(static_cast<int>(m_albumCount) - 1, (endPixelX - ITEM_SPACING) / (ITEM_WIDTH + ITEM_SPACING) + 1);
+    int startIdx = std::max(0, startPixelX / itemWidth);
+    int endIdx = std::min(static_cast<int>(m_albumCount) - 1, endPixelX / itemWidth + 1);
 
     double scaleFactor = GetContentScaleFactor();
-    wxFont titleFont = wxFontInfo(wxSize(0, 13)).Bold().Family(wxFONTFAMILY_DEFAULT);
-    wxFont artistFont = wxFontInfo(wxSize(0, 11)).Family(wxFONTFAMILY_DEFAULT);
+    wxFont titleFont = wxFontInfo(wxSize(0, 15)).Weight(wxFONTWEIGHT_MEDIUM).Family(wxFONTFAMILY_DEFAULT);
+    wxFont artistFont = wxFontInfo(wxSize(0, 13)).Family(wxFONTFAMILY_DEFAULT);
+
+    int padding = 6;
+    int coverSize = std::max(16, itemWidth - padding * 2);
 
     for (int i = startIdx; i <= endIdx; ++i) {
-        int itemX = ITEM_SPACING + i * (ITEM_WIDTH + ITEM_SPACING) - m_scrollOffsetX;
+        int itemX = i * itemWidth - m_scrollOffsetX;
+        int coverX = itemX + padding;
         int itemY = 8;
 
         Album album = m_libraryService->GetAlbum(i);
         wxBitmap cover;
         if (m_imageService) {
-            cover = m_imageService->GetAlbumImage(i, COVER_SIZE, scaleFactor);
+            cover = m_imageService->GetAlbumImage(i, coverSize, scaleFactor);
         }
 
         if (cover.IsOk()) {
-            dc.DrawBitmap(cover, itemX, itemY, false);
+            dc.DrawBitmap(cover, coverX, itemY, false);
         } else {
             dc.SetBrush(wxBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)));
             dc.SetPen(wxPen(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW)));
-            dc.DrawRoundedRectangle(itemX, itemY, COVER_SIZE, COVER_SIZE, 8.0);
+            dc.DrawRoundedRectangle(coverX, itemY, coverSize, coverSize, 8.0);
         }
 
         // Title
         dc.SetTextForeground(GetForegroundColour());
         dc.SetFont(titleFont);
         wxString albumName = wxString::FromUTF8(album.name);
-        wxString truncatedTitle = dc.GetTextExtent(albumName).GetWidth() > COVER_SIZE ? albumName.substr(0, 16) + "..." : albumName;
-        dc.DrawText(truncatedTitle, itemX, itemY + COVER_SIZE + 6);
+        wxString truncatedTitle = albumName;
+        if (dc.GetTextExtent(truncatedTitle).GetWidth() > coverSize) {
+            while (!truncatedTitle.empty() && dc.GetTextExtent(truncatedTitle + "...").GetWidth() > coverSize) {
+                truncatedTitle.RemoveLast();
+            }
+            truncatedTitle += "...";
+        }
+        dc.DrawText(truncatedTitle, coverX, itemY + coverSize + 6);
 
         // Artist
         dc.SetTextForeground(wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT));
         dc.SetFont(artistFont);
         wxString artistName = wxString::FromUTF8(album.artist);
-        wxString truncatedArtist = dc.GetTextExtent(artistName).GetWidth() > COVER_SIZE ? artistName.substr(0, 18) + "..." : artistName;
-        dc.DrawText(truncatedArtist, itemX, itemY + COVER_SIZE + 24);
+        wxString truncatedArtist = artistName;
+        if (dc.GetTextExtent(truncatedArtist).GetWidth() > coverSize) {
+            while (!truncatedArtist.empty() && dc.GetTextExtent(truncatedArtist + "...").GetWidth() > coverSize) {
+                truncatedArtist.RemoveLast();
+            }
+            truncatedArtist += "...";
+        }
+        dc.DrawText(truncatedArtist, coverX, itemY + coverSize + 24);
     }
 }
