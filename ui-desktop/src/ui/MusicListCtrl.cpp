@@ -16,7 +16,6 @@ MusicListCtrl::MusicListCtrl(wxWindow* parent, LibraryService* libraryService, I
       m_imageService(imageService) {
     ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetBackgroundColour(wxColour(14, 14, 14));
 }
 
 void MusicListCtrl::RefreshData() {
@@ -71,7 +70,7 @@ void MusicListCtrl::OnLeftDown(wxMouseEvent& evt) {
 void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
     wxAutoBufferedPaintDC dc(this);
 
-    dc.SetBackground(wxBrush(wxColour(14, 14, 14)));
+    dc.SetBackground(wxBrush(GetBackgroundColour()));
     dc.Clear();
 
     if (m_trackCount == 0 || !m_libraryService) return;
@@ -88,8 +87,8 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
     int endRow = (endPixelY - PADDING) / ITEM_HEIGHT + 1;
 
     double scaleFactor = GetContentScaleFactor();
-    wxFont titleFont = wxFontInfo(wxSize(0, 13)).Bold().Family(wxFONTFAMILY_DEFAULT);
-    wxFont subFont = wxFontInfo(wxSize(0, 11)).Family(wxFONTFAMILY_DEFAULT);
+    dc.SetFont(GetFont());
+    dc.SetTextForeground(GetForegroundColour());
 
     for (int row = startRow; row <= endRow; ++row) {
         for (int col = 0; col < colCount; ++col) {
@@ -105,36 +104,23 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
                 thumb = m_imageService->GetTrackImage(idx, THUMB_SIZE, scaleFactor);
             }
 
-            // Card background
-            dc.SetBrush(wxBrush(wxColour(22, 22, 22)));
-            dc.SetPen(wxPen(wxColour(32, 32, 32)));
-            dc.DrawRoundedRectangle(cellX, cellY, colWidth - 8, ITEM_HEIGHT - 6, 6.0);
-
             // Thumbnail
             int thumbX = cellX + 6;
             int thumbY = cellY + 4;
             if (thumb.IsOk()) {
                 dc.DrawBitmap(thumb, thumbX, thumbY, false);
-            } else {
-                dc.SetBrush(wxBrush(wxColour(38, 38, 38)));
-                dc.SetPen(wxPen(wxColour(50, 50, 50)));
-                dc.DrawRoundedRectangle(thumbX, thumbY, THUMB_SIZE, THUMB_SIZE, 4.0);
             }
 
             // Track metadata text
             int textX = thumbX + THUMB_SIZE + 8;
             int textMaxW = colWidth - THUMB_SIZE - 60;
 
-            dc.SetFont(titleFont);
-            dc.SetTextForeground(wxColour(235, 235, 235));
             wxString tStr = wxString::FromUTF8(track.title);
             if (dc.GetTextExtent(tStr).GetWidth() > textMaxW && tStr.length() > 20) {
                 tStr = tStr.substr(0, 18) + "...";
             }
             dc.DrawText(tStr, textX, cellY + 8);
 
-            dc.SetFont(subFont);
-            dc.SetTextForeground(wxColour(150, 150, 150));
             wxString subStr = wxString::FromUTF8(track.artist) + " • " + wxString::FromUTF8(track.album);
             if (dc.GetTextExtent(subStr).GetWidth() > textMaxW && subStr.length() > 24) {
                 subStr = subStr.substr(0, 22) + "...";
@@ -142,7 +128,6 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
             dc.DrawText(subStr, textX, cellY + 28);
 
             // Duration on right
-            dc.SetTextForeground(wxColour(110, 110, 110));
             dc.DrawText(wxString::FromUTF8(track.FormatDuration()), cellX + colWidth - 48, cellY + 18);
         }
     }

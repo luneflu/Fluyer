@@ -1,6 +1,7 @@
 #include "PlayerBarCtrl.h"
 #include "common/Icons.h"
 #include <wx/dcbuffer.h>
+#include <wx/settings.h>
 #include <algorithm>
 
 using Icons::CreateSVGIcon;
@@ -35,20 +36,22 @@ PlayerBarCtrl::PlayerBarCtrl(wxWindow* parent, PlayerService* playerService, Ima
       m_imageService(imageService),
       m_progressTimer(this, ID_TIMER_PROGRESS) {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetBackgroundColour(wxColour(14, 14, 14));
 
     wxBoxSizer* outerSizer = new wxBoxSizer(wxVERTICAL);
+
+    wxColour grayCol = wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT);
+    wxColour btnCol = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT);
 
     // 1. Progress Bar
     wxBoxSizer* progSizer = new wxBoxSizer(wxHORIZONTAL);
     m_lblTimePos = new wxStaticText(this, wxID_ANY, "0:00", wxDefaultPosition, wxSize(42, -1), wxALIGN_RIGHT);
-    m_lblTimePos->SetForegroundColour(wxColour(140, 140, 140));
+    m_lblTimePos->SetForegroundColour(grayCol);
     m_lblTimePos->SetFont(wxFontInfo(wxSize(0, 10)).Family(wxFONTFAMILY_DEFAULT));
 
     m_seekSlider = new wxSlider(this, ID_SLIDER_SEEK, 0, 0, 1000, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL);
 
     m_lblTimeDur = new wxStaticText(this, wxID_ANY, "0:00", wxDefaultPosition, wxSize(42, -1), wxALIGN_LEFT);
-    m_lblTimeDur->SetForegroundColour(wxColour(140, 140, 140));
+    m_lblTimeDur->SetForegroundColour(grayCol);
     m_lblTimeDur->SetFont(wxFontInfo(wxSize(0, 10)).Family(wxFONTFAMILY_DEFAULT));
 
     progSizer->Add(m_lblTimePos, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
@@ -60,22 +63,18 @@ PlayerBarCtrl::PlayerBarCtrl(wxWindow* parent, PlayerService* playerService, Ima
 
     // 2. Control Pill Container
     m_pillPanel = new wxPanel(this, wxID_ANY);
-    m_pillPanel->SetBackgroundColour(wxColour(24, 24, 24));
 
     wxBoxSizer* pillSizer = new wxBoxSizer(wxHORIZONTAL);
 
     // Column 1: Playback Controls (Previous, Play/Pause, Next)
     wxBoxSizer* leftCtrlSizer = new wxBoxSizer(wxHORIZONTAL);
-    m_btnPrev = new wxBitmapButton(m_pillPanel, ID_BTN_PREV, CreateSVGIcon(Icons::SKIP_BACK_CIRCLE, "#D0D0D0", wxSize(24, 24)), wxDefaultPosition, wxSize(24, 24), wxBORDER_NONE);
-    m_btnPrev->SetBackgroundColour(wxColour(24, 24, 24));
+    m_btnPrev = new wxBitmapButton(m_pillPanel, ID_BTN_PREV, CreateSVGIcon(Icons::SKIP_BACK_CIRCLE, btnCol, wxSize(24, 24)), wxDefaultPosition, wxSize(24, 24), wxBORDER_NONE);
     m_btnPrev->SetBitmapMargins(0, 0);
 
-    m_btnPlayPause = new wxBitmapButton(m_pillPanel, ID_BTN_PLAY_PAUSE, CreateSVGIcon(Icons::PLAY_CIRCLE, "#FFFFFF", wxSize(28, 28)), wxDefaultPosition, wxSize(28, 28), wxBORDER_NONE);
-    m_btnPlayPause->SetBackgroundColour(wxColour(24, 24, 24));
+    m_btnPlayPause = new wxBitmapButton(m_pillPanel, ID_BTN_PLAY_PAUSE, CreateSVGIcon(Icons::PLAY_CIRCLE, btnCol, wxSize(28, 28)), wxDefaultPosition, wxSize(28, 28), wxBORDER_NONE);
     m_btnPlayPause->SetBitmapMargins(0, 0);
 
-    m_btnNext = new wxBitmapButton(m_pillPanel, ID_BTN_NEXT, CreateSVGIcon(Icons::SKIP_FORWARD_CIRCLE, "#D0D0D0", wxSize(24, 24)), wxDefaultPosition, wxSize(24, 24), wxBORDER_NONE);
-    m_btnNext->SetBackgroundColour(wxColour(24, 24, 24));
+    m_btnNext = new wxBitmapButton(m_pillPanel, ID_BTN_NEXT, CreateSVGIcon(Icons::SKIP_FORWARD_CIRCLE, btnCol, wxSize(24, 24)), wxDefaultPosition, wxSize(24, 24), wxBORDER_NONE);
     m_btnNext->SetBitmapMargins(0, 0);
 
     leftCtrlSizer->Add(m_btnPrev, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
@@ -85,16 +84,16 @@ PlayerBarCtrl::PlayerBarCtrl(wxWindow* parent, PlayerService* playerService, Ima
     // Column 2: Track Info
     wxBoxSizer* centerTrackSizer = new wxBoxSizer(wxHORIZONTAL);
     wxImage dummy(40, 40);
-    dummy.SetRGB(wxRect(0, 0, 40, 40), 40, 40, 40);
+    wxColour dummyBg = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE);
+    dummy.SetRGB(wxRect(0, 0, 40, 40), dummyBg.Red(), dummyBg.Green(), dummyBg.Blue());
     m_coverView = new wxStaticBitmap(m_pillPanel, wxID_ANY, wxBitmap(dummy));
 
     wxBoxSizer* metaTextSizer = new wxBoxSizer(wxVERTICAL);
     m_lblTitle = new wxStaticText(m_pillPanel, wxID_ANY, "No track playing");
-    m_lblTitle->SetForegroundColour(wxColour(240, 240, 240));
     m_lblTitle->SetFont(wxFontInfo(wxSize(0, 12)).Bold().Family(wxFONTFAMILY_DEFAULT));
 
     m_lblArtist = new wxStaticText(m_pillPanel, wxID_ANY, "Fluyer");
-    m_lblArtist->SetForegroundColour(wxColour(160, 160, 160));
+    m_lblArtist->SetForegroundColour(grayCol);
     m_lblArtist->SetFont(wxFontInfo(wxSize(0, 10)).Family(wxFONTFAMILY_DEFAULT));
 
     metaTextSizer->Add(m_lblTitle, 0, wxEXPAND);
@@ -105,15 +104,13 @@ PlayerBarCtrl::PlayerBarCtrl(wxWindow* parent, PlayerService* playerService, Ima
 
     // Column 3: Secondary Controls
     wxBoxSizer* rightExtraSizer = new wxBoxSizer(wxHORIZONTAL);
-    m_btnRepeat = new wxBitmapButton(m_pillPanel, ID_BTN_REPEAT, CreateSVGIcon(Icons::REPEAT, "#8C8C8C", wxSize(20, 20)), wxDefaultPosition, wxSize(20, 20), wxBORDER_NONE);
-    m_btnRepeat->SetBackgroundColour(wxColour(24, 24, 24));
+    m_btnRepeat = new wxBitmapButton(m_pillPanel, ID_BTN_REPEAT, CreateSVGIcon(Icons::REPEAT, grayCol, wxSize(20, 20)), wxDefaultPosition, wxSize(20, 20), wxBORDER_NONE);
     m_btnRepeat->SetBitmapMargins(0, 0);
 
-    m_btnShuffle = new wxBitmapButton(m_pillPanel, ID_BTN_SHUFFLE, CreateSVGIcon(Icons::SHUFFLE, "#8C8C8C", wxSize(20, 20)), wxDefaultPosition, wxSize(20, 20), wxBORDER_NONE);
-    m_btnShuffle->SetBackgroundColour(wxColour(24, 24, 24));
+    m_btnShuffle = new wxBitmapButton(m_pillPanel, ID_BTN_SHUFFLE, CreateSVGIcon(Icons::SHUFFLE, grayCol, wxSize(20, 20)), wxDefaultPosition, wxSize(20, 20), wxBORDER_NONE);
     m_btnShuffle->SetBitmapMargins(0, 0);
     
-    m_volIcon = new wxStaticBitmap(m_pillPanel, wxID_ANY, CreateSVGIcon(Icons::SPEAKER_HIGH, "#A0A0A0", wxSize(18, 18)));
+    m_volIcon = new wxStaticBitmap(m_pillPanel, wxID_ANY, CreateSVGIcon(Icons::SPEAKER_HIGH, grayCol, wxSize(18, 18)));
     m_volSlider = new wxSlider(m_pillPanel, ID_SLIDER_VOL, 100, 0, 100, wxDefaultPosition, wxSize(90, 18), wxSL_HORIZONTAL);
 
     rightExtraSizer->Add(m_btnRepeat, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
@@ -171,8 +168,11 @@ void PlayerBarCtrl::UpdateState() {
     if (!m_playerService) return;
     const auto& state = m_playerService->GetState();
 
-    m_btnPlayPause->SetBitmap(state.is_playing ? CreateSVGIcon(Icons::PAUSE_CIRCLE, "#FFFFFF", wxSize(28, 28))
-                                              : CreateSVGIcon(Icons::PLAY_CIRCLE, "#FFFFFF", wxSize(28, 28)));
+    wxColour btnCol = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT);
+    wxColour grayCol = wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT);
+
+    m_btnPlayPause->SetBitmap(state.is_playing ? CreateSVGIcon(Icons::PAUSE_CIRCLE, btnCol, wxSize(28, 28))
+                                              : CreateSVGIcon(Icons::PLAY_CIRCLE, btnCol, wxSize(28, 28)));
     m_btnPlayPause->Refresh();
 
     if (state.is_playing) {
@@ -188,7 +188,7 @@ void PlayerBarCtrl::UpdateState() {
     UpdateProgress();
 
     m_btnShuffle->SetBitmap(state.is_shuffled ? CreateSVGIcon(Icons::SHUFFLE, "#1ED760", wxSize(20, 20))
-                                              : CreateSVGIcon(Icons::SHUFFLE, "#8C8C8C", wxSize(20, 20)));
+                                              : CreateSVGIcon(Icons::SHUFFLE, grayCol, wxSize(20, 20)));
     m_btnShuffle->Refresh();
 
     if (state.repeat_mode == FluyerRepeatMode::All) {
@@ -196,7 +196,7 @@ void PlayerBarCtrl::UpdateState() {
     } else if (state.repeat_mode == FluyerRepeatMode::One) {
         m_btnRepeat->SetBitmap(CreateSVGIcon(Icons::REPEAT_ONCE, "#1ED760", wxSize(20, 20)));
     } else {
-        m_btnRepeat->SetBitmap(CreateSVGIcon(Icons::REPEAT, "#8C8C8C", wxSize(20, 20)));
+        m_btnRepeat->SetBitmap(CreateSVGIcon(Icons::REPEAT, grayCol, wxSize(20, 20)));
     }
     m_btnRepeat->Refresh();
 
@@ -262,13 +262,14 @@ void PlayerBarCtrl::OnVolume(wxCommandEvent& WXUNUSED(evt)) {
     int val = m_volSlider->GetValue();
     m_playerService->SetVolume(static_cast<float>(val) / 100.0f);
     if (m_volIcon) {
-        m_volIcon->SetBitmap(val == 0 ? CreateSVGIcon(Icons::SPEAKER_X, "#A0A0A0", wxSize(18, 18))
-                                      : CreateSVGIcon(Icons::SPEAKER_HIGH, "#A0A0A0", wxSize(18, 18)));
+        wxColour grayCol = wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT);
+        m_volIcon->SetBitmap(val == 0 ? CreateSVGIcon(Icons::SPEAKER_X, grayCol, wxSize(18, 18))
+                                      : CreateSVGIcon(Icons::SPEAKER_HIGH, grayCol, wxSize(18, 18)));
     }
 }
 
 void PlayerBarCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
     wxAutoBufferedPaintDC dc(this);
-    dc.SetBackground(wxBrush(wxColour(14, 14, 14)));
+    dc.SetBackground(wxBrush(GetBackgroundColour()));
     dc.Clear();
 }

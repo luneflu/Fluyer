@@ -1,5 +1,6 @@
 #include "AlbumListCtrl.h"
 #include <wx/dcbuffer.h>
+#include <wx/settings.h>
 #include <algorithm>
 
 wxBEGIN_EVENT_TABLE(AlbumListCtrl, wxScrolledWindow)
@@ -15,7 +16,6 @@ AlbumListCtrl::AlbumListCtrl(wxWindow* parent, LibraryService* libraryService, I
       m_imageService(imageService) {
     ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetBackgroundColour(wxColour(18, 18, 18));
 }
 
 void AlbumListCtrl::RefreshData() {
@@ -55,7 +55,7 @@ void AlbumListCtrl::OnLeftDown(wxMouseEvent& evt) {
 void AlbumListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
     wxAutoBufferedPaintDC dc(this);
 
-    dc.SetBackground(wxBrush(wxColour(18, 18, 18)));
+    dc.SetBackground(wxBrush(GetBackgroundColour()));
     dc.Clear();
 
     if (m_albumCount == 0 || !m_libraryService) return;
@@ -84,20 +84,20 @@ void AlbumListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
         if (cover.IsOk()) {
             dc.DrawBitmap(cover, itemX, itemY, false);
         } else {
-            dc.SetBrush(wxBrush(wxColour(32, 32, 32)));
-            dc.SetPen(wxPen(wxColour(48, 48, 48)));
+            dc.SetBrush(wxBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)));
+            dc.SetPen(wxPen(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW)));
             dc.DrawRoundedRectangle(itemX, itemY, COVER_SIZE, COVER_SIZE, 8.0);
         }
 
         // Title
-        dc.SetTextForeground(wxColour(240, 240, 240));
+        dc.SetTextForeground(GetForegroundColour());
         dc.SetFont(titleFont);
         wxString albumName = wxString::FromUTF8(album.name);
         wxString truncatedTitle = dc.GetTextExtent(albumName).GetWidth() > COVER_SIZE ? albumName.substr(0, 16) + "..." : albumName;
         dc.DrawText(truncatedTitle, itemX, itemY + COVER_SIZE + 6);
 
         // Artist
-        dc.SetTextForeground(wxColour(160, 160, 160));
+        dc.SetTextForeground(wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT));
         dc.SetFont(artistFont);
         wxString artistName = wxString::FromUTF8(album.artist);
         wxString truncatedArtist = dc.GetTextExtent(artistName).GetWidth() > COVER_SIZE ? artistName.substr(0, 18) + "..." : artistName;
