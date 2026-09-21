@@ -98,4 +98,43 @@ void ImageService::InvalidateAlbumCover(uintptr_t index) {
 void ImageService::ClearCache() {
     m_trackImageCache.clear();
     m_albumImageCache.clear();
+    m_visibleTracks.clear();
+    m_visibleAlbums.clear();
+    m_newVisibleTracks.clear();
+    m_newVisibleAlbums.clear();
+}
+
+void ImageService::BeginVisibilityUpdate() {
+    m_newVisibleTracks.clear();
+    m_newVisibleAlbums.clear();
+}
+
+void ImageService::MarkTrackVisible(uintptr_t index) {
+    m_newVisibleTracks.insert(index);
+}
+
+void ImageService::MarkAlbumVisible(uintptr_t index) {
+    m_newVisibleAlbums.insert(index);
+}
+
+void ImageService::EndVisibilityUpdate() {
+    // Remove cached images that are no longer visible
+    for (auto it = m_trackImageCache.begin(); it != m_trackImageCache.end();) {
+        if (m_newVisibleTracks.find(it->first.index) == m_newVisibleTracks.end()) {
+            it = m_trackImageCache.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    
+    for (auto it = m_albumImageCache.begin(); it != m_albumImageCache.end();) {
+        if (m_newVisibleAlbums.find(it->first.index) == m_newVisibleAlbums.end()) {
+            it = m_albumImageCache.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    
+    m_visibleTracks = std::move(m_newVisibleTracks);
+    m_visibleAlbums = std::move(m_newVisibleAlbums);
 }

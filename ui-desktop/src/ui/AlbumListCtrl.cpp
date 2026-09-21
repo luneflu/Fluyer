@@ -144,8 +144,17 @@ void AlbumListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
 
     int padding = 6;
     int coverSize = itemWidth - padding * 2;
+    
+    // Track visible albums for cache management
+    if (m_imageService) {
+        m_imageService->BeginVisibilityUpdate();
+    }
 
     for (int i = startIdx; i <= endIdx; ++i) {
+        if (m_imageService) {
+            m_imageService->MarkAlbumVisible(i);
+        }
+        
         int itemX = i * itemWidth - m_scrollOffsetX;
         int coverX = itemX + padding;
         int itemY = 8;
@@ -189,5 +198,10 @@ void AlbumListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
             truncatedArtist += "...";
         }
         dc.DrawText(truncatedArtist, coverX, itemY + coverSize + 24);
+    }
+    
+    // Cleanup images no longer visible
+    if (m_imageService) {
+        m_imageService->EndVisibilityUpdate();
     }
 }

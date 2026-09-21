@@ -119,11 +119,20 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
     double scaleFactor = GetContentScaleFactor();
     dc.SetFont(GetFont());
     dc.SetTextForeground(GetForegroundColour());
+    
+    // Track visible tracks for cache management
+    if (m_imageService) {
+        m_imageService->BeginVisibilityUpdate();
+    }
 
     for (int row = startRow; row <= endRow; ++row) {
         for (int col = 0; col < colCount; ++col) {
             size_t idx = row * colCount + col;
             if (idx >= m_trackCount) break;
+            
+            if (m_imageService) {
+                m_imageService->MarkTrackVisible(idx);
+            }
 
             int cellX = PADDING + col * colWidth;
             int cellY = PADDING + row * ITEM_HEIGHT - m_scrollOffsetY;
@@ -160,5 +169,10 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
             // Duration on right
             dc.DrawText(wxString::FromUTF8(track.FormatDuration()), cellX + colWidth - 48, cellY + 18);
         }
+    }
+    
+    // Cleanup images no longer visible
+    if (m_imageService) {
+        m_imageService->EndVisibilityUpdate();
     }
 }

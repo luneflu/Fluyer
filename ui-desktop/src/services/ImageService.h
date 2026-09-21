@@ -1,5 +1,6 @@
 #pragma once
 #include <unordered_map>
+#include <unordered_set>
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/mstream.h>
@@ -18,6 +19,12 @@ public:
     void InvalidateTrackCover(uintptr_t index);
     void InvalidateAlbumCover(uintptr_t index);
     void ClearCache();
+    
+    // Visibility tracking - only keep images currently visible
+    void MarkTrackVisible(uintptr_t index);
+    void MarkAlbumVisible(uintptr_t index);
+    void BeginVisibilityUpdate();
+    void EndVisibilityUpdate();
 
 private:
     struct CacheKey {
@@ -43,4 +50,10 @@ private:
     FluyerEngine* m_engine = nullptr;
     std::unordered_map<CacheKey, wxBitmap, CacheKeyHash> m_trackImageCache;
     std::unordered_map<CacheKey, wxBitmap, CacheKeyHash> m_albumImageCache;
+    
+    // Track which indices are currently visible
+    std::unordered_set<uintptr_t> m_visibleTracks;
+    std::unordered_set<uintptr_t> m_visibleAlbums;
+    std::unordered_set<uintptr_t> m_newVisibleTracks;
+    std::unordered_set<uintptr_t> m_newVisibleAlbums;
 };
