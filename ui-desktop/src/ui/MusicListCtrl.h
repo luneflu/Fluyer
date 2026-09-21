@@ -16,6 +16,7 @@ private:
     void OnScroll(wxScrollWinEvent& evt);
     void OnLeftDown(wxMouseEvent& evt);
     void OnMouseWheel(wxMouseEvent& evt);
+    int GetColumnCount() const;
 
     LibraryService* m_libraryService = nullptr;
     ImageService* m_imageService = nullptr;

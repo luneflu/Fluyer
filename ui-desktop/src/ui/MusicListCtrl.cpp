@@ -3,6 +3,24 @@
 #include <wx/dcbuffer.h>
 #include <algorithm>
 
+struct ResponsiveRule {
+    int minWidth;
+    double minDpr;
+    double widthRatio;
+};
+
+static constexpr ResponsiveRule RESPONSIVE_RULES[] = {
+    { 1280, 2.01, 0.25 },    // 4 cols at 1280+ DPR>2
+    { 1024, 2.01, 0.33333 }, // 3 cols
+    { 768,  2.01, 0.5 },     // 2 cols
+    { 1536, 1.01, 0.25 },    // hdpi 4 cols
+    { 1280, 1.01, 0.33333 }, // 3 cols
+    { 768,  1.01, 0.5 },     // 2 cols
+    { 1536, 0.0,  0.25 },    // 4 cols
+    { 1024, 0.0,  0.33333 }, // 3 cols
+    { 768,  0.0,  0.5 }      // 2 cols
+};
+
 wxBEGIN_EVENT_TABLE(MusicListCtrl, wxScrolledWindow)
     EVT_PAINT(MusicListCtrl::OnPaint)
     EVT_SIZE(MusicListCtrl::OnSize)
@@ -36,9 +54,21 @@ void MusicListCtrl::OnSize(wxSizeEvent& evt) {
     evt.Skip();
 }
 
+int MusicListCtrl::GetColumnCount() const {
+    int width = GetClientSize().GetWidth();
+    if (width <= 0) return 1;
+    double dpr = GetContentScaleFactor();
+
+    for (const auto& rule : RESPONSIVE_RULES) {
+        if (width >= rule.minWidth && dpr >= rule.minDpr) {
+            return std::max(1, static_cast<int>(1.0 / rule.widthRatio));
+        }
+    }
+    return 1;
+}
+
 void MusicListCtrl::OnMouseWheel(wxMouseEvent& evt) {
-    int clientW = GetClientSize().GetWidth();
-    int colCount = std::max(1, (clientW - PADDING * 2) / MIN_COL_WIDTH);
+    int colCount = GetColumnCount();
     int totalRows = (static_cast<int>(m_trackCount) + colCount - 1) / colCount;
     int maxScroll = std::max(0, totalRows * ITEM_HEIGHT - GetClientSize().GetHeight() + PADDING * 2);
 
@@ -51,7 +81,7 @@ void MusicListCtrl::OnLeftDown(wxMouseEvent& evt) {
     int x = evt.GetX();
     int y = evt.GetY() + m_scrollOffsetY;
     int clientW = GetClientSize().GetWidth();
-    int colCount = std::max(1, (clientW - PADDING * 2) / MIN_COL_WIDTH);
+    int colCount = GetColumnCount();
     int colWidth = (clientW - PADDING * 2) / colCount;
 
     int clickedRow = (y - PADDING) / ITEM_HEIGHT;
@@ -80,7 +110,7 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
     int startPixelY = m_scrollOffsetY;
     int endPixelY = startPixelY + viewH;
 
-    int colCount = std::max(1, (viewW - PADDING * 2) / MIN_COL_WIDTH);
+    int colCount = GetColumnCount();
     int colWidth = (viewW - PADDING * 2) / colCount;
 
     int startRow = std::max(0, (startPixelY - PADDING) / ITEM_HEIGHT);
