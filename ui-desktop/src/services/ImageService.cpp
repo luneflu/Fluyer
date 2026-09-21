@@ -21,7 +21,8 @@ wxBitmap ImageService::LoadBitmapFromBytes(uint8_t* bytes, uintptr_t len, int ta
 }
 
 wxBitmap ImageService::GetTrackImage(uintptr_t index, int targetSize, double scaleFactor) {
-    auto it = m_trackImageCache.find(index);
+    CacheKey key{index, targetSize, scaleFactor};
+    auto it = m_trackImageCache.find(key);
     if (it != m_trackImageCache.end()) {
         return it->second;
     }
@@ -35,12 +36,13 @@ wxBitmap ImageService::GetTrackImage(uintptr_t index, int targetSize, double sca
         bmp = LoadBitmapFromBytes(bytes, imgLen, targetSize, scaleFactor);
         fluyer_bytes_free(bytes, imgLen);
     }
-    m_trackImageCache[index] = bmp;
+    m_trackImageCache[key] = bmp;
     return bmp;
 }
 
 wxBitmap ImageService::GetAlbumImage(uintptr_t index, int targetSize, double scaleFactor) {
-    auto it = m_albumImageCache.find(index);
+    CacheKey key{index, targetSize, scaleFactor};
+    auto it = m_albumImageCache.find(key);
     if (it != m_albumImageCache.end()) {
         return it->second;
     }
@@ -54,7 +56,7 @@ wxBitmap ImageService::GetAlbumImage(uintptr_t index, int targetSize, double sca
         bmp = LoadBitmapFromBytes(bytes, imgLen, targetSize, scaleFactor);
         fluyer_bytes_free(bytes, imgLen);
     }
-    m_albumImageCache[index] = bmp;
+    m_albumImageCache[key] = bmp;
     return bmp;
 }
 
@@ -72,11 +74,25 @@ wxBitmap ImageService::GetCurrentImage(int targetSize, double scaleFactor) {
 }
 
 void ImageService::InvalidateTrackCover(uintptr_t index) {
-    m_trackImageCache.erase(index);
+    // Erase all cached entries for this index (any size/scale)
+    for (auto it = m_trackImageCache.begin(); it != m_trackImageCache.end();) {
+        if (it->first.index == index) {
+            it = m_trackImageCache.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 void ImageService::InvalidateAlbumCover(uintptr_t index) {
-    m_albumImageCache.erase(index);
+    // Erase all cached entries for this index (any size/scale)
+    for (auto it = m_albumImageCache.begin(); it != m_albumImageCache.end();) {
+        if (it->first.index == index) {
+            it = m_albumImageCache.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 void ImageService::ClearCache() {

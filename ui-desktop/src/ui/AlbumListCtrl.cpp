@@ -56,13 +56,15 @@ int AlbumListCtrl::GetItemWidth() const {
 
 int AlbumListCtrl::GetItemHeight() const {
     if (m_albumCount == 0) return 0;
-    int width = GetClientSize().GetWidth();
-    if (width <= 0 && GetParent()) {
-        width = GetParent()->GetClientSize().GetWidth();
-    }
     int itemWidth = GetItemWidth();
-    int extra = (width > 640) ? 52 : 44;
-    return itemWidth + extra;
+    int padding = 6;
+    int coverSize = std::max(16, itemWidth - padding * 2);
+    int topMargin = 8;
+    int titleSpacing = 6;
+    int artistSpacing = 24;
+    int bottomMargin = 8;
+    // Total: topMargin + coverSize + artistSpacing + font height (~13px) + bottomMargin
+    return topMargin + coverSize + artistSpacing + 13 + bottomMargin;
 }
 
 wxSize AlbumListCtrl::DoGetBestClientSize() const {
@@ -141,7 +143,7 @@ void AlbumListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
     wxFont artistFont = wxFontInfo(wxSize(0, 13)).Family(wxFONTFAMILY_DEFAULT);
 
     int padding = 6;
-    int coverSize = std::max(16, itemWidth - padding * 2);
+    int coverSize = itemWidth - padding * 2;
 
     for (int i = startIdx; i <= endIdx; ++i) {
         int itemX = i * itemWidth - m_scrollOffsetX;

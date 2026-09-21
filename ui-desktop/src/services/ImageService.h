@@ -20,9 +20,27 @@ public:
     void ClearCache();
 
 private:
+    struct CacheKey {
+        uintptr_t index;
+        int size;
+        double scale;
+        
+        bool operator==(const CacheKey& other) const {
+            return index == other.index && size == other.size && scale == other.scale;
+        }
+    };
+    
+    struct CacheKeyHash {
+        size_t operator()(const CacheKey& key) const {
+            return std::hash<uintptr_t>()(key.index) ^ 
+                   (std::hash<int>()(key.size) << 1) ^
+                   (std::hash<double>()(key.scale) << 2);
+        }
+    };
+
     static wxBitmap LoadBitmapFromBytes(uint8_t* bytes, uintptr_t len, int targetSize, double scaleFactor);
 
     FluyerEngine* m_engine = nullptr;
-    std::unordered_map<uintptr_t, wxBitmap> m_trackImageCache;
-    std::unordered_map<uintptr_t, wxBitmap> m_albumImageCache;
+    std::unordered_map<CacheKey, wxBitmap, CacheKeyHash> m_trackImageCache;
+    std::unordered_map<CacheKey, wxBitmap, CacheKeyHash> m_albumImageCache;
 };
