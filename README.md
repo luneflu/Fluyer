@@ -7,7 +7,7 @@ cargo build -p fluyer_core
 
 Build App
 ```
-cmake -B ui-desktop/build -S ui-desktop -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake -B ui-desktop/build -S ui-desktop -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake --build ui-desktop/build
 ```
 
