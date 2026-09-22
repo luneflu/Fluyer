@@ -28,6 +28,7 @@ wxBEGIN_EVENT_TABLE(AlbumListCtrl, wxScrolledWindow)
     EVT_PAINT(AlbumListCtrl::OnPaint)
     EVT_SIZE(AlbumListCtrl::OnSize)
     EVT_LEFT_DOWN(AlbumListCtrl::OnLeftDown)
+    EVT_LEFT_DCLICK(AlbumListCtrl::OnLeftDClick)
     EVT_MOUSEWHEEL(AlbumListCtrl::OnMouseWheel)
 wxEND_EVENT_TABLE()
 
@@ -74,10 +75,18 @@ wxSize AlbumListCtrl::DoGetBestClientSize() const {
 void AlbumListCtrl::RefreshData() {
     m_scrollOffsetX = 0;
     m_albumCount = m_libraryService ? m_libraryService->GetAlbumCount() : 0;
+    if (m_selectedAlbumIndex >= static_cast<int>(m_albumCount)) {
+        m_selectedAlbumIndex = -1;
+    }
     SetMinSize(wxSize(-1, GetItemHeight()));
     if (GetParent()) {
         GetParent()->Layout();
     }
+    Refresh();
+}
+
+void AlbumListCtrl::SetSelectedAlbum(int index) {
+    m_selectedAlbumIndex = index;
     Refresh();
 }
 
@@ -114,7 +123,30 @@ void AlbumListCtrl::OnLeftDown(wxMouseEvent& evt) {
         int x = evt.GetX() + m_scrollOffsetX;
         int clickedIdx = x / itemWidth;
         if (clickedIdx >= 0 && clickedIdx < static_cast<int>(m_albumCount)) {
-            // Future: Filter or play album tracks
+            m_selectedAlbumIndex = clickedIdx;
+            Refresh();
+            if (m_onAlbumSelected) {
+                m_onAlbumSelected(clickedIdx);
+            }
+        }
+    }
+    evt.Skip();
+}
+
+void AlbumListCtrl::OnLeftDClick(wxMouseEvent& evt) {
+    int itemWidth = GetItemWidth();
+    if (itemWidth > 0) {
+        int x = evt.GetX() + m_scrollOffsetX;
+        int clickedIdx = x / itemWidth;
+        if (clickedIdx >= 0 && clickedIdx < static_cast<int>(m_albumCount)) {
+            m_selectedAlbumIndex = clickedIdx;
+            Refresh();
+            if (m_onAlbumSelected) {
+                m_onAlbumSelected(clickedIdx);
+            }
+            if (m_libraryService) {
+                m_libraryService->PlayAlbum(clickedIdx);
+            }
         }
     }
     evt.Skip();
@@ -171,6 +203,13 @@ void AlbumListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
             dc.SetBrush(wxBrush(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)));
             dc.SetPen(wxPen(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW)));
             dc.DrawRoundedRectangle(coverX, itemY, coverSize, coverSize, 8.0);
+        }
+
+        // Highlight border for selected album
+        if (i == m_selectedAlbumIndex) {
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            dc.SetPen(wxPen(wxColour(255, 255, 255), 2));
+            dc.DrawRoundedRectangle(coverX - 1, itemY - 1, coverSize + 2, coverSize + 2, 6.0);
         }
 
         // Title

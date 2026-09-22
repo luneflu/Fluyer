@@ -352,6 +352,38 @@ pub unsafe extern "C" fn fluyer_library_play_index(engine: *mut FluyerEngine, in
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn fluyer_library_play_album(engine: *mut FluyerEngine, index: usize) {
+    if let Some(e) = engine.as_ref() {
+        e.play_album(index);
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_library_play_album_track(
+    engine: *mut FluyerEngine,
+    album_index: usize,
+    track_index: usize,
+) {
+    if let Some(e) = engine.as_ref() {
+        e.play_album_track(album_index, track_index);
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_library_queue_album(engine: *mut FluyerEngine, index: usize) {
+    if let Some(e) = engine.as_ref() {
+        e.queue_album(index);
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_library_shuffle_album(engine: *mut FluyerEngine, index: usize) {
+    if let Some(e) = engine.as_ref() {
+        e.shuffle_album(index);
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn fluyer_library_get_track_image(
     engine: *mut FluyerEngine,
     index: usize,

@@ -28,12 +28,17 @@ set(SOURCES
     src/services/ImageService.cpp
     src/ui/MainFrame.cpp
     src/ui/AlbumListCtrl.cpp
+    src/ui/CollectionInfoCtrl.cpp
     src/ui/MusicListCtrl.cpp
     src/ui/PlayerBarCtrl.cpp
 )
 
 if(APPLE)
-    set_source_files_properties(src/ui/PlayerBarCtrl.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++ -fobjc-arc")
+    set_source_files_properties(
+        src/ui/PlayerBarCtrl.cpp
+        src/ui/CollectionInfoCtrl.cpp
+        PROPERTIES COMPILE_FLAGS "-x objective-c++ -fobjc-arc"
+    )
 endif()
 
 add_executable(FluyerApp ${SOURCES})

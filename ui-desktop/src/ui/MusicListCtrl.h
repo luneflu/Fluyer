@@ -10,6 +10,9 @@ public:
     void RefreshData();
     void OnCoverLoaded(uintptr_t index);
 
+    void SetAlbumFilter(int albumIndex);
+    int GetAlbumFilter() const { return m_albumFilter; }
+
 private:
     void OnPaint(wxPaintEvent& evt);
     void OnSize(wxSizeEvent& evt);
@@ -22,6 +25,8 @@ private:
     ImageService* m_imageService = nullptr;
     uintptr_t m_trackCount = 0;
     int m_scrollOffsetY = 0;
+    int m_albumFilter = -1;
+    Album m_filteredAlbum;
 
     static constexpr int ITEM_HEIGHT = 58;
     static constexpr int MIN_COL_WIDTH = 280;

@@ -144,6 +144,48 @@ impl FluyerEngine {
         self.player.goto_track(start_index);
     }
 
+    pub fn play_album(&self, index: usize) {
+        if let Some(album) = self.library.read().unwrap().album_get_by_index(index) {
+            if album.is_empty() {
+                return;
+            }
+            self.player.clear();
+            self.player.add_track_no_auto_play(album);
+            self.player.goto_track(0);
+        }
+    }
+
+    pub fn play_album_track(&self, album_index: usize, track_index: usize) {
+        if let Some(album) = self.library.read().unwrap().album_get_by_index(album_index) {
+            if track_index < album.len() {
+                self.player.clear();
+                self.player.add_track_no_auto_play(album);
+                self.player.goto_track(track_index);
+            }
+        }
+    }
+
+    pub fn queue_album(&self, index: usize) {
+        if let Some(album) = self.library.read().unwrap().album_get_by_index(index) {
+            if album.is_empty() {
+                return;
+            }
+            self.player.add_track(album);
+        }
+    }
+
+    pub fn shuffle_album(&self, index: usize) {
+        if let Some(album) = self.library.read().unwrap().album_get_by_index(index) {
+            if album.is_empty() {
+                return;
+            }
+            self.player.clear();
+            self.player.add_track_no_auto_play(album);
+            self.player.shuffle_track();
+            self.player.goto_track(0);
+        }
+    }
+
     pub fn add_track_to_queue(&self, track: MusicMetadata) {
         self.player.add_track(vec![track]);
     }

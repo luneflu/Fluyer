@@ -99,3 +99,29 @@ impl LibraryState {
         self.albums.get(index).cloned()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_album_grouping_and_retrieval() {
+        let mut state = LibraryState::default();
+        let mut t1 = MusicMetadata::default();
+        t1.album = Some("Test Album".into());
+        t1.title = Some("Track 1".into());
+        t1.track_number = Some("1".into());
+
+        let mut t2 = MusicMetadata::default();
+        t2.album = Some("Test Album".into());
+        t2.title = Some("Track 2".into());
+        t2.track_number = Some("2".into());
+
+        state.rebuild(vec![t2, t1]);
+        assert_eq!(state.album_count(), 1);
+        let album = state.album_get_by_index(0).unwrap();
+        assert_eq!(album.len(), 2);
+        assert_eq!(album[0].title.as_deref(), Some("Track 1"));
+        assert_eq!(album[1].title.as_deref(), Some("Track 2"));
+    }
+}

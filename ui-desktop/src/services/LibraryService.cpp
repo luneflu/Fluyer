@@ -60,6 +60,30 @@ void LibraryService::PlayTrack(uintptr_t index) {
     }
 }
 
+void LibraryService::PlayAlbum(uintptr_t index) {
+    if (m_engine) {
+        fluyer_library_play_album(m_engine, index);
+    }
+}
+
+void LibraryService::PlayAlbumTrack(uintptr_t albumIndex, uintptr_t trackIndex) {
+    if (m_engine) {
+        fluyer_library_play_album_track(m_engine, albumIndex, trackIndex);
+    }
+}
+
+void LibraryService::QueueAlbum(uintptr_t index) {
+    if (m_engine) {
+        fluyer_library_queue_album(m_engine, index);
+    }
+}
+
+void LibraryService::ShuffleAlbum(uintptr_t index) {
+    if (m_engine) {
+        fluyer_library_shuffle_album(m_engine, index);
+    }
+}
+
 void LibraryService::ScanDirectories(const std::vector<std::string>& paths) {
     if (!m_engine || paths.empty()) return;
     std::vector<const char*> c_paths;

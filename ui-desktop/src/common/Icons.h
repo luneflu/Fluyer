@@ -23,7 +23,9 @@ enum Icon {
   RepeatOnce,
   Shuffle,
   SpeakerHigh,
-  SpeakerMute
+  SpeakerMute,
+  Back,
+  QueueMusic
 };
 
 #if defined(__WXOSX__) || defined(__APPLE__)
@@ -116,6 +118,12 @@ inline wxBitmapBundle Get(Icon icon, const wxColour &color,
   case Icon::SpeakerMute:
     name = "speaker.slash.fill";
     break;
+  case Icon::Back:
+    name = "arrow.backward";
+    break;
+  case Icon::QueueMusic:
+    name = "text.badge.plus";
+    break;
   }
   return CreateNativeIcon(name, color, size);
 }
@@ -148,6 +156,12 @@ constexpr const char *SPEAKER_HIGH =
 
 constexpr const char *SPEAKER_X =
     R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path d="M80,168H32a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8H80l72-56V224Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="240" y1="104" x2="192" y2="152" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="240" y1="152" x2="192" y2="104" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="80" y1="88" x2="80" y2="168" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>)";
+
+constexpr const char *ARROW_BACK =
+    R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><polyline points="160 208 80 128 160 48" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/></svg>)";
+
+constexpr const char *QUEUE_MUSIC =
+    R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><line x1="40" y1="64" x2="216" y2="64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="40" y1="128" x2="144" y2="128" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="40" y1="192" x2="144" y2="192" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="200" y1="144" x2="200" y2="208" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="168" y1="176" x2="232" y2="176" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>)";
 
 inline wxBitmapBundle CreateSVGIcon(const std::string &svg,
                                     const wxColour &color, const wxSize &size) {
@@ -194,6 +208,12 @@ inline wxBitmapBundle Get(Icon icon, const wxColour &color,
     break;
   case Icon::SpeakerMute:
     svg = SPEAKER_X;
+    break;
+  case Icon::Back:
+    svg = ARROW_BACK;
+    break;
+  case Icon::QueueMusic:
+    svg = QUEUE_MUSIC;
     break;
   }
   return CreateSVGIcon(svg, color, size);

@@ -30,6 +30,10 @@ MainFrame::MainFrame(LibraryService* libraryService, PlayerService* playerServic
     // Top: Album list
     m_albumList = new AlbumListCtrl(this, m_libraryService, m_imageService);
 
+    // Collection Info (hidden by default)
+    m_collectionInfo = new CollectionInfoCtrl(this, m_libraryService);
+    m_collectionInfo->Show(false);
+
     // Middle: Music list
     m_musicList = new MusicListCtrl(this, m_libraryService, m_imageService);
 
@@ -37,9 +41,28 @@ MainFrame::MainFrame(LibraryService* libraryService, PlayerService* playerServic
     m_playerBar = new PlayerBarCtrl(this, m_playerService, m_imageService);
 
     rootSizer->Add(m_albumList, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
+    rootSizer->Add(m_collectionInfo, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
     rootSizer->Add(m_musicList, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
     rootSizer->Add(m_playerBar, 0, wxEXPAND);
     SetSizer(rootSizer);
+
+    m_albumList->SetOnAlbumSelected([this](int index) {
+        if (index >= 0) {
+            m_collectionInfo->SetAlbum(index);
+            m_musicList->SetAlbumFilter(index);
+        } else {
+            m_collectionInfo->ClearAlbum();
+            m_musicList->SetAlbumFilter(-1);
+        }
+        Layout();
+    });
+
+    m_collectionInfo->SetOnBack([this]() {
+        m_albumList->SetSelectedAlbum(-1);
+        m_collectionInfo->ClearAlbum();
+        m_musicList->SetAlbumFilter(-1);
+        Layout();
+    });
 
     RefreshViews();
 }
@@ -48,6 +71,9 @@ MainFrame::~MainFrame() = default;
 
 void MainFrame::RefreshViews() {
     if (m_albumList) m_albumList->RefreshData();
+    if (m_collectionInfo && m_collectionInfo->GetAlbumIndex() >= 0) {
+        m_collectionInfo->SetAlbum(m_collectionInfo->GetAlbumIndex());
+    }
     if (m_musicList) m_musicList->RefreshData();
 }
 

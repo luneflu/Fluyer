@@ -18,6 +18,10 @@ public:
     Album GetAlbum(uintptr_t index);
 
     void PlayTrack(uintptr_t index);
+    void PlayAlbum(uintptr_t index);
+    void PlayAlbumTrack(uintptr_t albumIndex, uintptr_t trackIndex);
+    void QueueAlbum(uintptr_t index);
+    void ShuffleAlbum(uintptr_t index);
     void ScanDirectories(const std::vector<std::string>& paths);
     void ClearCache();
 

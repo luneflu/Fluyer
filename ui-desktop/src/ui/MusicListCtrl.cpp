@@ -36,9 +36,20 @@ MusicListCtrl::MusicListCtrl(wxWindow* parent, LibraryService* libraryService, I
     SetBackgroundStyle(wxBG_STYLE_PAINT);
 }
 
+void MusicListCtrl::SetAlbumFilter(int albumIndex) {
+    m_albumFilter = albumIndex;
+    RefreshData();
+}
+
 void MusicListCtrl::RefreshData() {
     m_scrollOffsetY = 0;
-    m_trackCount = m_libraryService ? m_libraryService->GetTrackCount() : 0;
+    if (m_albumFilter >= 0 && m_libraryService) {
+        m_filteredAlbum = m_libraryService->GetAlbum(m_albumFilter);
+        m_trackCount = m_filteredAlbum.tracks.size();
+    } else {
+        m_filteredAlbum = Album{};
+        m_trackCount = m_libraryService ? m_libraryService->GetTrackCount() : 0;
+    }
     Refresh();
 }
 
@@ -91,7 +102,11 @@ void MusicListCtrl::OnLeftDown(wxMouseEvent& evt) {
         size_t trackIdx = clickedRow * colCount + clickedCol;
         FluyerLog::Info("UI", "Clicked track index " + std::to_string(trackIdx));
         if (trackIdx < m_trackCount && m_libraryService) {
-            m_libraryService->PlayTrack(trackIdx);
+            if (m_albumFilter >= 0) {
+                m_libraryService->PlayAlbumTrack(m_albumFilter, trackIdx);
+            } else {
+                m_libraryService->PlayTrack(trackIdx);
+            }
         }
     }
     evt.Skip();
@@ -129,19 +144,28 @@ void MusicListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
         for (int col = 0; col < colCount; ++col) {
             size_t idx = row * colCount + col;
             if (idx >= m_trackCount) break;
-            
-            if (m_imageService) {
-                m_imageService->MarkTrackVisible(idx);
+
+            Track track;
+            wxBitmap thumb;
+            if (m_albumFilter >= 0) {
+                if (idx < m_filteredAlbum.tracks.size()) {
+                    track = m_filteredAlbum.tracks[idx];
+                }
+                if (m_imageService) {
+                    thumb = m_imageService->GetAlbumImage(m_albumFilter, THUMB_SIZE, scaleFactor);
+                }
+            } else {
+                if (m_imageService) {
+                    m_imageService->MarkTrackVisible(idx);
+                }
+                track = m_libraryService->GetTrack(idx);
+                if (m_imageService) {
+                    thumb = m_imageService->GetTrackImage(idx, THUMB_SIZE, scaleFactor);
+                }
             }
 
             int cellX = PADDING + col * colWidth;
             int cellY = PADDING + row * ITEM_HEIGHT - m_scrollOffsetY;
-
-            Track track = m_libraryService->GetTrack(idx);
-            wxBitmap thumb;
-            if (m_imageService) {
-                thumb = m_imageService->GetTrackImage(idx, THUMB_SIZE, scaleFactor);
-            }
 
             // Thumbnail
             int thumbX = cellX + 6;

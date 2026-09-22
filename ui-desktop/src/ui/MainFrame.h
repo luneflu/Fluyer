@@ -5,6 +5,7 @@
 #include "services/PlayerService.h"
 #include "services/ImageService.h"
 #include "AlbumListCtrl.h"
+#include "CollectionInfoCtrl.h"
 #include "MusicListCtrl.h"
 #include "PlayerBarCtrl.h"
 
@@ -28,6 +29,7 @@ private:
     ImageService* m_imageService;
 
     AlbumListCtrl* m_albumList = nullptr;
+    CollectionInfoCtrl* m_collectionInfo = nullptr;
     MusicListCtrl* m_musicList = nullptr;
     PlayerBarCtrl* m_playerBar = nullptr;
 
