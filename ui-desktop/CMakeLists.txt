@@ -32,6 +32,10 @@ set(SOURCES
     src/ui/PlayerBarCtrl.cpp
 )
 
+if(APPLE)
+    set_source_files_properties(src/ui/PlayerBarCtrl.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++ -fobjc-arc")
+endif()
+
 add_executable(FluyerApp ${SOURCES})
 
 target_link_libraries(FluyerApp
