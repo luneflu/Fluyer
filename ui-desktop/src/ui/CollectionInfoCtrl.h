@@ -16,6 +16,8 @@ public:
 
     void SetOnBack(std::function<void()> cb) { m_onBack = std::move(cb); }
 
+    wxSize DoGetBestClientSize() const override { return wxSize(-1, 46); }
+
 private:
     void OnPaint(wxPaintEvent& evt);
     void OnSize(wxSizeEvent& evt);

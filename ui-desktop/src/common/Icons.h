@@ -71,10 +71,10 @@ inline wxBitmapBundle CreateNativeIcon(const std::string &name,
           NSSize symSize = [configured size];
           CGFloat w = std::min(symSize.width, dstRect.size.width);
           CGFloat h = std::min(symSize.height, dstRect.size.height);
-          NSRect r =
-              NSMakeRect(std::round((dstRect.size.width - w) / 2.0),
-                         std::round((dstRect.size.height - h) / 2.0), w, h);
-          [configured drawInRect:r
+    NSRect r =
+        NSMakeRect(std::round((dstRect.size.width - w) / 2.0),
+                   std::round((dstRect.size.height - h) / 2.0), w, h);
+    [configured drawInRect:r
                         fromRect:NSZeroRect
                        operation:NSCompositingOperationSourceOver
                         fraction:1.0];
@@ -158,7 +158,7 @@ constexpr const char *SPEAKER_X =
     R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path d="M80,168H32a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8H80l72-56V224Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="240" y1="104" x2="192" y2="152" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="240" y1="152" x2="192" y2="104" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="80" y1="88" x2="80" y2="168" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>)";
 
 constexpr const char *ARROW_BACK =
-    R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><polyline points="160 208 80 128 160 48" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/></svg>)";
+    R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path d="M80,168l-48-48,48-48" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/><path d="M32,120H160a56,56,0,0,1,56,56v16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/></svg>)";
 
 constexpr const char *QUEUE_MUSIC =
     R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><line x1="40" y1="64" x2="216" y2="64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="40" y1="128" x2="144" y2="128" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="40" y1="192" x2="144" y2="192" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="200" y1="144" x2="200" y2="208" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/><line x1="168" y1="176" x2="232" y2="176" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="16"/></svg>)";

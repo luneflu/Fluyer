@@ -1,11 +1,14 @@
 #pragma once
 #include <wx/wx.h>
-#include <wx/slider.h>
 #include <wx/statbmp.h>
 #include <wx/bmpbuttn.h>
 #include <wx/timer.h>
+#include <functional>
 #include "services/PlayerService.h"
 #include "services/ImageService.h"
+
+class ProgressBarCtrl;
+class PillPanel;
 
 class PlayerBarCtrl : public wxPanel {
 public:
@@ -24,20 +27,17 @@ private:
     void OnPrev(wxCommandEvent& evt);
     void OnShuffle(wxCommandEvent& evt);
     void OnRepeat(wxCommandEvent& evt);
-    void OnSeek(wxCommandEvent& evt);
-    void OnVolume(wxCommandEvent& evt);
+    void OnVolumeBtn(wxCommandEvent& evt);
     void OnTimer(wxTimerEvent& evt);
     void UpdateProgress();
+    void UpdateVolumeIcon();
 
     PlayerService* m_playerService = nullptr;
     ImageService* m_imageService = nullptr;
     wxTimer m_progressTimer;
 
-    wxSlider* m_seekSlider = nullptr;
-    wxStaticText* m_lblTimePos = nullptr;
-    wxStaticText* m_lblTimeDur = nullptr;
-
-    wxPanel* m_pillPanel = nullptr;
+    ProgressBarCtrl* m_progressBar = nullptr;
+    PillPanel* m_pillPanel = nullptr;
 
     wxButton* m_btnPrev = nullptr;
     wxButton* m_btnPlayPause = nullptr;
@@ -49,8 +49,9 @@ private:
 
     wxButton* m_btnRepeat = nullptr;
     wxButton* m_btnShuffle = nullptr;
-    wxStaticBitmap* m_volIcon = nullptr;
-    wxSlider* m_volSlider = nullptr;
+    wxButton* m_btnVol = nullptr;
+    ProgressBarCtrl* m_volBar = nullptr;
+    float m_previousVolume = 1.0f;
 
     wxDECLARE_EVENT_TABLE();
 };
