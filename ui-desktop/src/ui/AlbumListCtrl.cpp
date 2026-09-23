@@ -113,7 +113,11 @@ void AlbumListCtrl::OnMouseWheel(wxMouseEvent& evt) {
     int totalWidth = static_cast<int>(m_albumCount) * itemWidth;
     int maxScroll = std::max(0, totalWidth - GetClientSize().GetWidth());
     int delta = evt.GetWheelRotation();
-    m_scrollOffsetX = std::clamp(m_scrollOffsetX - delta, 0, maxScroll);
+    if (evt.GetWheelAxis() == wxMOUSE_WHEEL_HORIZONTAL) {
+        m_scrollOffsetX = std::clamp(m_scrollOffsetX + delta, 0, maxScroll);
+    } else {
+        m_scrollOffsetX = std::clamp(m_scrollOffsetX - delta, 0, maxScroll);
+    }
     Refresh();
 }
 
