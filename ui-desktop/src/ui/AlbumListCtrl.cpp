@@ -37,7 +37,7 @@ AlbumListCtrl::AlbumListCtrl(wxWindow* parent, LibraryService* libraryService, I
       m_libraryService(libraryService),
       m_imageService(imageService) {
     ShowScrollbars(wxSHOW_SB_NEVER, wxSHOW_SB_NEVER);
-    SetBackgroundStyle(wxBG_STYLE_PAINT);
+    SetBackgroundStyle(wxBG_STYLE_TRANSPARENT);
 }
 
 int AlbumListCtrl::GetItemWidth() const {
@@ -157,10 +157,7 @@ void AlbumListCtrl::OnLeftDClick(wxMouseEvent& evt) {
 }
 
 void AlbumListCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
-    wxAutoBufferedPaintDC dc(this);
-
-    dc.SetBackground(wxBrush(GetBackgroundColour()));
-    dc.Clear();
+    wxPaintDC dc(this);
 
     if (m_albumCount == 0 || !m_libraryService) return;
 

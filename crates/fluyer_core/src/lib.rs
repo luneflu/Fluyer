@@ -240,4 +240,19 @@ impl FluyerEngine {
             }
         })
     }
+
+    pub fn generate_background_for_current(&self, width: u32, height: u32) -> (Vec<u8>, u32, u32) {
+        let cover_bytes = self
+            .player
+            .get_current_track()
+            .and_then(|t| self.resolve_track_cover(&t, None));
+        let colors = if let Some(bytes) = cover_bytes {
+            services::background::extract_prominent_from_bytes(&bytes, 10, false)
+        } else {
+            vec![services::background::balance_color([30, 30, 40], true)]
+        };
+        let blurred = services::background::generate_blurred_background(&colors, width, height);
+        let (w, h) = (blurred.width(), blurred.height());
+        (blurred.into_raw(), w, h)
+    }
 }

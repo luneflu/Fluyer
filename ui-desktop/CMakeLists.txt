@@ -34,9 +34,11 @@ set(SOURCES
 )
 
 if(APPLE)
+    list(APPEND SOURCES src/ui/MainFrameNative.mm)
     set_source_files_properties(
         src/ui/PlayerBarCtrl.cpp
         src/ui/CollectionInfoCtrl.cpp
+        src/ui/MainFrameNative.mm
         PROPERTIES COMPILE_FLAGS "-x objective-c++ -fobjc-arc"
     )
 endif()
@@ -51,8 +53,12 @@ target_link_libraries(FluyerApp
     ${ROOT_DIR}/libs/macos/libbassmix.dylib
 )
 
+if(APPLE)
+    target_link_libraries(FluyerApp "-framework QuartzCore" "-framework Cocoa")
+endif()
+
 # Ensure runtime finds dylibs
 set_target_properties(FluyerApp PROPERTIES
     BUILD_WITH_INSTALL_RPATH TRUE
-    INSTALL_RPATH "@executable_path/../../../../libs/macos;@executable_path/../../../../target/debug"
+    INSTALL_RPATH "@executable_path/../../libs/macos;@executable_path/../../target/debug;@executable_path/../../../../libs/macos;@executable_path/../../../../target/debug"
 )

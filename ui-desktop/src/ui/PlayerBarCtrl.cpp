@@ -42,7 +42,7 @@ public:
         : wxPanel(parent, id, wxDefaultPosition, size, wxNO_BORDER),
           m_barHeight(barHeight),
           m_showTooltip(showTooltip) {
-        SetBackgroundStyle(wxBG_STYLE_PAINT);
+        SetBackgroundStyle(wxBG_STYLE_TRANSPARENT);
         SetCursor(wxCursor(wxCURSOR_HAND));
     }
 
@@ -61,9 +61,7 @@ public:
 
 private:
     void OnPaint(wxPaintEvent& WXUNUSED(evt)) {
-        wxAutoBufferedPaintDC dc(this);
-        dc.SetBackground(wxBrush(GetParent() ? GetParent()->GetBackgroundColour() : GetBackgroundColour()));
-        dc.Clear();
+        wxPaintDC dc(this);
 
         wxRect client = GetClientRect();
         if (client.width <= 0 || client.height <= 0) return;
@@ -147,14 +145,12 @@ class PillPanel : public wxPanel {
 public:
     PillPanel(wxWindow* parent, wxWindowID id = wxID_ANY)
         : wxPanel(parent, id, wxDefaultPosition, wxDefaultSize, wxNO_BORDER) {
-        SetBackgroundStyle(wxBG_STYLE_PAINT);
+        SetBackgroundStyle(wxBG_STYLE_TRANSPARENT);
     }
 
 private:
     void OnPaint(wxPaintEvent& WXUNUSED(evt)) {
-        wxAutoBufferedPaintDC dc(this);
-        dc.SetBackground(wxBrush(GetParent() ? GetParent()->GetBackgroundColour() : GetBackgroundColour()));
-        dc.Clear();
+        wxPaintDC dc(this);
 
         wxRect rect = GetClientRect();
         rect.Deflate(1, 1);
@@ -193,7 +189,7 @@ PlayerBarCtrl::PlayerBarCtrl(wxWindow* parent, PlayerService* playerService, Ima
       m_playerService(playerService),
       m_imageService(imageService),
       m_progressTimer(this, ID_TIMER_PROGRESS) {
-    SetBackgroundStyle(wxBG_STYLE_PAINT);
+    SetBackgroundStyle(wxBG_STYLE_TRANSPARENT);
 
     wxBoxSizer* outerSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -439,7 +435,5 @@ void PlayerBarCtrl::OnVolumeBtn(wxCommandEvent& WXUNUSED(evt)) {
 }
 
 void PlayerBarCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
-    wxAutoBufferedPaintDC dc(this);
-    dc.SetBackground(wxBrush(GetParent() ? GetParent()->GetBackgroundColour() : GetBackgroundColour()));
-    dc.Clear();
+    wxPaintDC dc(this);
 }

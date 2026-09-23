@@ -429,3 +429,107 @@ pub unsafe extern "C" fn fluyer_string_free(s: *mut c_char) {
         drop(CString::from_raw(s));
     }
 }
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct FluyerColor {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_extract_prominent_colors(
+    bytes: *const u8,
+    len: usize,
+    is_default: bool,
+    out_count: *mut usize,
+) -> *mut FluyerColor {
+    let colors = if !bytes.is_null() && len > 0 {
+        let slice = std::slice::from_raw_parts(bytes, len);
+        crate::services::background::extract_prominent_from_bytes(slice, 10, is_default)
+    } else {
+        vec![crate::services::background::balance_color([30, 30, 40], is_default)]
+    };
+
+    if !out_count.is_null() {
+        *out_count = colors.len();
+    }
+
+    let ffi_colors: Vec<FluyerColor> = colors
+        .into_iter()
+        .map(|c| FluyerColor {
+            r: c[0],
+            g: c[1],
+            b: c[2],
+        })
+        .collect();
+    let boxed = ffi_colors.into_boxed_slice();
+    Box::into_raw(boxed) as *mut FluyerColor
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_colors_free(ptr: *mut FluyerColor, len: usize) {
+    if !ptr.is_null() && len > 0 {
+        let slice = std::slice::from_raw_parts_mut(ptr, len);
+        drop(Box::from_raw(slice as *mut [FluyerColor]));
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_player_generate_background(
+    engine: *mut FluyerEngine,
+    width: u32,
+    height: u32,
+    out_w: *mut u32,
+    out_h: *mut u32,
+    out_len: *mut usize,
+) -> *mut u8 {
+    if let Some(e) = engine.as_ref() {
+        let (raw, w, h) = e.generate_background_for_current(width, height);
+        if !out_w.is_null() {
+            *out_w = w;
+        }
+        if !out_h.is_null() {
+            *out_h = h;
+        }
+        return raw_bytes_into_ptr(Some(raw), out_len);
+    }
+    if !out_w.is_null() {
+        *out_w = 0;
+    }
+    if !out_h.is_null() {
+        *out_h = 0;
+    }
+    if !out_len.is_null() {
+        *out_len = 0;
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_background_generate_from_bytes(
+    bytes: *const u8,
+    len: usize,
+    is_default: bool,
+    width: u32,
+    height: u32,
+    out_w: *mut u32,
+    out_h: *mut u32,
+    out_len: *mut usize,
+) -> *mut u8 {
+    let colors = if !bytes.is_null() && len > 0 {
+        let slice = std::slice::from_raw_parts(bytes, len);
+        crate::services::background::extract_prominent_from_bytes(slice, 10, is_default)
+    } else {
+        vec![crate::services::background::balance_color([30, 30, 40], is_default)]
+    };
+    let blurred = crate::services::background::generate_blurred_background(&colors, width, height);
+    if !out_w.is_null() {
+        *out_w = blurred.width();
+    }
+    if !out_h.is_null() {
+        *out_h = blurred.height();
+    }
+    raw_bytes_into_ptr(Some(blurred.into_raw()), out_len)
+}

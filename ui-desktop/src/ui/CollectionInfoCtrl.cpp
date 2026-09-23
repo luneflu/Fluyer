@@ -23,7 +23,7 @@ CollectionInfoCtrl::CollectionInfoCtrl(wxWindow* parent, LibraryService* library
     : wxPanel(parent, id, wxDefaultPosition, wxSize(-1, 46), wxNO_BORDER),
       m_libraryService(libraryService) {
     SetMinSize(wxSize(-1, 46));
-    SetBackgroundStyle(wxBG_STYLE_PAINT);
+    SetBackgroundStyle(wxBG_STYLE_TRANSPARENT);
 
     wxColour activeCol(255, 255, 255, 255);
     wxSize iconSize(20, 20);
@@ -91,9 +91,7 @@ void CollectionInfoCtrl::ClearAlbum() {
 }
 
 void CollectionInfoCtrl::OnPaint(wxPaintEvent& WXUNUSED(evt)) {
-    wxAutoBufferedPaintDC dc(this);
-    dc.SetBackground(wxBrush(GetParent() ? GetParent()->GetBackgroundColour() : GetBackgroundColour()));
-    dc.Clear();
+    wxPaintDC dc(this);
 
     if (!IsShown() || m_albumIndex < 0) return;
 

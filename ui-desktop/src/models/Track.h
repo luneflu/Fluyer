@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 
 struct Track {
+    std::string path = "";
     std::string title = "Unknown Title";
     std::string artist = "Unknown Artist";
     std::string album = "";
@@ -22,6 +23,7 @@ struct Track {
         Track t;
         try {
             auto j = nlohmann::json::parse(jsonStr);
+            if (j.contains("path") && !j["path"].is_null()) t.path = j["path"].get<std::string>();
             if (j.contains("title") && !j["title"].is_null()) t.title = j["title"].get<std::string>();
             if (j.contains("artist") && !j["artist"].is_null()) t.artist = j["artist"].get<std::string>();
             if (j.contains("album") && !j["album"].is_null()) t.album = j["album"].get<std::string>();
