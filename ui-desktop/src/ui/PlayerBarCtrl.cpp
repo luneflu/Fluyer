@@ -249,13 +249,14 @@ PlayerBarCtrl::PlayerBarCtrl(wxWindow* parent, PlayerService* playerService, Ima
 
     wxBoxSizer* metaTextSizer = new wxBoxSizer(wxVERTICAL);
     m_lblTitle = new wxStaticText(m_pillPanel, wxID_ANY, "No track playing", wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
-    m_lblTitle->SetFont(wxFontInfo(wxSize(0, 12)).Weight(wxFONTWEIGHT_MEDIUM).Family(wxFONTFAMILY_DEFAULT));
+    m_lblTitle->SetFont(wxFontInfo(wxSize(0, 14)).Weight(wxFONTWEIGHT_MEDIUM).Family(wxFONTFAMILY_DEFAULT));
 
     m_lblArtist = new wxStaticText(m_pillPanel, wxID_ANY, "Fluyer", wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
     m_lblArtist->SetForegroundColour(inactiveCol);
-    m_lblArtist->SetFont(wxFontInfo(wxSize(0, 10)).Family(wxFONTFAMILY_DEFAULT));
+    m_lblArtist->SetFont(wxFontInfo(wxSize(0, 12)).Family(wxFONTFAMILY_DEFAULT));
 
     metaTextSizer->Add(m_lblTitle, 0, wxEXPAND);
+    metaTextSizer->AddSpacer(2);
     metaTextSizer->Add(m_lblArtist, 0, wxEXPAND);
 
     centerTrackSizer->Add(m_coverView, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
