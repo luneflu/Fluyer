@@ -1,6 +1,7 @@
 #include <wx/wx.h>
 #include <wx/image.h>
 #include <wx/stdpaths.h>
+#include <wx/filename.h>
 #include "fluyer_core.h"
 #include "services/LibraryService.h"
 #include "services/PlayerService.h"
@@ -81,13 +82,34 @@ void FluyerApp::OnAlbumCoverLoaded(void* user_data, uintptr_t index) {
 }
 
 bool FluyerApp::OnInit() {
+    SetAppName("org.alvindimas05.fluyer");
+    SetAppDisplayName("Fluyer");
+
     if (!wxApp::OnInit()) return false;
 
     wxInitAllImageHandlers();
 
     wxStandardPaths& stdPaths = wxStandardPaths::Get();
-    wxString appSupportDir = "/Users/alvindimas05/Library/Application Support/org.alvindimas05.fluyer";
-    wxString cacheDir = stdPaths.GetUserLocalDataDir() + "/cache";
+
+#if defined(__WXMSW__)
+    wxString appSupportDir = stdPaths.GetUserDataDir(); // {FOLDERID_RoamingAppData}/org.alvindimas05.fluyer
+    wxString cacheDir = stdPaths.GetUserLocalDataDir();  // {FOLDERID_LocalAppData}/org.alvindimas05.fluyer
+#elif defined(__WXOSX__) || defined(__APPLE__)
+    wxString appSupportDir = stdPaths.GetUserDataDir(); // $HOME/Library/Application Support/org.alvindimas05.fluyer
+    wxString cacheDir = wxFileName::GetHomeDir() + "/Library/Caches/org.alvindimas05.fluyer";
+#else
+    wxString xdgData;
+    if (!wxGetEnv("XDG_DATA_HOME", &xdgData) || xdgData.empty()) {
+        xdgData = wxFileName::GetHomeDir() + "/.local/share";
+    }
+    wxString appSupportDir = xdgData + "/org.alvindimas05.fluyer";
+
+    wxString xdgCache;
+    if (!wxGetEnv("XDG_CACHE_HOME", &xdgCache) || xdgCache.empty()) {
+        xdgCache = wxFileName::GetHomeDir() + "/.cache";
+    }
+    wxString cacheDir = xdgCache + "/org.alvindimas05.fluyer";
+#endif
 
     FluyerCallbacks callbacks = { 0 };
     callbacks.user_data = this;
@@ -98,7 +120,7 @@ bool FluyerApp::OnInit() {
     callbacks.on_track_cover_loaded = FluyerApp::OnTrackCoverLoaded;
     callbacks.on_album_cover_loaded = FluyerApp::OnAlbumCoverLoaded;
 
-    m_engine = fluyer_init(appSupportDir.c_str(), cacheDir.c_str(), callbacks);
+    m_engine = fluyer_init(appSupportDir.utf8_str(), cacheDir.utf8_str(), callbacks);
 
     m_libraryService.SetEngine(m_engine);
     m_playerService.SetEngine(m_engine);
