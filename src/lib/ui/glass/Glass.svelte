@@ -17,7 +17,6 @@
 
 	let {
 		children,
-		shineColor = 'rgba(255, 255, 255, 0.5)',
 		enableBlur = false,
 		shineSize = 'md',
 		thisElement = $bindable<HTMLDivElement>(),
@@ -34,6 +33,7 @@
 	};
 
 	const getShineSize = () => {
+		if (shineSize === 'xs') return 'border-[1px] border-[var(--shine-color)]';
 		if (shineSize === 'sm') return 'border-[1.5px] border-[var(--shine-color)]';
 		return 'border-[2px] border-[var(--shine-color)]';
 		// Note: Disable for now because the performance is bad
@@ -47,7 +47,7 @@
 	class="{getBlurClass()} {getHoverClasses()}
         {getShineSize()}
         {props.class ?? ''}"
-	style="--shine-color: {shineColor}; {isAndroid()
+	style="--shine-color: {props.shineColor ?? 'rgba(255, 255, 255, 0.5)'}; {isAndroid()
 		? '-webkit-transform: translate3d(0, 0, 0);'
 		: ''} {props.style || ''}"
 	bind:this={thisElement}

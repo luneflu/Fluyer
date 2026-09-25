@@ -2,6 +2,7 @@ import axios from 'axios';
 import { createWriteStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 import fs from 'fs/promises';
+import path from 'node:path';
 import Seven from 'node-7z';
 import extract from 'extract-zip';
 import * as tar from 'tar';
@@ -30,7 +31,7 @@ export async function extract7z(filePath: string, destination: string): Promise<
 
 export async function extractZip(filePath: string, destination: string): Promise<void> {
 	console.log('Extracting', filePath);
-	await extract(filePath, { dir: destination });
+	await extract(filePath, { dir: path.resolve(destination) });
 	await fs.rm(filePath);
 }
 

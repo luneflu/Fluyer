@@ -35,8 +35,5 @@ PRs and feedback are welcome. This project is made for fun!
 
 ## 📄 License
 
-This project includes code from the Vissonance project, which is licensed under the MIT License.  
-See [licenses/Vissonance-LICENSE](licenses/Vissonance-LICENSE) for the full license text.
-
 This project is licensed under the MIT License.  
 See [LICENSE](./LICENSE) for details.

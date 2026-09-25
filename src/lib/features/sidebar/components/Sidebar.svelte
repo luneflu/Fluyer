@@ -215,7 +215,7 @@
 	>
 		<View
 			class="anim pointer-events-auto h-full
-				rounded-lg p-3
+				rounded p-3
 				{isShowing
 				? type === SidebarType.Right
 					? 'anim-fade-in-right'
@@ -229,6 +229,7 @@
 				width: {sidebarWidth}px;
 				animation-duration: {isLinux() ? '350ms' : '500ms'};
 			"
+			glassShineSize="sm"
 			events={{ onanimationend: handleAnimationEnd }}
 		>
 			{@render children?.()}

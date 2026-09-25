@@ -35,8 +35,6 @@ export enum IconType {
 	SaveLog,
 	Equalizer,
 	Close,
-	// Reset,
-	Visualizer,
 	Folder,
 	SortAsc,
 	SortDesc,

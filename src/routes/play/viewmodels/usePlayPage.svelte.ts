@@ -100,9 +100,7 @@ async function handleButtonBack() {
 }
 
 async function handleButtonShuffle() {
-	await MusicPlayerService.pause();
 	await QueueService.shuffleQueue();
-	await MusicPlayerService.play();
 }
 
 async function resetLyrics() {

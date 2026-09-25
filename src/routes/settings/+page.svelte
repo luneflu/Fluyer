@@ -29,7 +29,8 @@
 <svelte:window onresize={onResize} />
 <div class="h-full w-full md:px-3 md:pb-4 md:pt-10">
 	<View
-		class="h-full w-full rounded-xl !bg-transparent {disableBorder && '!border-0 !shadow-none'}"
+		class="h-full w-full rounded-lg !bg-transparent {disableBorder && '!border-0 !shadow-none'}"
+		glassShineSize="xs"
 	>
 		<div
 			class="grid h-full w-full grid-rows-[min-content_auto_min-content]"
@@ -54,10 +55,9 @@
 				<SettingDeveloper />
 			</div>
 			<Button
-				class="mx-5 grid w-fit grid-cols-[min-content_auto] items-center
-                gap-2 rounded px-3 py-2"
+				class="mx-5 grid w-fit grid-cols-[min-content_auto] items-center gap-2
+                rounded bg-transparent px-3 py-2"
 				onclick={() => PageService.back()}
-				glassShineSize="sm"
 			>
 				<div class="w-4"><Icon type={IconType.Back} /></div>
 				<div>Back</div>

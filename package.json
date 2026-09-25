@@ -43,7 +43,6 @@
 		"sass": "^1.101.0",
 		"sleep-promise": "^9.1.0",
 		"svelte-material-icons": "^3.0.5",
-		"three": "^0.179.1",
 		"uuid": "^14.0.1"
 	},
 	"devDependencies": {
@@ -56,7 +55,6 @@
 		"@types/node": "^26.1.1",
 		"@types/node-7z": "^2.1.11",
 		"@types/tar": "^6.1.13",
-		"@types/three": "^0.178.1",
 		"autoprefixer": "^10.5.3",
 		"eslint": "^10.7.0",
 		"eslint-plugin-svelte": "^3.20.0",

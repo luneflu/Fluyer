@@ -23,6 +23,7 @@ export function useMusicItem(
 	let coverArt = $state<Promise<string | null> | null>(null);
 	let currentBlobUrl: string | null = null;
 	let folderInfo = $state<FolderInfo | null>(null);
+	let isImageAnimating = $state(false);
 
 	const musicIndex = $derived(getMusicIndex());
 	const musicProp = $derived(getMusicProp());
@@ -115,6 +116,7 @@ export function useMusicItem(
 					URL.revokeObjectURL(currentBlobUrl);
 				}
 				currentBlobUrl = url;
+				isImageAnimating = true;
 			}
 		}, COVER_ART_DEBOUNCE_DELAY);
 
@@ -279,6 +281,12 @@ export function useMusicItem(
 		},
 		get isSelectedForPlaylist() {
 			return isSelectedForPlaylist;
+		},
+		get isImageAnimating() {
+			return isImageAnimating;
+		},
+		set isImageAnimating(v) {
+			isImageAnimating = v;
 		},
 		togglePlaylistSelection,
 		addMusicAndPlay,

@@ -37,11 +37,6 @@ class NavigationBarVisibilityArgs {
 }
 
 @InvokeArg
-class VisualizerGetBufferArgs {
-    lateinit var args: String
-}
-
-@InvokeArg
 class MetadataArgs {
     lateinit var path: String
 }
@@ -170,20 +165,6 @@ class FluyerPlugin(val activity: Activity): Plugin(activity) {
             }
         }
         pickFolderChannel!!.send(JSObject().put("value", null))
-    }
-    
-    @Command
-    fun visualizerGetBuffer(invoke: Invoke): Boolean {
-        try {
-            val args = invoke.parseArgs(VisualizerGetBufferArgs::class.java)
-            val result = FluyerVisualizer.getBuffer(args.args)
-            invoke.resolve(JSObject().put("value", result))
-            return result
-        } catch (err: Exception){
-            Log.e(LOG_TAG, err.message.toString())
-            invoke.resolve(JSObject().put("value", false))
-            return false
-        }
     }
     
     @Command

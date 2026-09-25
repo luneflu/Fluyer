@@ -10,6 +10,7 @@
 		glassEnableBlur?: boolean;
 		glassEnableHoverEffect?: boolean;
 		glassShineSize?: GlassShineSize;
+		glassShineColor?: string;
 		events?: any;
 	}
 
@@ -17,6 +18,7 @@
 		glassEnableBlur = false,
 		glassEnableHoverEffect = false,
 		glassShineSize = 'md',
+		glassShineColor = undefined,
 		children,
 		thisElement = $bindable<HTMLDivElement>(),
 		...props
@@ -28,6 +30,7 @@
 	style={props.style}
 	enableBlur={glassEnableBlur}
 	shineSize={glassShineSize}
+	shineColor={glassShineColor}
 	bind:thisElement
 	events={props.events}
 >

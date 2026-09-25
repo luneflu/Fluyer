@@ -26,7 +26,7 @@ const LogService = {
 				LogService.processBackendLog(levelStr, message);
 			}
 		} catch (e) {
-			console.error("Failed to fetch initial backend logs", e);
+			console.error('Failed to fetch initial backend logs', e);
 		}
 	},
 	processBackendLog: (levelStr: string, message: string) => {
@@ -35,7 +35,7 @@ const LogService = {
 			logs.push({ level: 'ADBLOG', message, timestamp: new Date() });
 			return;
 		}
-		
+
 		// Rust logger sends strings like 'INFO', 'ERROR', not numbers
 		switch (levelStr) {
 			case 'ERROR':
@@ -56,7 +56,7 @@ const LogService = {
 			default:
 				logs.push({ level: 'RS-LOG', message: `${levelStr}: ${message}`, timestamp: new Date() });
 		}
-		
+
 		if (logs.length > 1000) {
 			logs.splice(0, logs.length - 1000); // Keep last 1000
 		}
@@ -69,15 +69,17 @@ const LogService = {
 			const original = console[method];
 			console[method] = (...args: any[]) => {
 				if (isLogging) return original.apply(console, args);
-				
+
 				isLogging = true;
 				try {
 					const msg = args.join(' ');
-					untrack(() => logs.push({ level: 'WEB-' + method.toUpperCase(), message: msg, timestamp: new Date() }));
+					untrack(() =>
+						logs.push({ level: 'WEB-' + method.toUpperCase(), message: msg, timestamp: new Date() })
+					);
 				} finally {
 					isLogging = false;
 				}
-				
+
 				return original.apply(console, args);
 			};
 		});
@@ -88,7 +90,7 @@ const LogService = {
 			const message = event.payload[1];
 			LogService.processBackendLog(levelStr, message);
 		});
-	},
+	}
 };
 
 export default LogService;

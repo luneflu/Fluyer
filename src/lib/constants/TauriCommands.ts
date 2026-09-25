@@ -23,7 +23,6 @@ export const TauriCommands = {
 	MUSIC_EQUALIZER_RESET: 'music_equalizer_reset',
 	MUSIC_IMAGE_GET: 'music_image_get',
 	MUSIC_DEFAULT_COVER_ART_GET: 'music_default_cover_art_get',
-	MUSIC_VISUALIZER_BUFFER_GET: 'music_visualizer_buffer_get',
 	MUSIC_DURATION_GET: 'music_duration_get',
 	MUSIC_LYRICS_GET: 'music_lyrics_get',
 	MUSIC_BIT_PERFECT_TOGGLE: 'music_bit_perfect_toggle',
@@ -77,6 +76,7 @@ export const TauriCommands = {
 	DEVELOPER_CLEAR_CACHE: 'developer_clear_cache',
 	DEVELOPER_SCREENSHOT_SAVE: 'developer_screenshot_save',
 	DEVELOPER_UPDATE_CHECK: 'developer_update_check',
+	DEVELOPER_METRICS_GET: 'developer_metrics_get',
 
 	RENDERER_TRIGGER_REDRAW: 'renderer_trigger_redraw',
 

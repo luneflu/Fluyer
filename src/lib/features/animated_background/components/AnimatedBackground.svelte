@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { PageRoutes } from '$lib/constants/PageRoutes';
 	import { isAndroid, isLinux, isWindows } from '$lib/platform';
-	import { afterNavigate } from '$app/navigation';
 	import MetadataService from '$lib/services/MetadataService.svelte';
 	import musicStore from '$lib/stores/music.svelte';
 	import LibraryService from '$lib/services/LibraryService.svelte';
@@ -117,9 +115,17 @@
 		animationFrameId = requestAnimationFrame(drawFadeIn);
 	}
 
-	async function bitmapFromRgba(data: number[] | Uint8Array, w: number, h: number): Promise<ImageBitmap> {
+	async function bitmapFromRgba(
+		data: number[] | Uint8Array,
+		w: number,
+		h: number
+	): Promise<ImageBitmap> {
 		const pixels = data instanceof Uint8Array ? data : new Uint8Array(data);
-		const imageData = new ImageData(new Uint8ClampedArray(pixels.buffer, pixels.byteOffset, pixels.byteLength), w, h);
+		const imageData = new ImageData(
+			new Uint8ClampedArray(pixels.buffer, pixels.byteOffset, pixels.byteLength),
+			w,
+			h
+		);
 		return createImageBitmap(imageData);
 	}
 
@@ -151,10 +157,12 @@
 
 		let balancedColors: RGB[] = colors.map((color) => {
 			let [h, s, l] = ColorConvert.rgb.hsl(color[0], color[1], color[2]);
-			if (l > 60) l = 60;
 			if (MetadataService.isDefaultCoverArt(currentCoverArt)) {
-				l = 60;
-				s = 60;
+				l = 50;
+				while (s > 40) s *= 0.9;
+			} else {
+				while (l > 45) l *= 0.9;
+				while (s > 50) s *= 0.9;
 			}
 			return ColorConvert.hsl.rgb(h, s, l);
 		});
@@ -206,8 +214,16 @@
 				currentBitmap = await bitmapFromRgba(data, texWidth, texHeight);
 				triggerFadeIn();
 			} else {
-				// Crossfade to new image
-				if (nextBitmap) nextBitmap.close();
+				// Interrupted transition: capture current canvas state as starting bitmap
+				if (animationFrameId) cancelAnimationFrame(animationFrameId);
+				if (nextBitmap || transitionStart !== null) {
+					const snapshot = await createImageBitmap(canvas);
+					currentBitmap.close();
+					if (nextBitmap) nextBitmap.close();
+					currentBitmap = snapshot;
+					nextBitmap = null;
+					transitionStart = null;
+				}
 				nextBitmap = await bitmapFromRgba(data, texWidth, texHeight);
 				triggerTransition();
 			}
@@ -243,12 +259,6 @@
 			updateBackground(true);
 		}
 	}
-
-	if (isLinux())
-		afterNavigate((navigation) => {
-			if (navigation.from?.route.id !== PageRoutes.VISUALIZER) return;
-			updateBackground(true);
-		});
 
 	$effect(() => {
 		musicStore.currentMusic;

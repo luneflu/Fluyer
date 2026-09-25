@@ -16,7 +16,6 @@ pub const COMMAND_HANDLERS: fn(crate::tauri_types::Invoke) -> bool = tauri::gene
     crate::music::commands::music_queue_goto,
     crate::music::commands::music_queue_moveto,
     crate::music::commands::music_queue_shuffle,
-    crate::music::commands::music_visualizer_buffer_get,
     crate::music::commands::music_image_get,
     // crate::music::commands::music_default_cover_art_get,
     crate::music::commands::music_duration_get,
@@ -60,6 +59,7 @@ pub const COMMAND_HANDLERS: fn(crate::tauri_types::Invoke) -> bool = tauri::gene
     crate::developer::commands::developer_clear_data,
     crate::developer::commands::developer_clear_cache,
     crate::developer::commands::developer_log_get,
+    crate::developer::commands::developer_metrics_get,
     // Mobile commands
     #[cfg(target_os = "android")]
     mobile::mobile_audio_permission_read_request,

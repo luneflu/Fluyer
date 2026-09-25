@@ -341,11 +341,6 @@ impl MusicPlayer {
             let extension = "so";
 
             for plugin in BASS_PLUGINS {
-                #[cfg(target_os = "macos")]
-                if plugin == "bassalac" || plugin == "bass_aac" {
-                    continue;
-                }
-
                 #[cfg(not(target_os = "linux"))]
                 let c_path = CString::new(format!("{}.{}", plugin, extension)).unwrap();
                 #[cfg(target_os = "linux")]
@@ -633,13 +628,15 @@ impl MusicPlayer {
         } else {
             #[cfg(desktop)]
             unsafe {
-                BASS_ChannelIsActive(bass_mixer) == BASS_ACTIVE_PLAYING
+                let status = BASS_ChannelIsActive(bass_mixer);
+                status == BASS_ACTIVE_PLAYING || status == BASS_ACTIVE_STALLED
             }
             #[cfg(target_os = "android")]
             {
                 bass_android::get_bass()
                     .map(|bass| unsafe {
-                        (bass.bass_channel_is_active)(bass_mixer) == BASS_ACTIVE_PLAYING
+                        let status = (bass.bass_channel_is_active)(bass_mixer);
+                        status == BASS_ACTIVE_PLAYING || status == BASS_ACTIVE_STALLED
                     })
                     .unwrap_or(false)
             }
@@ -1307,12 +1304,16 @@ impl MusicPlayer {
         } else {
             #[cfg(desktop)]
             unsafe {
-                BASS_ChannelIsActive(bm) == BASS_ACTIVE_PLAYING
+                let status = BASS_ChannelIsActive(bm);
+                status == BASS_ACTIVE_PLAYING || status == BASS_ACTIVE_STALLED
             }
             #[cfg(target_os = "android")]
             {
                 bass_android::get_bass()
-                    .map(|bass| unsafe { (bass.bass_channel_is_active)(bm) == BASS_ACTIVE_PLAYING })
+                    .map(|bass| unsafe {
+                        let status = (bass.bass_channel_is_active)(bm);
+                        status == BASS_ACTIVE_PLAYING || status == BASS_ACTIVE_STALLED
+                    })
                     .unwrap_or(false)
             }
         };
@@ -1438,7 +1439,11 @@ impl MusicPlayer {
 
         #[cfg(desktop)]
         unsafe {
-            let path_wide: Vec<u16> = music.path.encode_utf16().chain(std::iter::once(0)).collect();
+            let path_wide: Vec<u16> = music
+                .path
+                .encode_utf16()
+                .chain(std::iter::once(0))
+                .collect();
             let stream = BASS_StreamCreateFile(
                 false,
                 path_wide.as_ptr() as *const _,
@@ -1456,7 +1461,11 @@ impl MusicPlayer {
                 );
 
                 if let Some(wav_path) = Self::convert_to_pcm_wav(&music.path) {
-                    let wav_wide: Vec<u16> = wav_path.to_string_lossy().encode_utf16().chain(std::iter::once(0)).collect();
+                    let wav_wide: Vec<u16> = wav_path
+                        .to_string_lossy()
+                        .encode_utf16()
+                        .chain(std::iter::once(0))
+                        .collect();
                     let wav_stream = BASS_StreamCreateFile(
                         false,
                         wav_wide.as_ptr() as *const _,
@@ -1564,7 +1573,11 @@ impl MusicPlayer {
         {
             if let Some(bass) = bass_android::get_bass() {
                 unsafe {
-                    let path_wide: Vec<u16> = music.path.encode_utf16().chain(std::iter::once(0)).collect();
+                    let path_wide: Vec<u16> = music
+                        .path
+                        .encode_utf16()
+                        .chain(std::iter::once(0))
+                        .collect();
                     let stream = (bass.bass_stream_create_file)(
                         false,
                         path_wide.as_ptr() as *const _,
@@ -1582,7 +1595,8 @@ impl MusicPlayer {
                         );
 
                         if let Some(wav_path) = Self::convert_to_pcm_wav_android(&music.path) {
-                            let wav_wide: Vec<u16> = wav_path.encode_utf16().chain(std::iter::once(0)).collect();
+                            let wav_wide: Vec<u16> =
+                                wav_path.encode_utf16().chain(std::iter::once(0)).collect();
                             let wav_stream = (bass.bass_stream_create_file)(
                                 false,
                                 wav_wide.as_ptr() as *const _,

@@ -7,9 +7,7 @@
 			"./libs/bassmix.dll": "bassmix.dll",
 			"./libs/bassopus.dll": "bassopus.dll",
 			"./libs/bassape.dll": "bassape.dll",
-			"./libs/bassalac.dll": "bassalac.dll",
-			"./libs/basswv.dll": "basswv.dll",
-			"./libs/bass_aac.dll": "bass_aac.dll"
+			"./libs/basswv.dll": "basswv.dll"
 		}
 	}
 }

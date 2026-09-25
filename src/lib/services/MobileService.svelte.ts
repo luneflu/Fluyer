@@ -17,7 +17,7 @@ const MobileService = {
 	},
 	listenPageEvents: () => {
 		$effect(() => {
-			const visible = ![PageRoutes.PLAY, PageRoutes.VISUALIZER].includes(page.url.pathname);
+			const visible = page.url.pathname !== PageRoutes.PLAY;
 			TauriMobileAPI.setNavigationBarVisibility(visible);
 		});
 	}

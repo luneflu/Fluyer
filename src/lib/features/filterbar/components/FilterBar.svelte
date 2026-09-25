@@ -5,6 +5,7 @@
 	import Button from '$lib/ui/components/Button.svelte';
 	import Input from '$lib/ui/components/Input.svelte';
 	import filterStore from '$lib/stores/filter.svelte';
+	import sidebarStore from '$lib/stores/sidebar.svelte';
 	import filterBarStore from '$lib/stores/filterBar.svelte';
 	import mobileStore from '$lib/stores/mobile.svelte';
 	import musicStore from '$lib/stores/music.svelte';
@@ -24,14 +25,14 @@
 	class="pointer-events-none fixed left-0 top-0 z-20 grid w-full gap-y-2 pb-3
         {isMacos() ? 'sm:justify-end' : ''}
         {isMacos() ? 'right-0' : 'left-0'}
-        {modalStore.show ? 'opacity-10 blur-sm' : ''} anim anim-slide-in-down
-        transition-opacity duration-300"
+        {modalStore.show ? 'opacity-10 blur-sm' : ''} anim anim-slide-in-down"
 	style="margin-top: {isMobile() ? mobileStore.statusBarHeight : 8}px;
         grid-template-columns: {vm.state.gridSize};"
 	bind:this={vm.element}
 >
 	<div
-		class="grid gap-x-1 px-3 sm:pe-3 sm:ps-3 md:gap-x-3
+		class="grid gap-x-1 md:gap-x-3
+		{isMobile() ? 'px-3' : 'px-2 md:px-3'}
 		{isMacos() ? 'ms-[68px]' : ''}
 		{isWindows() || (isLinux() && !appStore.isCefEnabled) ? 'me-[100px] sm:me-0' : ''}
 		{isMobile()
@@ -41,6 +42,7 @@
 		{#if isMobile()}
 			<Button
 				class="pointer-events-auto grid aspect-square h-9 justify-center rounded sm:p-0"
+				glassShineColor="rgba(255, 255, 255, 0.3)"
 				onclick={vm.handleMenuButton}
 			>
 				<div class="w-5">
@@ -50,14 +52,16 @@
 		{/if}
 
 		<Input
-			class="pointer-events-auto h-9 rounded p-0 sm:hidden"
+			class="pointer-events-auto h-9 rounded p-0 transition-opacity duration-300 sm:hidden {sidebarStore.showType ? 'opacity-20' : ''}"
+			glassShineColor="rgba(255, 255, 255, 0.3)"
 			icon={IconType.Search}
 			placeholder="Search..."
 			bind:value={filterStore.search}
 		/>
 
 		<Button
-			class="pointer-events-auto grid aspect-square h-9 justify-center rounded"
+			class="pointer-events-auto grid aspect-square h-9 justify-center rounded transition-opacity duration-300 {sidebarStore.showType ? 'opacity-20' : ''}"
+			glassShineColor="rgba(255, 255, 255, 0.3)"
 			onclick={vm.toggleSort}
 		>
 			<div class="w-5">
@@ -72,6 +76,7 @@
 		{#if isMobile()}
 			<Button
 				class="pointer-events-auto grid aspect-square h-9 justify-center rounded sm:hidden sm:p-0"
+				glassShineColor="rgba(255, 255, 255, 0.3)"
 				onclick={vm.handleQueueButton}
 			>
 				<div class="w-5">
@@ -80,7 +85,7 @@
 			</Button>
 		{/if}
 
-		<div class="pointer-events-auto hidden h-9 w-full min-w-0 sm:flex sm:items-center sm:gap-x-1">
+		<div class="pointer-events-auto hidden h-9 w-full min-w-0 transition-opacity duration-300 sm:flex sm:items-center sm:gap-x-1 {sidebarStore.showType ? 'opacity-20' : ''}">
 			{#if musicStore.listType === 'playlist' && playlistStore.isCreating && vm.state.columns < 5}
 				<ConfirmCancelButtons
 					onconfirm={vm.confirmPlaylistCreation}
@@ -100,7 +105,7 @@
 		</div>
 	</div>
 
-	<div class="h-9 px-3 sm:hidden">
+	<div class="h-9 px-3 transition-opacity duration-300 sm:hidden {sidebarStore.showType ? 'opacity-20' : ''}">
 		<div class="flex h-9 w-full min-w-0 items-center gap-x-1">
 			{#if musicStore.listType === 'playlist' && playlistStore.isCreating}
 				<ConfirmCancelButtons
@@ -120,7 +125,7 @@
 			{/if}
 		</div>
 	</div>
-	<div class="hidden sm:block" style={vm.state.columns > 5 ? 'width: 50%;' : ''}>
+	<div class="hidden transition-opacity duration-300 sm:block {sidebarStore.showType ? 'opacity-20' : ''}" style={vm.state.columns > 5 ? 'width: 50%;' : ''}>
 		{#if musicStore.listType === 'playlist' && playlistStore.isCreating && vm.state.columns >= 5}
 			<ConfirmCancelButtons
 				onconfirm={vm.confirmPlaylistCreation}
@@ -131,13 +136,14 @@
 		{/if}
 	</div>
 	<div
-		class="hidden sm:grid sm:ps-3
-		{isMobile() ? 'sm:pe-3' : 'gap-x-1 sm:grid-cols-[1fr_min-content] md:gap-x-3'}
+		class="hidden sm:grid sm:px-3
+		{isMobile() && 'gap-x-1 sm:grid-cols-[1fr_min-content] md:gap-x-3'}
 		{isLinux() && !appStore.isCefEnabled ? 'me-[100px]' : ''}
 		{isWindows() ? 'me-[120px]' : ''}"
 	>
 		<Input
-			class="pointer-events-auto h-9 rounded p-0"
+			class="pointer-events-auto h-9 rounded p-0 transition-opacity duration-300 {sidebarStore.showType ? 'opacity-20' : ''}"
+			glassShineColor="rgba(255, 255, 255, 0.3)"
 			icon={IconType.Search}
 			placeholder="Search..."
 			bind:value={filterStore.search}
@@ -147,6 +153,7 @@
 			<Button
 				class="pointer-events-auto grid aspect-square h-9 justify-center rounded sm:p-0"
 				onclick={vm.handleQueueButton}
+				glassShineColor="rgba(255, 255, 255, 0.3)"
 			>
 				<div class="w-5">
 					<Icon type={IconType.Queue} />

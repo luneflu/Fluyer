@@ -26,6 +26,7 @@
 	import appStore from '$lib/stores/app.svelte';
 	import settingStore from '$lib/stores/setting.svelte';
 	import LogPanel from '$lib/features/developer_debug_overlay/components/LogPanel.svelte';
+	import PerformancePanel from '$lib/features/developer_debug_overlay/components/PerformancePanel.svelte';
 
 	if (isLinux()) {
 		import('$lib/scss/linux.scss');
@@ -88,5 +89,6 @@
 {/if}
 {#if settingStore.developerMode}
 	<LogPanel />
+	<PerformancePanel />
 {/if}
 <CreatePlaylistModal />

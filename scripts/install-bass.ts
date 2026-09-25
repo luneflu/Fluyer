@@ -10,9 +10,7 @@ const DEFAULT_LIBS = [
 	'bassflac',
 	'bassopus',
 	'bassape',
-	'bassalac',
-	'basswv',
-	'bass_aac'
+	'basswv'
 ];
 
 export interface InstallOptions {
@@ -23,13 +21,8 @@ export interface InstallOptions {
 
 export async function installBassLib(name: string, options: InstallOptions = {}) {
 	const platform = options.platform || os.platform();
-	const arch = options.arch || os.arch();
+	const arch = options.arch || process.env.ARCH || process.env.arch || os.arch();
 	const destPath = options.destDir || path.resolve('src-tauri', 'libs');
-
-	if (platform === 'darwin' && (name === 'bassalac' || name === 'bass_aac')) {
-		console.log(`Skipping ${name} for macOS...`);
-		return;
-	}
 
 	const downloadPath = path.join(destPath, `${name}-${VERSION}-${platform}-${arch}.zip`);
 	const extractPath = path.join(destPath, `${name}-${VERSION}-${platform}-${arch}`);
@@ -46,7 +39,7 @@ export async function installBassLib(name: string, options: InstallOptions = {})
 		if (platform === 'android') {
 			if (!options.arch) throw new Error('Arch is required for Android installation');
 
-			downloadUrl = `https://www.un4seen.com/files/${name === 'bass_aac' ? 'z/2/' : ''}${name}${VERSION}-android.zip`;
+			downloadUrl = `https://www.un4seen.com/files/${name}${VERSION}-android.zip`;
 			// Android zip structure: libs/<arch>/lib<name>.so
 			libSourcePath = path.join(extractPath, 'libs', arch, `lib${name}.so`);
 
@@ -60,12 +53,25 @@ export async function installBassLib(name: string, options: InstallOptions = {})
 				case 'win32':
 					platformSuffix = '';
 					libSourcePath = path.join(extractPath, 'x64', `${name}.dll`);
+					// Some bass zip files put dll in root directory instead of x64
+					try {
+						await fs.access(libSourcePath);
+					} catch {
+						libSourcePath = path.join(extractPath, `${name}.dll`);
+					}
 					libDestPath = path.join(destPath, `${name}.dll`);
 
 					extraOps = async () => {
-						const libWindowsPath = path.join(extractPath, 'c', 'x64', `${name}.lib`);
+						let libWindowsPath = path.join(extractPath, 'c', 'x64', `${name}.lib`);
+						try {
+							await fs.access(libWindowsPath);
+						} catch {
+							libWindowsPath = path.join(extractPath, 'c', `${name}.lib`);
+						}
 						const destLibWindowsPath = path.join(destPath, path.basename(libWindowsPath));
-						await fs.copyFile(libWindowsPath, destLibWindowsPath);
+						try {
+							await fs.copyFile(libWindowsPath, destLibWindowsPath);
+						} catch (e) {}
 					};
 					break;
 				case 'darwin':
@@ -100,7 +106,9 @@ export async function installBassLib(name: string, options: InstallOptions = {})
 				default:
 					throw new Error(`Unsupported platform: ${platform}`);
 			}
-			downloadUrl = `https://www.un4seen.com/files/${name === 'bass_aac' ? 'z/2/' : ''}${name}${VERSION}${platformSuffix}.zip`;
+			if (!downloadUrl) {
+				downloadUrl = `https://www.un4seen.com/files/${name}${VERSION}${platformSuffix}.zip`;
+			}
 		}
 
 		try {
@@ -120,11 +128,21 @@ export async function installBassLib(name: string, options: InstallOptions = {})
 				await downloadFile(downloadUrl, downloadPath);
 				await extractZip(downloadPath, extractPath);
 
+				if (platform === 'win32') {
+					libSourcePath = path.join(extractPath, 'x64', `${name}.dll`);
+					try {
+						await fs.access(libSourcePath);
+					} catch {
+						libSourcePath = path.join(extractPath, `${name}.dll`);
+					}
+				}
+
 				await fs.copyFile(libSourcePath, libDestPath);
 
 				if (extraOps) {
 					await extraOps();
 				}
+				console.log(`Successfully installed ${name} to ${libDestPath}`);
 				break;
 			} catch (error) {
 				attempts++;
@@ -159,8 +177,31 @@ export async function installBassLib(name: string, options: InstallOptions = {})
 }
 
 export async function installBass(options: InstallOptions = {}) {
+	const platform = options.platform || os.platform();
+	const arch = options.arch || process.env.ARCH || process.env.arch || os.arch();
 	const destDir = options.destDir || path.resolve('src-tauri', 'libs');
 	await fs.mkdir(destDir, { recursive: true });
+
+	if (platform === 'win32' && (arch === 'arm64' || arch === 'aarch64')) {
+		const downloadPath = path.join(destDir, `bass24-arm64.zip`);
+		const extractPath = path.join(destDir, `bass24-arm64`);
+		try {
+			await downloadFile(`https://www.un4seen.com/files/bass${VERSION}-arm64.zip`, downloadPath);
+			await extractZip(downloadPath, extractPath);
+
+			for (const lib of DEFAULT_LIBS) {
+				const dllSrc = path.join(extractPath, 'arm64', `${lib}.dll`);
+				const libSrc = path.join(extractPath, 'c', 'arm64', `${lib}.lib`);
+				await fs.copyFile(dllSrc, path.join(destDir, `${lib}.dll`));
+				await fs.copyFile(libSrc, path.join(destDir, `${lib}.lib`));
+			}
+		} finally {
+			try {
+				await fs.rm(extractPath, { recursive: true, force: true });
+			} catch (e) {}
+		}
+		return;
+	}
 
 	const promises: Promise<void>[] = [];
 	for (const lib of DEFAULT_LIBS) {

@@ -31,15 +31,6 @@
 
 	<MenuButton label="Play All" icon={IconType.Play} onclick={playAllMusic} />
 	<MenuButton label="Play Screen" icon={IconType.Fullscreen} onclick={gotoPlayPage} />
-	<!--{#if isDesktop() && !$settingBitPerfectMode}-->
-	<!--    <MenuButton label="Equalizer" icon={IconType.Equalizer}-->
-	<!--              onclick={() => UIController.toggleEqualizer(true)}/>-->
-	<!--{/if}-->
-	<!-- <MenuButton
-		label="Visualizer"
-		icon={IconType.Visualizer}
-		onclick={() => PageService.goTo(PageRoutes.VISUALIZER)}
-	/> -->
 	<MenuButton
 		label="Settings"
 		icon={IconType.Settings}

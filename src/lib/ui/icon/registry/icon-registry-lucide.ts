@@ -67,7 +67,6 @@ const iconRegistryLucide = {
 	[IconType.SaveLog]: FileText,
 	[IconType.Equalizer]: KeyboardMusic,
 	[IconType.Close]: CircleX,
-	[IconType.Visualizer]: ChartNoAxesColumn,
 	[IconType.Folder]: Folder,
 	[IconType.SortAsc]: ArrowUpNarrowWide,
 	[IconType.SortDesc]: ArrowDownWideNarrow,
