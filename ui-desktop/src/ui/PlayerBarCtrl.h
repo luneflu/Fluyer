@@ -18,6 +18,7 @@ public:
     void UpdateState();
     void UpdateTrack();
     void OnCoverLoaded();
+    void SetOnCoverClicked(std::function<void()> cb) { m_onCoverClicked = std::move(cb); }
 
 private:
     void OnPaint(wxPaintEvent& evt);
@@ -52,6 +53,7 @@ private:
     wxButton* m_btnVol = nullptr;
     ProgressBarCtrl* m_volBar = nullptr;
     float m_previousVolume = 1.0f;
+    std::function<void()> m_onCoverClicked;
 
     wxDECLARE_EVENT_TABLE();
 };

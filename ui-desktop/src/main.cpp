@@ -23,6 +23,7 @@ private:
     static void OnToast(void* user_data, const char* msg);
     static void OnTrackCoverLoaded(void* user_data, uintptr_t index);
     static void OnAlbumCoverLoaded(void* user_data, uintptr_t index);
+    static void OnLyricsLoaded(void* user_data, const char* lyrics);
     static void OnStateChanged(void* user_data, FluyerPlayerState state);
     static void OnTrackChanged(void* user_data, const char* jsonMeta, uintptr_t index);
 };
@@ -80,6 +81,16 @@ void FluyerApp::OnAlbumCoverLoaded(void* user_data, uintptr_t index) {
     }
 }
 
+void FluyerApp::OnLyricsLoaded(void* user_data, const char* lyrics) {
+    auto* app = static_cast<FluyerApp*>(user_data);
+    if (app && app->m_mainFrame) {
+        std::string lrcStr = lyrics ? lyrics : "";
+        wxTheApp->CallAfter([app, lrcStr]() {
+            app->m_playerService.SetLyrics(lrcStr);
+        });
+    }
+}
+
 bool FluyerApp::OnInit() {
     if (!wxApp::OnInit()) return false;
 
@@ -97,6 +108,7 @@ bool FluyerApp::OnInit() {
     callbacks.on_toast = FluyerApp::OnToast;
     callbacks.on_track_cover_loaded = FluyerApp::OnTrackCoverLoaded;
     callbacks.on_album_cover_loaded = FluyerApp::OnAlbumCoverLoaded;
+    callbacks.on_lyrics_loaded = FluyerApp::OnLyricsLoaded;
 
     m_engine = fluyer_init(appSupportDir.c_str(), cacheDir.c_str(), callbacks);
 

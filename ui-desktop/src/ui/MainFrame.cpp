@@ -61,11 +61,24 @@ MainFrame::MainFrame(LibraryService* libraryService, PlayerService* playerServic
     // Bottom: Player bar
     m_playerBar = new PlayerBarCtrl(this, m_playerService, m_imageService);
 
+    // Fullscreen Play/Lyrics view (hidden by default)
+    m_playView = new PlayViewCtrl(this, m_playerService, m_imageService);
+    m_playView->Show(false);
+
     rootSizer->Add(m_albumList, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
     rootSizer->Add(m_collectionInfo, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
     rootSizer->Add(m_musicList, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 8);
     rootSizer->Add(m_playerBar, 0, wxEXPAND);
+    rootSizer->Add(m_playView, 1, wxEXPAND);
     SetSizer(rootSizer);
+
+    m_playerBar->SetOnCoverClicked([this]() {
+        ShowPlayView(true);
+    });
+
+    m_playView->SetOnBack([this]() {
+        ShowPlayView(false);
+    });
 
     m_albumList->SetOnAlbumSelected([this](int index) {
         if (index >= 0) {
@@ -89,6 +102,29 @@ MainFrame::MainFrame(LibraryService* libraryService, PlayerService* playerServic
     UpdateBackground(true);
 }
 
+void MainFrame::ShowPlayView(bool show) {
+    m_showingPlayView = show;
+    if (show) {
+        m_albumList->Show(false);
+        m_collectionInfo->Show(false);
+        m_musicList->Show(false);
+        m_playerBar->Show(false);
+        m_playView->Show(true);
+        m_playView->UpdateTrack();
+        m_playView->UpdateState();
+    } else {
+        m_playView->Show(false);
+        if (m_collectionInfo && m_collectionInfo->GetAlbumIndex() >= 0) {
+            m_collectionInfo->Show(true);
+        } else {
+            m_albumList->Show(true);
+        }
+        m_musicList->Show(true);
+        m_playerBar->Show(true);
+    }
+    Layout();
+}
+
 MainFrame::~MainFrame() {
     if (m_animTimer.IsRunning()) {
         m_animTimer.Stop();
@@ -109,6 +145,7 @@ void MainFrame::RefreshViews() {
 void MainFrame::OnTrackCoverLoaded(uintptr_t index) {
     if (m_musicList) m_musicList->OnCoverLoaded(index);
     if (m_playerBar) m_playerBar->OnCoverLoaded();
+    if (m_playView) m_playView->OnCoverLoaded();
     UpdateBackground(true);
 }
 
@@ -119,11 +156,13 @@ void MainFrame::OnAlbumCoverLoaded(uintptr_t index) {
 void MainFrame::OnPlayerStateChanged(const FluyerPlayerState& state) {
     if (m_playerService) m_playerService->UpdateState(state);
     if (m_playerBar) m_playerBar->UpdateState();
+    if (m_playView) m_playView->UpdateState();
 }
 
 void MainFrame::OnTrackChanged(const std::string& jsonMeta, uintptr_t index) {
     if (m_playerService) m_playerService->UpdateTrack(jsonMeta, index);
     if (m_playerBar) m_playerBar->UpdateTrack();
+    if (m_playView) m_playView->UpdateTrack();
     UpdateBackground(false);
 }
 

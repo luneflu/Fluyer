@@ -58,6 +58,7 @@ pub struct FluyerCallbacks {
     pub on_toast: Option<unsafe extern "C" fn(*mut c_void, *const c_char)>,
     pub on_track_cover_loaded: Option<unsafe extern "C" fn(*mut c_void, usize)>,
     pub on_album_cover_loaded: Option<unsafe extern "C" fn(*mut c_void, usize)>,
+    pub on_lyrics_loaded: Option<unsafe extern "C" fn(*mut c_void, *const c_char)>,
 }
 
 unsafe impl Send for FluyerCallbacks {}
@@ -113,6 +114,13 @@ impl EventSink for FfiEventSink {
     fn on_album_cover_loaded(&self, index: usize) {
         if let Some(cb) = self.callbacks.on_album_cover_loaded {
             unsafe { cb(self.callbacks.user_data, index) };
+        }
+    }
+
+    fn on_lyrics_loaded(&self, lyrics: &str) {
+        if let Some(cb) = self.callbacks.on_lyrics_loaded {
+            let c_lyrics = CString::new(lyrics).unwrap_or_default();
+            unsafe { cb(self.callbacks.user_data, c_lyrics.as_ptr()) };
         }
     }
 }
@@ -532,4 +540,15 @@ pub unsafe extern "C" fn fluyer_background_generate_from_bytes(
         *out_h = blurred.height();
     }
     raw_bytes_into_ptr(Some(blurred.into_raw()), out_len)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_player_get_lyrics(engine: *mut FluyerEngine) -> *mut c_char {
+    let lyrics = engine.as_ref().and_then(|e| {
+        e.player.get_current_track().and_then(|t| e.resolve_lyrics(&t))
+    });
+    match lyrics {
+        Some(s) => CString::new(s).map(|c| c.into_raw()).unwrap_or(std::ptr::null_mut()),
+        None => std::ptr::null_mut(),
+    }
 }

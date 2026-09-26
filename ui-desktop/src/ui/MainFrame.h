@@ -10,6 +10,7 @@
 #include "CollectionInfoCtrl.h"
 #include "MusicListCtrl.h"
 #include "PlayerBarCtrl.h"
+#include "PlayViewCtrl.h"
 #include <thread>
 #include <atomic>
 
@@ -25,6 +26,7 @@ public:
     void OnTrackChanged(const std::string& jsonMeta, uintptr_t index);
 
     void UpdateBackground(bool force = false);
+    void ShowPlayView(bool show);
 
 private:
     void OnOpenFolder(wxCommandEvent& evt);
@@ -45,6 +47,8 @@ private:
     CollectionInfoCtrl* m_collectionInfo = nullptr;
     MusicListCtrl* m_musicList = nullptr;
     PlayerBarCtrl* m_playerBar = nullptr;
+    PlayViewCtrl* m_playView = nullptr;
+    bool m_showingPlayView = false;
 
     // Background state
     wxTimer m_animTimer;

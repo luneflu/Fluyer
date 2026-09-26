@@ -255,4 +255,34 @@ impl FluyerEngine {
         let (w, h) = (blurred.width(), blurred.height());
         (blurred.into_raw(), w, h)
     }
+
+    pub fn resolve_lyrics(&self, track: &MusicMetadata) -> Option<String> {
+        if let Some(lyrics) = metadata::probe::extract_lyrics_file(&track.path) {
+            return Some(lyrics);
+        }
+        if let Some(lyrics) = metadata::probe::extract_lyrics_embedded(&track.path) {
+            return Some(lyrics);
+        }
+        let title = track.title.as_deref().unwrap_or("");
+        let artist = track.artist.as_deref().unwrap_or("");
+        let duration = track.duration.map(|d| d as u64);
+        let query = services::lyric::LyricQuery {
+            title: title.to_string(),
+            artist: artist.to_string(),
+            duration,
+        };
+        if let Some(cached) = self.lyrics.get_cached(&query) {
+            return Some(cached);
+        }
+        let lyric_service = Arc::clone(&self.lyrics);
+        let sink = self.event_sink.clone();
+        self.runtime.spawn(async move {
+            if let Some(fetched) = lyric_service.fetch(query).await {
+                if let Some(s) = sink {
+                    s.on_lyrics_loaded(&fetched);
+                }
+            }
+        });
+        None
+    }
 }
