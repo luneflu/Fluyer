@@ -78,21 +78,3 @@ else()
         ${ROOT_DIR}/libs/linux/libbassmix.so
     )
 endif()
-
-# Ensure runtime finds dylibs
-set_target_properties(FluyerApp PROPERTIES
-    BUILD_WITH_INSTALL_RPATH TRUE
-    INSTALL_RPATH "@executable_path/../../libs/macos;@executable_path/../../target/debug;@executable_path/../../../../libs/macos;@executable_path/../../../../target/debug"
-)
-
-add_executable(test_lyrics tests/test_lyrics.cpp src/services/PlayerService.cpp)
-target_link_libraries(test_lyrics
-    nlohmann_json::nlohmann_json
-    ${ROOT_DIR}/target/debug/libfluyer_core.dylib
-    ${ROOT_DIR}/libs/macos/libbass.dylib
-    ${ROOT_DIR}/libs/macos/libbassmix.dylib
-)
-set_target_properties(test_lyrics PROPERTIES
-    BUILD_WITH_INSTALL_RPATH TRUE
-    INSTALL_RPATH "@executable_path/../../libs/macos;@executable_path/../../target/debug;@executable_path/../../../../libs/macos;@executable_path/../../../../target/debug"
-)
