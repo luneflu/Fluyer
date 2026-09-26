@@ -552,3 +552,137 @@ pub unsafe extern "C" fn fluyer_player_get_lyrics(engine: *mut FluyerEngine) -> 
         None => std::ptr::null_mut(),
     }
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_format_time(ms: u64) -> *mut c_char {
+    let s = crate::view_models::format_time(ms);
+    CString::new(s).map(|c| c.into_raw()).unwrap_or(std::ptr::null_mut())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_lyrics_parse_json(lrc_text: *const c_char) -> *mut c_char {
+    if lrc_text.is_null() {
+        return std::ptr::null_mut();
+    }
+    let s = match CStr::from_ptr(lrc_text).to_str() {
+        Ok(s) => s,
+        Err(_) => return std::ptr::null_mut(),
+    };
+    let lines = crate::view_models::parse_lrc(s);
+    if let Ok(json) = serde_json::to_string(&lines) {
+        if let Ok(c_str) = CString::new(json) {
+            return c_str.into_raw();
+        }
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_lyrics_find_active_index_json(
+    lines_json: *const c_char,
+    position_ms: u64,
+) -> i32 {
+    if lines_json.is_null() {
+        return -1;
+    }
+    let s = match CStr::from_ptr(lines_json).to_str() {
+        Ok(s) => s,
+        Err(_) => return -1,
+    };
+    if let Ok(lines) = serde_json::from_str::<Vec<crate::view_models::LyricLine>>(s) {
+        crate::view_models::find_active_lyric_index(&lines, position_ms)
+    } else {
+        -1
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_library_get_track_view_json(
+    engine: *mut FluyerEngine,
+    index: usize,
+) -> *mut c_char {
+    if let Some(e) = engine.as_ref() {
+        if let Some(view) = e.get_track_view(index) {
+            if let Ok(json) = serde_json::to_string(&view) {
+                if let Ok(c_str) = CString::new(json) {
+                    return c_str.into_raw();
+                }
+            }
+        }
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_library_get_album_view_json(
+    engine: *mut FluyerEngine,
+    index: usize,
+) -> *mut c_char {
+    if let Some(e) = engine.as_ref() {
+        if let Some(view) = e.get_album_view(index) {
+            if let Ok(json) = serde_json::to_string(&view) {
+                if let Ok(c_str) = CString::new(json) {
+                    return c_str.into_raw();
+                }
+            }
+        }
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_player_get_bar_view_json(engine: *mut FluyerEngine) -> *mut c_char {
+    if let Some(e) = engine.as_ref() {
+        let view = e.get_player_bar_view();
+        if let Ok(json) = serde_json::to_string(&view) {
+            if let Ok(c_str) = CString::new(json) {
+                return c_str.into_raw();
+            }
+        }
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_image_resize_rgba(
+    bytes: *const u8,
+    len: usize,
+    target_w: u32,
+    target_h: u32,
+    out_w: *mut u32,
+    out_h: *mut u32,
+    out_len: *mut usize,
+) -> *mut u8 {
+    if bytes.is_null() || len == 0 || target_w == 0 || target_h == 0 {
+        if !out_w.is_null() {
+            *out_w = 0;
+        }
+        if !out_h.is_null() {
+            *out_h = 0;
+        }
+        if !out_len.is_null() {
+            *out_len = 0;
+        }
+        return std::ptr::null_mut();
+    }
+    let slice = std::slice::from_raw_parts(bytes, len);
+    if let Some((raw, w, h)) = crate::view_models::resize_image_rgba(slice, target_w, target_h) {
+        if !out_w.is_null() {
+            *out_w = w;
+        }
+        if !out_h.is_null() {
+            *out_h = h;
+        }
+        return raw_bytes_into_ptr(Some(raw), out_len);
+    }
+    if !out_w.is_null() {
+        *out_w = 0;
+    }
+    if !out_h.is_null() {
+        *out_h = 0;
+    }
+    if !out_len.is_null() {
+        *out_len = 0;
+    }
+    std::ptr::null_mut()
+}

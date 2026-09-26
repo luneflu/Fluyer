@@ -1,0 +1,4 @@
+module fluyer_coreFFI {
+    header "fluyer_coreFFI.h"
+    export *
+}

@@ -31,6 +31,11 @@ once_cell = "1.21"
 souvlaki = { version = "0.8", default-features = false }
 log = "0.4"
 env_logger = "0.11"
+uniffi = { version = "0.28", features = ["cli"] }
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 souvlaki = { version = "0.8", default-features = false, features = ["use_zbus"] }

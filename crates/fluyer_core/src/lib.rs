@@ -7,6 +7,10 @@ pub mod ffi;
 pub mod library;
 pub mod metadata;
 pub mod services;
+pub mod view_models;
+pub mod uniffi_api;
+
+uniffi::setup_scaffolding!();
 
 use audio::{MusicPlayer, RepeatMode};
 use db::Database;
@@ -298,5 +302,134 @@ impl FluyerEngine {
             }
         });
         None
+    }
+
+    pub fn get_track_view(&self, index: usize) -> Option<view_models::TrackItemViewModel> {
+        let current_path = self.player.get_current_track().map(|t| t.path);
+        self.library
+            .read()
+            .unwrap()
+            .get_by_index(index)
+            .map(|t| {
+                let is_current = current_path.as_deref() == Some(&t.path);
+                view_models::TrackItemViewModel::from_metadata(index, &t, is_current)
+            })
+    }
+
+    pub fn get_album_card(&self, index: usize) -> Option<view_models::AlbumCardViewModel> {
+        self.library
+            .read()
+            .unwrap()
+            .album_get_by_index(index)
+            .map(|tracks| view_models::AlbumCardViewModel::from_tracks(index, &tracks))
+    }
+
+    pub fn get_album_detail(&self, index: usize) -> Option<view_models::AlbumDetailViewModel> {
+        let current_path = self.player.get_current_track().map(|t| t.path);
+        self.library
+            .read()
+            .unwrap()
+            .album_get_by_index(index)
+            .map(|tracks| {
+                view_models::AlbumDetailViewModel::from_tracks(
+                    index,
+                    &tracks,
+                    current_path.as_deref(),
+                )
+            })
+    }
+
+    pub fn get_album_view(&self, index: usize) -> Option<view_models::AlbumCardViewModel> {
+        self.get_album_card(index)
+    }
+
+    pub fn get_player_bar_view(&self) -> view_models::PlayerBarViewModel {
+        let sync = self.player.get_sync_info(false);
+        let current_track = self.player.get_current_track();
+        let (title, artist, album) = match current_track {
+            Some(ref t) => (
+                t.title.clone().unwrap_or_else(|| metadata::DEFAULT_TITLE.to_string()),
+                t.artist.clone().unwrap_or_else(|| metadata::DEFAULT_ARTIST.to_string()),
+                t.album.clone().unwrap_or_default(),
+            ),
+            None => ("No Track".to_string(), String::new(), String::new()),
+        };
+
+        let position_ms = sync.position_ms();
+        let duration_ms = sync.duration_ms();
+        let progress_pct = if duration_ms > 0 {
+            (position_ms as f32 / duration_ms as f32).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+
+        let time_label = format!(
+            "{} / {}",
+            view_models::format_time(position_ms),
+            view_models::format_time(duration_ms)
+        );
+
+        view_models::PlayerBarViewModel {
+            track_index: sync.index,
+            title,
+            artist,
+            album,
+            position_ms,
+            duration_ms,
+            progress_pct,
+            time_label,
+            is_playing: sync.is_playing,
+            repeat_mode: sync.repeat_mode.into(),
+            is_shuffled: sync.is_shuffled,
+            volume: 1.0,
+        }
+    }
+
+    pub fn get_play_view(&self) -> view_models::PlayViewModel {
+        let current_track = self.player.get_current_track();
+        let track_vm = current_track.as_ref().map(|t| {
+            let sync = self.player.get_sync_info(false);
+            let idx = if sync.index >= 0 { sync.index as usize } else { 0 };
+            view_models::TrackItemViewModel::from_metadata(idx, t, true)
+        });
+
+        let lyrics = self.get_parsed_lyrics();
+        let pos_ms = self.player.get_sync_info(false).position_ms();
+        let current_lyric_index = view_models::find_active_lyric_index(&lyrics, pos_ms);
+
+        let cover_bytes = current_track
+            .as_ref()
+            .and_then(|t| self.resolve_track_cover(t, None));
+        let colors = if let Some(bytes) = cover_bytes {
+            services::background::extract_prominent_from_bytes(&bytes, 5, false)
+        } else {
+            vec![services::background::balance_color([30, 30, 40], true)]
+        };
+        let palette = colors
+            .into_iter()
+            .map(|c| view_models::ColorRgb {
+                r: c[0],
+                g: c[1],
+                b: c[2],
+            })
+            .collect();
+
+        view_models::PlayViewModel {
+            track: track_vm,
+            lyrics,
+            current_lyric_index,
+            palette,
+        }
+    }
+
+    pub fn get_parsed_lyrics(&self) -> Vec<view_models::LyricLine> {
+        let lyrics_text = self
+            .player
+            .get_current_track()
+            .and_then(|t| self.resolve_lyrics(&t));
+        match lyrics_text {
+            Some(ref lrc) => view_models::parse_lrc(lrc),
+            None => Vec::new(),
+        }
     }
 }

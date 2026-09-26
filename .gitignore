@@ -32,5 +32,15 @@ Makefile
 *.o
 *.obj
 
+# Swift / SPM / Xcode artifacts
+.build/
+*.build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserdatad/
+*.xcuserstate
+
 Fluyer
 build
