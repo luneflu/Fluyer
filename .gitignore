@@ -33,3 +33,4 @@ Makefile
 *.obj
 
 Fluyer
+build

@@ -288,6 +288,45 @@ pub fn extract_image_symphonia(path: &str) -> Result<Vec<u8>, String> {
     Err(format!("No cover art found in file: {}", path))
 }
 
+pub fn extract_image_lofty(path: &str) -> Result<Vec<u8>, String> {
+    use lofty::config::ParseOptions;
+    use lofty::file::TaggedFileExt;
+    use lofty::picture::PictureType;
+    use lofty::probe::Probe;
+
+    let tagged_file = Probe::open(path)
+        .map_err(|e| format!("Failed to open file: {}", e))?
+        .options(ParseOptions::new().read_properties(false))
+        .read()
+        .map_err(|e| format!("Lofty failed to read tags: {}", e))?;
+
+    // Check primary tag first
+    if let Some(tag) = tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {
+        for pic in tag.pictures() {
+            if pic.pic_type() == PictureType::CoverFront {
+                return Ok(pic.data().to_vec());
+            }
+        }
+        if let Some(pic) = tag.pictures().first() {
+            return Ok(pic.data().to_vec());
+        }
+    }
+
+    // Check other tags in file if primary didn't contain an image
+    for tag in tagged_file.tags() {
+        for pic in tag.pictures() {
+            if pic.pic_type() == PictureType::CoverFront {
+                return Ok(pic.data().to_vec());
+            }
+        }
+        if let Some(pic) = tag.pictures().first() {
+            return Ok(pic.data().to_vec());
+        }
+    }
+
+    Err(format!("No cover art found in file: {}", path))
+}
+
 pub async fn extract_image_ffmpeg(path: &str) -> Result<Vec<u8>, String> {
     let ffmpeg = ffmpeg_path().ok_or("ffmpeg path not set")?;
     let ffprobe = ffprobe_path().ok_or("ffprobe path not set")?;

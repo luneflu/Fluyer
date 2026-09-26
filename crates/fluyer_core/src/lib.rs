@@ -191,54 +191,68 @@ impl FluyerEngine {
     }
 
     pub fn resolve_track_cover(&self, track: &MusicMetadata, notify_index: Option<usize>) -> Option<Vec<u8>> {
-        MusicMetadata::get_image_with_symphonia(&track.path).ok().or_else(|| {
-            let artist = track.artist.as_deref().unwrap_or("");
-            let album = track.album.as_deref();
-            let title = track.title.as_deref();
-            if let Some(cached) = self.cover_art.get_cached(artist, album, title) {
-                Some(cached)
-            } else {
-                let cover_service = Arc::clone(&self.cover_art);
-                let sink = self.event_sink.clone();
-                let artist_s = artist.to_string();
-                let album_s = album.map(|s| s.to_string());
-                let title_s = title.map(|s| s.to_string());
-                self.runtime.spawn(async move {
-                    if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), title_s.as_deref()).await {
-                        if let (Some(s), Some(idx)) = (sink, notify_index) {
-                            s.on_track_cover_loaded(idx);
-                        }
-                    }
-                });
-                None
+        let artist = track.artist.as_deref().unwrap_or("");
+        let album = track.album.as_deref();
+        let title = track.title.as_deref();
+
+        // 1. Check disk cache first (fast, hits SSD/OS cache, 0 HDD reads)
+        if let Some(cached) = self.cover_art.get_cached_with_fallback(artist, album, title, Some(&track.path)) {
+            return Some(cached);
+        }
+
+        // 2. Extract embedded cover art with Lofty (only parses header, avoids decoding audio)
+        if let Ok(bytes) = MusicMetadata::get_image_with_lofty(&track.path) {
+            let _ = self.cover_art.save_to_cache(artist, album, title, Some(&track.path), &bytes);
+            return Some(bytes);
+        }
+
+        // 3. Fallback: async fetch online from MusicBrainz / Cover Art Archive
+        let cover_service = Arc::clone(&self.cover_art);
+        let sink = self.event_sink.clone();
+        let artist_s = artist.to_string();
+        let album_s = album.map(|s| s.to_string());
+        let title_s = title.map(|s| s.to_string());
+        self.runtime.spawn(async move {
+            if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), title_s.as_deref()).await {
+                if let (Some(s), Some(idx)) = (sink, notify_index) {
+                    s.on_track_cover_loaded(idx);
+                }
             }
-        })
+        });
+        None
     }
 
     pub fn resolve_album_cover(&self, album: &[MusicMetadata], notify_index: Option<usize>) -> Option<Vec<u8>> {
         let first_track = album.first()?;
-        MusicMetadata::get_image_with_symphonia(&first_track.path).ok().or_else(|| {
-            let artist = first_track.album_artist.as_deref()
-                .or(first_track.artist.as_deref())
-                .unwrap_or("");
-            let album_name = first_track.album.as_deref();
-            if let Some(cached) = self.cover_art.get_cached(artist, album_name, None) {
-                Some(cached)
-            } else {
-                let cover_service = Arc::clone(&self.cover_art);
-                let sink = self.event_sink.clone();
-                let artist_s = artist.to_string();
-                let album_s = album_name.map(|s| s.to_string());
-                self.runtime.spawn(async move {
-                    if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), None).await {
-                        if let (Some(s), Some(idx)) = (sink, notify_index) {
-                            s.on_album_cover_loaded(idx);
-                        }
-                    }
-                });
-                None
+        let artist = first_track.album_artist.as_deref()
+            .or(first_track.artist.as_deref())
+            .unwrap_or("");
+        let album_name = first_track.album.as_deref();
+
+        // 1. Check disk cache first
+        if let Some(cached) = self.cover_art.get_cached_with_fallback(artist, album_name, None, Some(&first_track.path)) {
+            return Some(cached);
+        }
+
+        // 2. Extract embedded cover art from first track with Lofty
+        if let Ok(bytes) = MusicMetadata::get_image_with_lofty(&first_track.path) {
+            let _ = self.cover_art.save_to_cache(artist, album_name, None, Some(&first_track.path), &bytes);
+            return Some(bytes);
+        }
+
+        // 3. Fallback: async fetch online
+        let cover_service = Arc::clone(&self.cover_art);
+        let sink = self.event_sink.clone();
+        let artist_s = artist.to_string();
+        let album_s = album_name.map(|s| s.to_string());
+        self.runtime.spawn(async move {
+            if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), None).await {
+                if let (Some(s), Some(idx)) = (sink, notify_index) {
+                    s.on_album_cover_loaded(idx);
+                }
             }
-        })
+        });
+        None
     }
 
     pub fn generate_background_for_current(&self, width: u32, height: u32) -> (Vec<u8>, u32, u32) {

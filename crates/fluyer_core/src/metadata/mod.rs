@@ -119,6 +119,10 @@ impl MusicMetadata {
         probe::extract_image_symphonia(path)
     }
 
+    pub fn get_image_with_lofty(path: &str) -> Result<Vec<u8>, String> {
+        probe::extract_image_lofty(path)
+    }
+
     pub async fn get_image_from_path(path: String) -> Result<Vec<u8>, String> {
         probe::extract_image(&path).await
     }

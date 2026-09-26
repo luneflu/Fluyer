@@ -22,6 +22,7 @@ chrono = "0.4"
 tokio = { version = "1", features = ["process", "sync", "rt-multi-thread", "macros", "fs", "io-util"] }
 futures = "0.3"
 symphonia = { version = "0.6", features = ["all", "opt-simd"] }
+lofty = "0.25"
 urlencoding = "2.1"
 rand = "0.9"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
