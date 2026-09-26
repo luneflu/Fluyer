@@ -45,18 +45,38 @@ if(APPLE)
     )
 endif()
 
-add_executable(FluyerApp ${SOURCES})
+add_executable(FluyerApp WIN32 ${SOURCES})
 
 target_link_libraries(FluyerApp
     ${wxWidgets_LIBRARIES}
     nlohmann_json::nlohmann_json
-    ${ROOT_DIR}/target/debug/libfluyer_core.dylib
-    ${ROOT_DIR}/libs/macos/libbass.dylib
-    ${ROOT_DIR}/libs/macos/libbassmix.dylib
 )
 
-if(APPLE)
-    target_link_libraries(FluyerApp "-framework QuartzCore" "-framework Cocoa")
+if(WIN32)
+    target_link_libraries(FluyerApp
+        ${ROOT_DIR}/target/debug/fluyer_core.dll.lib
+        ${ROOT_DIR}/libs/windows/bass.lib
+        ${ROOT_DIR}/libs/windows/bassmix.lib
+    )
+elseif(APPLE)
+    target_link_libraries(FluyerApp
+        ${ROOT_DIR}/target/debug/libfluyer_core.dylib
+        ${ROOT_DIR}/libs/macos/libbass.dylib
+        ${ROOT_DIR}/libs/macos/libbassmix.dylib
+        "-framework QuartzCore"
+        "-framework Cocoa"
+    )
+    # Ensure runtime finds dylibs
+    set_target_properties(FluyerApp PROPERTIES
+        BUILD_WITH_INSTALL_RPATH TRUE
+        INSTALL_RPATH "@executable_path/../../libs/macos;@executable_path/../../target/debug;@executable_path/../../../../libs/macos;@executable_path/../../../../target/debug"
+    )
+else()
+    target_link_libraries(FluyerApp
+        ${ROOT_DIR}/target/debug/libfluyer_core.so
+        ${ROOT_DIR}/libs/linux/libbass.so
+        ${ROOT_DIR}/libs/linux/libbassmix.so
+    )
 endif()
 
 # Ensure runtime finds dylibs
