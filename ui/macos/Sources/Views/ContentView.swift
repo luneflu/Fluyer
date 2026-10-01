@@ -12,17 +12,14 @@ public struct ContentView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Top section: Album Carousel OR Collection Header
-                Group {
-                    if state.selectedAlbumIndex != nil {
-                        CollectionHeaderView(state: state)
-                            .transition(.opacity.combined(with: .move(edge: .top)))
-                    } else {
-                        AlbumCarouselView(state: state)
-                            .transition(.opacity)
-                    }
+                // Top section: Album Carousel
+                AlbumCarouselView(state: state)
+
+                // Collection Header (shown when an album is selected)
+                if state.selectedAlbumIndex != nil {
+                    CollectionHeaderView(state: state)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
                 }
-                .animation(.easeInOut(duration: 0.2), value: state.selectedAlbumIndex)
 
                 // Middle section: Responsive Music Grid matching wxWidgets MusicListCtrl
                 MusicGridView(state: state)
@@ -31,6 +28,7 @@ public struct ContentView: View {
                 // Bottom section: Player Bar matching wxWidgets PlayerBarCtrl
                 PlayerBarView(state: state)
             }
+            .animation(.easeInOut(duration: 0.2), value: state.selectedAlbumIndex)
 
             // Fullscreen PlayView overlay matching wxWidgets ShowPlayView(true)
             if state.showPlayView {
