@@ -63,14 +63,25 @@ impl MusicBrainz {
             .build()
             .map_err(|e| e.to_string())?;
 
-        let url = format!("{}/{}?query={}&fmt=json&limit=1", BASE_URL, btype, urlencoding::encode(&bquery));
+        let url = format!(
+            "{}/{}?query={}&fmt=json&limit=1",
+            BASE_URL,
+            btype,
+            urlencoding::encode(&bquery)
+        );
         let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
 
         let id = if album.is_some() {
-            let parsed = response.json::<ReleaseGroupResponse>().await.map_err(|e| e.to_string())?;
+            let parsed = response
+                .json::<ReleaseGroupResponse>()
+                .await
+                .map_err(|e| e.to_string())?;
             parsed.release_groups.into_iter().next().map(|rg| rg.id)
         } else {
-            let parsed = response.json::<ReleaseResponse>().await.map_err(|e| e.to_string())?;
+            let parsed = response
+                .json::<ReleaseResponse>()
+                .await
+                .map_err(|e| e.to_string())?;
             parsed.releases.into_iter().next().map(|r| r.id)
         };
 
@@ -79,13 +90,24 @@ impl MusicBrainz {
         };
 
         let ca_url = format!("{}/{}/{}", BASE_COVER_ART_URL, btype, target_id);
-        let ca_res = client.get(&ca_url).send().await.map_err(|e| e.to_string())?;
+        let ca_res = client
+            .get(&ca_url)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
 
         if ca_res.status() == reqwest::StatusCode::NOT_FOUND {
             return Ok(None);
         }
 
-        let ca_json = ca_res.json::<CoverArtResponse>().await.map_err(|e| e.to_string())?;
-        Ok(ca_json.images.into_iter().next().map(|img| img.thumbnails.i500))
+        let ca_json = ca_res
+            .json::<CoverArtResponse>()
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(ca_json
+            .images
+            .into_iter()
+            .next()
+            .map(|img| img.thumbnails.i500))
     }
 }

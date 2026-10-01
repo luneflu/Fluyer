@@ -6,7 +6,10 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 fn create_synthetic_mp3(path: &PathBuf, dummy_size_mb: usize) -> Vec<u8> {
-    let fake_jpeg: Vec<u8> = vec![0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xFF, 0xDB, 0x00, 0x43, 0x00];
+    let fake_jpeg: Vec<u8> = vec![
+        0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00,
+        0x01, 0x00, 0x01, 0x00, 0x00, 0xFF, 0xDB, 0x00, 0x43, 0x00,
+    ];
 
     // APIC body:
     // encoding: 0x00 (ISO-8859-1)
@@ -62,7 +65,10 @@ fn create_synthetic_mp3(path: &PathBuf, dummy_size_mb: usize) -> Vec<u8> {
 }
 
 fn create_synthetic_flac(path: &PathBuf, dummy_size_mb: usize) -> Vec<u8> {
-    let fake_jpeg: Vec<u8> = vec![0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xFF, 0xDB, 0x00, 0x43, 0x00];
+    let fake_jpeg: Vec<u8> = vec![
+        0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00,
+        0x01, 0x00, 0x01, 0x00, 0x00, 0xFF, 0xDB, 0x00, 0x43, 0x00,
+    ];
 
     let mut buf = Vec::new();
     buf.extend_from_slice(b"fLaC");
@@ -128,9 +134,18 @@ fn test_benchmark_image_read_performance() {
     let flac_path_str = flac_path.to_str().unwrap();
 
     // Verify extractions
-    assert_eq!(MusicMetadata::get_image_with_lofty(mp3_path_str).unwrap(), original_bytes_mp3);
-    assert_eq!(MusicMetadata::get_image_with_symphonia(mp3_path_str).unwrap(), original_bytes_mp3);
-    assert_eq!(MusicMetadata::get_image_with_lofty(flac_path_str).unwrap(), original_bytes_flac);
+    assert_eq!(
+        MusicMetadata::get_image_with_lofty(mp3_path_str).unwrap(),
+        original_bytes_mp3
+    );
+    assert_eq!(
+        MusicMetadata::get_image_with_symphonia(mp3_path_str).unwrap(),
+        original_bytes_mp3
+    );
+    assert_eq!(
+        MusicMetadata::get_image_with_lofty(flac_path_str).unwrap(),
+        original_bytes_flac
+    );
 
     let cover_service = CoverArtService::new(&cache_dir);
     const ITERATIONS: u32 = 100;
@@ -157,12 +172,22 @@ fn test_benchmark_image_read_performance() {
     let lofty_flac_time = t2.elapsed();
 
     // Populate disk cache
-    cover_service.save_to_cache("Artist", Some("Album"), Some("Track"), Some(mp3_path_str), &original_bytes_mp3).unwrap();
+    cover_service
+        .save_to_cache(
+            "Artist",
+            Some("Album"),
+            Some("Track"),
+            Some(mp3_path_str),
+            &original_bytes_mp3,
+        )
+        .unwrap();
 
     // D) Disk Cache Hit
     let t3 = Instant::now();
     for _ in 0..ITERATIONS {
-        let _ = cover_service.get_cached_with_fallback("Artist", Some("Album"), Some("Track"), Some(mp3_path_str)).unwrap();
+        let _ = cover_service
+            .get_cached_with_fallback("Artist", Some("Album"), Some("Track"), Some(mp3_path_str))
+            .unwrap();
     }
     let disk_cache_time = t3.elapsed();
 
@@ -174,13 +199,31 @@ fn test_benchmark_image_read_performance() {
     println!("\n========================================================");
     println!("IMAGE EXTRACTION BENCHMARK ({} iterations)", ITERATIONS);
     println!("========================================================");
-    println!("MP3  (10MB) - Symphonia probe : {:>8.2} µs / read", sym_mp3_us);
-    println!("MP3  (10MB) - Lofty metadata  : {:>8.2} µs / read", lofty_mp3_us);
-    println!("FLAC (20MB) - Lofty metadata  : {:>8.2} µs / read", lofty_flac_us);
-    println!("Disk Cache hit (SSD/Cache)    : {:>8.2} µs / read", cache_us);
+    println!(
+        "MP3  (10MB) - Symphonia probe : {:>8.2} µs / read",
+        sym_mp3_us
+    );
+    println!(
+        "MP3  (10MB) - Lofty metadata  : {:>8.2} µs / read",
+        lofty_mp3_us
+    );
+    println!(
+        "FLAC (20MB) - Lofty metadata  : {:>8.2} µs / read",
+        lofty_flac_us
+    );
+    println!(
+        "Disk Cache hit (SSD/Cache)    : {:>8.2} µs / read",
+        cache_us
+    );
     println!("--------------------------------------------------------");
-    println!("Cache vs MP3 Symphonia : {:.2}x faster", sym_mp3_us / cache_us);
-    println!("Cache vs FLAC Lofty    : {:.2}x faster", lofty_flac_us / cache_us);
+    println!(
+        "Cache vs MP3 Symphonia : {:.2}x faster",
+        sym_mp3_us / cache_us
+    );
+    println!(
+        "Cache vs FLAC Lofty    : {:.2}x faster",
+        lofty_flac_us / cache_us
+    );
     println!("========================================================\n");
 
     let _ = std::fs::remove_dir_all(&temp_dir);
@@ -238,13 +281,24 @@ fn test_verify_lofty_does_not_read_whole_file() {
     println!("\n========================================================");
     println!("LOFTY READ VERIFICATION (50MB FLAC FILE)");
     println!("========================================================");
-    println!("Total file size on disk : {} bytes (~50 MB)", total_file_size);
-    println!("Bytes read by Lofty     : {} bytes (~{:.2} KB)", bytes_read, bytes_read as f64 / 1024.0);
+    println!(
+        "Total file size on disk : {} bytes (~50 MB)",
+        total_file_size
+    );
+    println!(
+        "Bytes read by Lofty     : {} bytes (~{:.2} KB)",
+        bytes_read,
+        bytes_read as f64 / 1024.0
+    );
     println!("Percentage of file read : {:.4}%", percent_read);
     println!("========================================================\n");
 
     // Lofty read less than 0.01% of the file, completely ignoring the 50MB audio payload!
-    assert!(bytes_read < 10_000, "Lofty must only read metadata header, read {} bytes", bytes_read);
+    assert!(
+        bytes_read < 10_000,
+        "Lofty must only read metadata header, read {} bytes",
+        bytes_read
+    );
     assert!(bytes_read < total_file_size / 1000);
 
     let _ = std::fs::remove_dir_all(&temp_dir);

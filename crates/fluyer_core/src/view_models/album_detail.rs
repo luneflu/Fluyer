@@ -27,19 +27,12 @@ impl AlbumDetailViewModel {
         for (i, t) in tracks.iter().enumerate() {
             let dur = t.duration.unwrap_or(0) as u64;
             duration_ms += dur;
-            let is_cur = current_track_path
-                .map(|p| p == t.path)
-                .unwrap_or(false);
+            let is_cur = current_track_path.map(|p| p == t.path).unwrap_or(false);
             track_vms.push(TrackItemViewModel::from_metadata(i, t, is_cur));
         }
 
         let total_duration_formatted = format_duration(duration_ms);
-        let subtitle = format_album_label(
-            &header.name,
-            &header.artist,
-            &header.year,
-            duration_ms,
-        );
+        let subtitle = format_album_label(&header.name, &header.artist, &header.year, duration_ms);
 
         Self {
             header,

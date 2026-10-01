@@ -7,15 +7,15 @@ pub mod ffi;
 pub mod library;
 pub mod metadata;
 pub mod services;
-pub mod view_models;
 pub mod uniffi_api;
+pub mod view_models;
 
 uniffi::setup_scaffolding!();
 
 use audio::{MusicPlayer, RepeatMode};
 use db::Database;
 use events::EventSink;
-use library::{LibraryState, process_supported_files, scan_directories};
+use library::{process_supported_files, scan_directories, LibraryState};
 use metadata::MusicMetadata;
 use services::{CoverArtService, DiscordRpc, LyricService};
 use std::path::Path;
@@ -29,6 +29,46 @@ pub struct FluyerEngine {
     pub cover_art: Arc<CoverArtService>,
     pub runtime: tokio::runtime::Runtime,
     pub event_sink: Option<Arc<dyn EventSink>>,
+    // ponytail: caches parsed LRC per track path; the UI polls this every 250ms
+    // and re-reading + re-parsing the .lrc file each tick stalled the main thread.
+    lyrics_cache: Arc<RwLock<Option<(String, Arc<Vec<view_models::LyricLine>>)>>>,
+    // ponytail: memoized down-scaled JPEG covers. Decoding a 3000x3000 cover is
+    // O(pixels), so scroll views would otherwise re-decode on every cell render.
+    thumbnail_cache: Arc<RwLock<ThumbnailCache>>,
+    palette_cache: Arc<RwLock<Option<(String, Arc<Vec<[u8; 3]>>)>>>,
+}
+
+const THUMBNAIL_CACHE_CAPACITY: usize = 256;
+
+struct ThumbnailCache {
+    map: std::collections::HashMap<(String, u32), Arc<Vec<u8>>>,
+    order: std::collections::VecDeque<(String, u32)>,
+}
+
+impl ThumbnailCache {
+    fn new() -> Self {
+        Self {
+            map: std::collections::HashMap::new(),
+            order: std::collections::VecDeque::new(),
+        }
+    }
+
+    fn get(&self, key: &(String, u32)) -> Option<Arc<Vec<u8>>> {
+        self.map.get(key).cloned()
+    }
+
+    fn put(&mut self, key: (String, u32), value: Arc<Vec<u8>>) {
+        if self.map.contains_key(&key) {
+            return;
+        }
+        if self.order.len() >= THUMBNAIL_CACHE_CAPACITY {
+            if let Some(oldest) = self.order.pop_front() {
+                self.map.remove(&oldest);
+            }
+        }
+        self.order.push_back(key.clone());
+        self.map.insert(key, value);
+    }
 }
 
 impl FluyerEngine {
@@ -68,6 +108,9 @@ impl FluyerEngine {
             cover_art,
             runtime,
             event_sink,
+            lyrics_cache: Arc::new(RwLock::new(None)),
+            thumbnail_cache: Arc::new(RwLock::new(ThumbnailCache::new())),
+            palette_cache: Arc::new(RwLock::new(None)),
         })
     }
 
@@ -194,19 +237,28 @@ impl FluyerEngine {
         self.player.add_track(vec![track]);
     }
 
-    pub fn resolve_track_cover(&self, track: &MusicMetadata, notify_index: Option<usize>) -> Option<Vec<u8>> {
+    pub fn resolve_track_cover(
+        &self,
+        track: &MusicMetadata,
+        notify_index: Option<usize>,
+    ) -> Option<Vec<u8>> {
         let artist = track.artist.as_deref().unwrap_or("");
         let album = track.album.as_deref();
         let title = track.title.as_deref();
 
         // 1. Check disk cache first (fast, hits SSD/OS cache, 0 HDD reads)
-        if let Some(cached) = self.cover_art.get_cached_with_fallback(artist, album, title, Some(&track.path)) {
+        if let Some(cached) =
+            self.cover_art
+                .get_cached_with_fallback(artist, album, title, Some(&track.path))
+        {
             return Some(cached);
         }
 
         // 2. Extract embedded cover art with Lofty (only parses header, avoids decoding audio)
         if let Ok(bytes) = MusicMetadata::get_image_with_lofty(&track.path) {
-            let _ = self.cover_art.save_to_cache(artist, album, title, Some(&track.path), &bytes);
+            let _ = self
+                .cover_art
+                .save_to_cache(artist, album, title, Some(&track.path), &bytes);
             return Some(bytes);
         }
 
@@ -217,7 +269,10 @@ impl FluyerEngine {
         let album_s = album.map(|s| s.to_string());
         let title_s = title.map(|s| s.to_string());
         self.runtime.spawn(async move {
-            if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), title_s.as_deref()).await {
+            if let Ok(Some(_)) = cover_service
+                .fetch_and_cache(&artist_s, album_s.as_deref(), title_s.as_deref())
+                .await
+            {
                 if let (Some(s), Some(idx)) = (sink, notify_index) {
                     s.on_track_cover_loaded(idx);
                 }
@@ -226,21 +281,38 @@ impl FluyerEngine {
         None
     }
 
-    pub fn resolve_album_cover(&self, album: &[MusicMetadata], notify_index: Option<usize>) -> Option<Vec<u8>> {
+    pub fn resolve_album_cover(
+        &self,
+        album: &[MusicMetadata],
+        notify_index: Option<usize>,
+    ) -> Option<Vec<u8>> {
         let first_track = album.first()?;
-        let artist = first_track.album_artist.as_deref()
+        let artist = first_track
+            .album_artist
+            .as_deref()
             .or(first_track.artist.as_deref())
             .unwrap_or("");
         let album_name = first_track.album.as_deref();
 
         // 1. Check disk cache first
-        if let Some(cached) = self.cover_art.get_cached_with_fallback(artist, album_name, None, Some(&first_track.path)) {
+        if let Some(cached) = self.cover_art.get_cached_with_fallback(
+            artist,
+            album_name,
+            None,
+            Some(&first_track.path),
+        ) {
             return Some(cached);
         }
 
         // 2. Extract embedded cover art from first track with Lofty
         if let Ok(bytes) = MusicMetadata::get_image_with_lofty(&first_track.path) {
-            let _ = self.cover_art.save_to_cache(artist, album_name, None, Some(&first_track.path), &bytes);
+            let _ = self.cover_art.save_to_cache(
+                artist,
+                album_name,
+                None,
+                Some(&first_track.path),
+                &bytes,
+            );
             return Some(bytes);
         }
 
@@ -250,7 +322,10 @@ impl FluyerEngine {
         let artist_s = artist.to_string();
         let album_s = album_name.map(|s| s.to_string());
         self.runtime.spawn(async move {
-            if let Ok(Some(_)) = cover_service.fetch_and_cache(&artist_s, album_s.as_deref(), None).await {
+            if let Ok(Some(_)) = cover_service
+                .fetch_and_cache(&artist_s, album_s.as_deref(), None)
+                .await
+            {
                 if let (Some(s), Some(idx)) = (sink, notify_index) {
                     s.on_album_cover_loaded(idx);
                 }
@@ -259,15 +334,14 @@ impl FluyerEngine {
         None
     }
 
+    /// Blurred ambient background for the current cover: the
+    /// `AnimatedBackground.svelte` -> `TauriBackgroundAPI.updateBackground` path.
+    /// Returns raw RGBA plus its dimensions; the UI stretches it to fill.
+    /// The colour blocks are randomised per call so only the palette is memoised.
     pub fn generate_background_for_current(&self, width: u32, height: u32) -> (Vec<u8>, u32, u32) {
-        let cover_bytes = self
-            .player
-            .get_current_track()
-            .and_then(|t| self.resolve_track_cover(&t, None));
-        let colors = if let Some(bytes) = cover_bytes {
-            services::background::extract_prominent_from_bytes(&bytes, 10, false)
-        } else {
-            vec![services::background::balance_color([30, 30, 40], true)]
+        let colors = match self.player.get_current_track() {
+            Some(ref t) => self.cover_palette(t),
+            None => vec![services::background::balance_color([30, 30, 40], true)],
         };
         let blurred = services::background::generate_blurred_background(&colors, width, height);
         let (w, h) = (blurred.width(), blurred.height());
@@ -306,14 +380,10 @@ impl FluyerEngine {
 
     pub fn get_track_view(&self, index: usize) -> Option<view_models::TrackItemViewModel> {
         let current_path = self.player.get_current_track().map(|t| t.path);
-        self.library
-            .read()
-            .unwrap()
-            .get_by_index(index)
-            .map(|t| {
-                let is_current = current_path.as_deref() == Some(&t.path);
-                view_models::TrackItemViewModel::from_metadata(index, &t, is_current)
-            })
+        self.library.read().unwrap().get_by_index(index).map(|t| {
+            let is_current = current_path.as_deref() == Some(&t.path);
+            view_models::TrackItemViewModel::from_metadata(index, &t, is_current)
+        })
     }
 
     pub fn get_album_card(&self, index: usize) -> Option<view_models::AlbumCardViewModel> {
@@ -348,8 +418,12 @@ impl FluyerEngine {
         let current_track = self.player.get_current_track();
         let (title, artist, album) = match current_track {
             Some(ref t) => (
-                t.title.clone().unwrap_or_else(|| metadata::DEFAULT_TITLE.to_string()),
-                t.artist.clone().unwrap_or_else(|| metadata::DEFAULT_ARTIST.to_string()),
+                t.title
+                    .clone()
+                    .unwrap_or_else(|| metadata::DEFAULT_TITLE.to_string()),
+                t.artist
+                    .clone()
+                    .unwrap_or_else(|| metadata::DEFAULT_ARTIST.to_string()),
                 t.album.clone().unwrap_or_default(),
             ),
             None => ("No Track".to_string(), String::new(), String::new()),
@@ -389,7 +463,11 @@ impl FluyerEngine {
         let current_track = self.player.get_current_track();
         let track_vm = current_track.as_ref().map(|t| {
             let sync = self.player.get_sync_info(false);
-            let idx = if sync.index >= 0 { sync.index as usize } else { 0 };
+            let idx = if sync.index >= 0 {
+                sync.index as usize
+            } else {
+                0
+            };
             view_models::TrackItemViewModel::from_metadata(idx, t, true)
         });
 
@@ -397,13 +475,9 @@ impl FluyerEngine {
         let pos_ms = self.player.get_sync_info(false).position_ms();
         let current_lyric_index = view_models::find_active_lyric_index(&lyrics, pos_ms);
 
-        let cover_bytes = current_track
-            .as_ref()
-            .and_then(|t| self.resolve_track_cover(t, None));
-        let colors = if let Some(bytes) = cover_bytes {
-            services::background::extract_prominent_from_bytes(&bytes, 5, false)
-        } else {
-            vec![services::background::balance_color([30, 30, 40], true)]
+        let colors = match current_track.as_ref() {
+            Some(t) => self.cover_palette(t),
+            None => vec![services::background::balance_color([30, 30, 40], true)],
         };
         let palette = colors
             .into_iter()
@@ -423,13 +497,110 @@ impl FluyerEngine {
     }
 
     pub fn get_parsed_lyrics(&self) -> Vec<view_models::LyricLine> {
-        let lyrics_text = self
-            .player
-            .get_current_track()
-            .and_then(|t| self.resolve_lyrics(&t));
-        match lyrics_text {
-            Some(ref lrc) => view_models::parse_lrc(lrc),
-            None => Vec::new(),
+        self.get_parsed_lyrics_arc()
+            .as_ref()
+            .map(|lines| lines.as_ref().clone())
+            .unwrap_or_default()
+    }
+
+    /// Active lyric index without cloning the parsed lyric vector; this runs on
+    /// the UI's 250ms position tick, so the Arc path matters.
+    pub fn active_lyric_index(&self, position_ms: u64) -> i32 {
+        match self.get_parsed_lyrics_arc() {
+            Some(lines) => view_models::find_active_lyric_index(&lines, position_ms),
+            None => -1,
         }
+    }
+
+    // ponytail: memoized down-scaled JPEG cover. `key` identifies the source
+    // cover so repeated scroll renders of the same row are allocation-free.
+    pub fn get_thumbnail(
+        &self,
+        key: String,
+        source: impl FnOnce() -> Option<Vec<u8>>,
+        max_size: u32,
+    ) -> Option<Arc<Vec<u8>>> {
+        let cache_key = (key, max_size);
+        if let Some(hit) = self.thumbnail_cache.read().unwrap().get(&cache_key) {
+            return Some(hit);
+        }
+        let bytes = source()?;
+        let encoded = view_models::thumbnail_jpeg(&bytes, max_size)?;
+        let arc = Arc::new(encoded);
+        self.thumbnail_cache
+            .write()
+            .unwrap()
+            .put(cache_key, Arc::clone(&arc));
+        Some(arc)
+    }
+
+    // ponytail: dominant-color extraction decodes the full cover, so it is
+    // memoized per track path. PlayView polls this on every state change.
+    fn cover_palette(&self, track: &MusicMetadata) -> Vec<[u8; 3]> {
+        if let Some((cached_path, colors)) = self.palette_cache.read().unwrap().as_ref() {
+            if cached_path == &track.path {
+                return colors.as_ref().clone();
+            }
+        }
+
+        let colors = match self.resolve_track_cover(track, None) {
+            Some(ref bytes) => services::background::extract_prominent_from_bytes(bytes, 10, false),
+            None => vec![services::background::balance_color([30, 30, 40], true)],
+        };
+
+        *self.palette_cache.write().unwrap() = Some((track.path.clone(), Arc::new(colors.clone())));
+        colors
+    }
+
+    pub fn track_thumbnail(&self, index: usize, max_size: u32) -> Option<Arc<Vec<u8>>> {
+        self.get_thumbnail(
+            format!("track:{}", index),
+            || {
+                self.library
+                    .read()
+                    .unwrap()
+                    .get_by_index(index)
+                    .and_then(|t| self.resolve_track_cover(&t, Some(index)))
+            },
+            max_size,
+        )
+    }
+
+    pub fn album_thumbnail(&self, index: usize, max_size: u32) -> Option<Arc<Vec<u8>>> {
+        self.get_thumbnail(
+            format!("album:{}", index),
+            || {
+                self.library
+                    .read()
+                    .unwrap()
+                    .album_get_by_index(index)
+                    .and_then(|a| self.resolve_album_cover(&a, Some(index)))
+            },
+            max_size,
+        )
+    }
+
+    pub fn current_thumbnail(&self, max_size: u32) -> Option<Arc<Vec<u8>>> {
+        let track = self.player.get_current_track()?;
+        self.get_thumbnail(
+            format!("path:{}", track.path),
+            || self.resolve_track_cover(&track, None),
+            max_size,
+        )
+    }
+
+    pub fn get_parsed_lyrics_arc(&self) -> Option<Arc<Vec<view_models::LyricLine>>> {
+        let track = self.player.get_current_track()?;
+
+        if let Some((cached_path, lines)) = self.lyrics_cache.read().unwrap().as_ref() {
+            if cached_path == &track.path {
+                return Some(Arc::clone(lines));
+            }
+        }
+
+        let lrc = self.resolve_lyrics(&track)?;
+        let lines = Arc::new(view_models::parse_lrc(&lrc));
+        *self.lyrics_cache.write().unwrap() = Some((track.path.clone(), Arc::clone(&lines)));
+        Some(lines)
     }
 }

@@ -32,9 +32,7 @@ impl MusicPlayerSync {
     }
 
     pub fn duration_ms(&self) -> u64 {
-        self.duration
-            .map(|s| (s * 1000.0) as u64)
-            .unwrap_or(0)
+        self.duration.map(|s| (s * 1000.0) as u64).unwrap_or(0)
     }
 }
 
@@ -407,7 +405,11 @@ impl MusicPlayer {
             unsafe {
                 let len_bytes = BASS_ChannelGetLength(current_stream, BASS_POS_BYTE);
                 let sec = BASS_ChannelBytes2Seconds(current_stream, len_bytes);
-                if sec > 0.0 { Some(sec) } else { None }
+                if sec > 0.0 {
+                    Some(sec)
+                } else {
+                    None
+                }
             }
         };
 
@@ -503,7 +505,12 @@ impl MusicPlayer {
                 (q.get(index).unwrap(), q.len())
             };
 
-            crate::flog!("Player", "Playing track: '{}' from path: '{}'", music.title.as_deref().unwrap_or("?"), music.path);
+            crate::flog!(
+                "Player",
+                "Playing track: '{}' from path: '{}'",
+                music.title.as_deref().unwrap_or("?"),
+                music.path
+            );
 
             Self::stop_stream(&bass_mixer, &current_stream, &temp_wav_path);
 
@@ -521,7 +528,13 @@ impl MusicPlayer {
                     q.set_current_index(Some(index));
                 }
                 Self::play_pause_inner(&bass_mixer, &current_stream, true);
-                Self::emit_sync_inner(&bass_mixer, &current_stream, &queue_arc, sink.as_deref(), true);
+                Self::emit_sync_inner(
+                    &bass_mixer,
+                    &current_stream,
+                    &queue_arc,
+                    sink.as_deref(),
+                    true,
+                );
                 crate::flog!("Player", "Playback started");
             } else {
                 crate::flog_err!("Player", "load_music_inner failed");
@@ -861,7 +874,11 @@ impl MusicPlayer {
             unsafe {
                 let len_bytes = BASS_ChannelGetLength(cs, BASS_POS_BYTE);
                 let sec = BASS_ChannelBytes2Seconds(cs, len_bytes);
-                if sec > 0.0 { Some(sec) } else { None }
+                if sec > 0.0 {
+                    Some(sec)
+                } else {
+                    None
+                }
             }
         };
 
@@ -963,7 +980,10 @@ impl MusicPlayer {
                 .encode_wide()
                 .chain(std::iter::once(0))
                 .collect();
-            (BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT | BASS_UNICODE, wide.as_ptr() as *const std::ffi::c_void)
+            (
+                BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT | BASS_UNICODE,
+                wide.as_ptr() as *const std::ffi::c_void,
+            )
         };
 
         #[cfg(not(target_os = "windows"))]
@@ -975,19 +995,18 @@ impl MusicPlayer {
                     return false;
                 }
             };
-            crate::flog!("Player", "Calling BASS_StreamCreateFile with path: '{}'", music.path);
-            (BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT, c_path.into_raw() as *const std::ffi::c_void)
-        };
-
-        let stream = unsafe {
-            BASS_StreamCreateFile(
-                0,
-                path_ptr,
-                0,
-                0,
-                flags,
+            crate::flog!(
+                "Player",
+                "Calling BASS_StreamCreateFile with path: '{}'",
+                music.path
+            );
+            (
+                BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT,
+                c_path.into_raw() as *const std::ffi::c_void,
             )
         };
+
+        let stream = unsafe { BASS_StreamCreateFile(0, path_ptr, 0, 0, flags) };
 
         #[cfg(not(target_os = "windows"))]
         unsafe {
@@ -1015,10 +1034,9 @@ impl MusicPlayer {
         );
 
         if unsafe { BASS_Mixer_StreamAddChannel(mixer, stream, BASS_MIXER_NORAMPIN) } == 0 {
-            log::error!(
-                "Failed to add stream to mixer: {}",
-                unsafe { BASS_ErrorGetCode() }
-            );
+            log::error!("Failed to add stream to mixer: {}", unsafe {
+                BASS_ErrorGetCode()
+            });
             unsafe { BASS_StreamFree(stream) };
             return false;
         }

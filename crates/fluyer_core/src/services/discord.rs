@@ -136,7 +136,11 @@ fn build_activity(data: &ActivityData) -> Activity<'static> {
         .details(data.title.clone());
 
     if data.is_playing {
-        activity = activity.state(data.artist.clone().unwrap_or_else(|| "Unknown Artist".to_string()));
+        activity = activity.state(
+            data.artist
+                .clone()
+                .unwrap_or_else(|| "Unknown Artist".to_string()),
+        );
 
         let pos = data.position_ms.unwrap_or(0.0).max(0.0) as i64;
         let start = now - pos;

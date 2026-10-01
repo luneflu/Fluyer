@@ -13,9 +13,7 @@ static METADATA_CLEANUP: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?i)(?:\s*[\[\(](?:official|lyrics?|hd|hq|audio|video|mv|m/v|remaster(?:ed)?|remix|live|acoustic|cover|instrumental|extended|edit|version|ver\.?|mix)(?:\s+\w+)*[\]\)])+\s*$").unwrap()
 });
 
-static LEADING_TRACK_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"^\d+[\.\-\s]+").unwrap()
-});
+static LEADING_TRACK_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\d+[\.\-\s]+").unwrap());
 
 struct PatternPair {
     regex: Regex,
@@ -98,7 +96,10 @@ pub fn get_artist_title_from_file_name(file_name: &str) -> (Option<String>, Stri
     let fallback_title = if cleaned.is_empty() {
         without_extension.trim().to_string()
     } else {
-        let title = METADATA_CLEANUP.replace_all(&cleaned, "").trim().to_string();
+        let title = METADATA_CLEANUP
+            .replace_all(&cleaned, "")
+            .trim()
+            .to_string();
         let title = LEADING_TRACK_RE.replace(&title, "").trim().to_string();
         if title.is_empty() {
             without_extension.trim().to_string()
@@ -116,7 +117,8 @@ mod tests {
 
     #[test]
     fn test_parse_artist_and_title() {
-        let (artist, title) = get_artist_title_from_file_name("Queen - Bohemian Rhapsody (Official Video).mp3");
+        let (artist, title) =
+            get_artist_title_from_file_name("Queen - Bohemian Rhapsody (Official Video).mp3");
         assert_eq!(artist.as_deref(), Some("Queen"));
         assert_eq!(title, "Bohemian Rhapsody");
 
@@ -128,7 +130,8 @@ mod tests {
         assert_eq!(artist.as_deref(), Some("Coldplay"));
         assert_eq!(title, "Yellow");
 
-        let (artist, title) = get_artist_title_from_file_name("Coldplay - Clocks [dQw4w9WgXcQ].mp3");
+        let (artist, title) =
+            get_artist_title_from_file_name("Coldplay - Clocks [dQw4w9WgXcQ].mp3");
         assert_eq!(artist.as_deref(), Some("Coldplay"));
         assert_eq!(title, "Clocks");
 

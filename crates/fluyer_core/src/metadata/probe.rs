@@ -61,8 +61,7 @@ pub fn probe_symphonia(path: &str) -> Result<MusicMetadata, String> {
 
     if let Some(dur) = track.duration {
         if let Some(tb) = track.time_base {
-            let duration_secs =
-                dur.get() as f64 * tb.numer.get() as f64 / tb.denom.get() as f64;
+            let duration_secs = dur.get() as f64 * tb.numer.get() as f64 / tb.denom.get() as f64;
             metadata.duration = Some((duration_secs * 1000.0) as u128);
         }
     }
@@ -80,9 +79,7 @@ pub fn probe_symphonia(path: &str) -> Result<MusicMetadata, String> {
                     StandardTag::TrackTitle(v) => metadata.title = Some(v.as_ref().clone()),
                     StandardTag::Artist(v) => metadata.artist = Some(v.as_ref().clone()),
                     StandardTag::Album(v) => metadata.album = Some(v.as_ref().clone()),
-                    StandardTag::AlbumArtist(v) => {
-                        metadata.album_artist = Some(v.as_ref().clone())
-                    }
+                    StandardTag::AlbumArtist(v) => metadata.album_artist = Some(v.as_ref().clone()),
                     StandardTag::TrackNumber(n) => metadata.track_number = Some(n.to_string()),
                     StandardTag::Genre(v) => metadata.genre = Some(v.as_ref().clone()),
                     StandardTag::RecordingDate(v) => metadata.date = Some(v.as_ref().clone()),
@@ -301,7 +298,10 @@ pub fn extract_image_lofty(path: &str) -> Result<Vec<u8>, String> {
         .map_err(|e| format!("Lofty failed to read tags: {}", e))?;
 
     // Check primary tag first
-    if let Some(tag) = tagged_file.primary_tag().or_else(|| tagged_file.first_tag()) {
+    if let Some(tag) = tagged_file
+        .primary_tag()
+        .or_else(|| tagged_file.first_tag())
+    {
         for pic in tag.pictures() {
             if pic.pic_type() == PictureType::CoverFront {
                 return Ok(pic.data().to_vec());

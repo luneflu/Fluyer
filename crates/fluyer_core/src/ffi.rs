@@ -294,9 +294,11 @@ pub unsafe extern "C" fn fluyer_player_get_current_image(
     engine: *mut FluyerEngine,
     out_len: *mut usize,
 ) -> *mut u8 {
-    let bytes = engine
-        .as_ref()
-        .and_then(|e| e.player.get_current_track().and_then(|t| e.resolve_track_cover(&t, Some(0))));
+    let bytes = engine.as_ref().and_then(|e| {
+        e.player
+            .get_current_track()
+            .and_then(|t| e.resolve_track_cover(&t, Some(0)))
+    });
     raw_bytes_into_ptr(bytes, out_len)
 }
 
@@ -457,7 +459,10 @@ pub unsafe extern "C" fn fluyer_extract_prominent_colors(
         let slice = std::slice::from_raw_parts(bytes, len);
         crate::services::background::extract_prominent_from_bytes(slice, 10, is_default)
     } else {
-        vec![crate::services::background::balance_color([30, 30, 40], is_default)]
+        vec![crate::services::background::balance_color(
+            [30, 30, 40],
+            is_default,
+        )]
     };
 
     if !out_count.is_null() {
@@ -530,7 +535,10 @@ pub unsafe extern "C" fn fluyer_background_generate_from_bytes(
         let slice = std::slice::from_raw_parts(bytes, len);
         crate::services::background::extract_prominent_from_bytes(slice, 10, is_default)
     } else {
-        vec![crate::services::background::balance_color([30, 30, 40], is_default)]
+        vec![crate::services::background::balance_color(
+            [30, 30, 40],
+            is_default,
+        )]
     };
     let blurred = crate::services::background::generate_blurred_background(&colors, width, height);
     if !out_w.is_null() {
@@ -545,10 +553,14 @@ pub unsafe extern "C" fn fluyer_background_generate_from_bytes(
 #[no_mangle]
 pub unsafe extern "C" fn fluyer_player_get_lyrics(engine: *mut FluyerEngine) -> *mut c_char {
     let lyrics = engine.as_ref().and_then(|e| {
-        e.player.get_current_track().and_then(|t| e.resolve_lyrics(&t))
+        e.player
+            .get_current_track()
+            .and_then(|t| e.resolve_lyrics(&t))
     });
     match lyrics {
-        Some(s) => CString::new(s).map(|c| c.into_raw()).unwrap_or(std::ptr::null_mut()),
+        Some(s) => CString::new(s)
+            .map(|c| c.into_raw())
+            .unwrap_or(std::ptr::null_mut()),
         None => std::ptr::null_mut(),
     }
 }
@@ -556,7 +568,9 @@ pub unsafe extern "C" fn fluyer_player_get_lyrics(engine: *mut FluyerEngine) -> 
 #[no_mangle]
 pub unsafe extern "C" fn fluyer_format_time(ms: u64) -> *mut c_char {
     let s = crate::view_models::format_time(ms);
-    CString::new(s).map(|c| c.into_raw()).unwrap_or(std::ptr::null_mut())
+    CString::new(s)
+        .map(|c| c.into_raw())
+        .unwrap_or(std::ptr::null_mut())
 }
 
 #[no_mangle]

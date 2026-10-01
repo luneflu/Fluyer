@@ -67,7 +67,10 @@ impl PlaybackQueue {
     }
 
     pub fn all_tracks(&self) -> Vec<MusicMetadata> {
-        self.tracks.iter().map(|item| item.metadata.clone()).collect()
+        self.tracks
+            .iter()
+            .map(|item| item.metadata.clone())
+            .collect()
     }
 
     pub fn clear(&mut self) {
@@ -163,8 +166,7 @@ impl PlaybackQueue {
                 self.tracks = original;
 
                 if let Some(meta) = current_meta {
-                    self.current_index =
-                        self.tracks.iter().position(|t| t.metadata.id == meta.id);
+                    self.current_index = self.tracks.iter().position(|t| t.metadata.id == meta.id);
                 }
             }
         } else {

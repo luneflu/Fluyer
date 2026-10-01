@@ -1,0 +1,44 @@
+{
+  "configurations": [
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:fluyer-native}/apps/macos-swiftui",
+      "name": "Debug FluyerApp (apps/macos-swiftui)",
+      "target": "FluyerApp",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug FluyerApp (apps/macos-swiftui)"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:fluyer-native}/apps/macos-swiftui",
+      "name": "Release FluyerApp (apps/macos-swiftui)",
+      "target": "FluyerApp",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release FluyerApp (apps/macos-swiftui)"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:fluyer-native}/ui/macos",
+      "name": "Debug FluyerApp (ui/macos)",
+      "target": "FluyerApp",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug FluyerApp (ui/macos)"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:fluyer-native}/ui/macos",
+      "name": "Release FluyerApp (ui/macos)",
+      "target": "FluyerApp",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release FluyerApp (ui/macos)"
+    }
+  ]
+}

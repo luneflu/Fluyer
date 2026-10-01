@@ -44,8 +44,12 @@ pub fn parse_lrc(lrc_text: &str) -> Vec<LyricLine> {
             continue;
         }
 
-        let Some(open_bracket) = line.find('[') else { continue };
-        let Some(close_bracket) = line.find(']') else { continue };
+        let Some(open_bracket) = line.find('[') else {
+            continue;
+        };
+        let Some(close_bracket) = line.find(']') else {
+            continue;
+        };
         if close_bracket <= open_bracket {
             continue;
         }
@@ -53,8 +57,12 @@ pub fn parse_lrc(lrc_text: &str) -> Vec<LyricLine> {
         let tag = &line[open_bracket + 1..close_bracket];
         let Some(colon) = tag.find(':') else { continue };
 
-        let Ok(minutes) = tag[..colon].parse::<f64>() else { continue };
-        let Ok(seconds) = tag[colon + 1..].parse::<f64>() else { continue };
+        let Ok(minutes) = tag[..colon].parse::<f64>() else {
+            continue;
+        };
+        let Ok(seconds) = tag[colon + 1..].parse::<f64>() else {
+            continue;
+        };
         let timestamp_ms = ((minutes * 60.0 + seconds) * 1000.0).round() as u64;
 
         let text = line[close_bracket + 1..].trim().to_string();

@@ -174,7 +174,9 @@ pub fn extract_prominent_from_bytes(
         }
         Err(_) => ImageReader::new(Cursor::new(image_bytes))
             .with_guessed_format()
-            .map_err(|e| image::ImageError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))
+            .map_err(|e| {
+                image::ImageError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e))
+            })
             .and_then(|r| r.decode()),
     };
 
@@ -189,11 +191,7 @@ pub fn extract_prominent_from_bytes(
     }
 }
 
-pub fn generate_blurred_background(
-    colors: &[[u8; 3]],
-    width: u32,
-    height: u32,
-) -> RgbaImage {
+pub fn generate_blurred_background(colors: &[[u8; 3]], width: u32, height: u32) -> RgbaImage {
     let scaled_width = max(1, (width as f32 * DEFAULT_SCALE) as u32);
     let scaled_height = max(1, (height as f32 * DEFAULT_SCALE) as u32);
     let block_size = max(1, (CANVAS_BLOCK_SIZE as f32 * DEFAULT_SCALE) as u32);
@@ -232,8 +230,10 @@ pub fn generate_blurred_background(
         }
     }
 
+    // Svelte uses Gaussian kernel 2 * (300 * 0.05) + 1 = 31. Keep same radius
+    // instead of halving it; otherwise square boundaries remain too sharp.
     let blur_radius = max(1, (CANVAS_BLUR_RADIUS as f32 * DEFAULT_SCALE) as u32);
-    image::imageops::blur(&canvas, blur_radius as f32 / 2.0)
+    image::imageops::blur(&canvas, blur_radius as f32)
 }
 
 #[cfg(test)]

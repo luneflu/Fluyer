@@ -62,11 +62,9 @@ impl MusicMetadata {
     pub async fn get(path: String) -> Result<Self, String> {
         let path_clone = path.clone();
 
-        let sym_res = tokio::task::spawn_blocking(move || {
-            probe::probe_symphonia(&path_clone)
-        })
-        .await
-        .map_err(|e| format!("Task join error: {}", e))?;
+        let sym_res = tokio::task::spawn_blocking(move || probe::probe_symphonia(&path_clone))
+            .await
+            .map_err(|e| format!("Task join error: {}", e))?;
 
         let mut metadata = match sym_res {
             Ok(meta) => meta,
@@ -80,14 +78,8 @@ impl MusicMetadata {
             }
         };
 
-        let title_missing = metadata
-            .title
-            .as_ref()
-            .is_none_or(|t| t.trim().is_empty());
-        let artist_missing = metadata
-            .artist
-            .as_ref()
-            .is_none_or(|a| a.trim().is_empty());
+        let title_missing = metadata.title.as_ref().is_none_or(|t| t.trim().is_empty());
+        let artist_missing = metadata.artist.as_ref().is_none_or(|a| a.trim().is_empty());
 
         if title_missing || artist_missing {
             if let Some(file_name) = Path::new(&metadata.path)

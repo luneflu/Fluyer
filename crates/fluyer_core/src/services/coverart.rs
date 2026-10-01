@@ -81,9 +81,23 @@ impl CoverArtService {
         fallback: Option<&str>,
     ) -> PathBuf {
         let (folder, name) = if let Some(alb) = album.filter(|s| !s.trim().is_empty()) {
-            ("album", if artist.trim().is_empty() { alb.to_string() } else { format!("{} - {}", artist, alb) })
+            (
+                "album",
+                if artist.trim().is_empty() {
+                    alb.to_string()
+                } else {
+                    format!("{} - {}", artist, alb)
+                },
+            )
         } else if let Some(tit) = title.filter(|s| !s.trim().is_empty()) {
-            ("track", if artist.trim().is_empty() { tit.to_string() } else { format!("{} - {}", artist, tit) })
+            (
+                "track",
+                if artist.trim().is_empty() {
+                    tit.to_string()
+                } else {
+                    format!("{} - {}", artist, tit)
+                },
+            )
         } else if !artist.trim().is_empty() {
             ("misc", artist.to_string())
         } else if let Some(fb) = fallback {
@@ -105,6 +119,8 @@ impl CoverArtService {
             })
             .collect();
 
-        self.cache_dir.join(folder).join(format!("{}.jpg", sanitized))
+        self.cache_dir
+            .join(folder)
+            .join(format!("{}.jpg", sanitized))
     }
 }

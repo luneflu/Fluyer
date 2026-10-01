@@ -2,8 +2,8 @@ use crate::audio::RepeatMode;
 use crate::events::EventSink;
 use crate::metadata::MusicMetadata;
 use crate::view_models::{
-    self, AlbumCardViewModel, AlbumDetailViewModel, LyricLine, NativeRepeatMode,
-    PlayViewModel, PlayerBarViewModel, ScanStatusViewModel, TrackItemViewModel,
+    self, AlbumCardViewModel, AlbumDetailViewModel, LyricLine, NativeRepeatMode, PlayViewModel,
+    PlayerBarViewModel, ScanStatusViewModel, TrackItemViewModel,
 };
 use crate::FluyerEngine;
 use std::path::Path;
@@ -189,6 +189,10 @@ impl FluyerAppEngine {
         self.inner.seek(position_ms);
     }
 
+    pub fn get_position(&self) -> u64 {
+        self.inner.player.get_sync_info(false).position_ms()
+    }
+
     pub fn set_volume(&self, volume: f32) {
         self.inner.set_volume(volume);
     }
@@ -292,8 +296,7 @@ impl FluyerAppEngine {
     }
 
     pub fn get_active_lyric_index(&self, position_ms: u64) -> i32 {
-        let lyrics = self.inner.get_parsed_lyrics();
-        view_models::find_active_lyric_index(&lyrics, position_ms)
+        self.inner.active_lyric_index(position_ms)
     }
 
     pub fn get_current_image(&self) -> Option<Vec<u8>> {
@@ -331,9 +334,59 @@ impl FluyerAppEngine {
         view_models::resize_image_rgba(&bytes, width, height).map(|(raw, _, _)| raw)
     }
 
+    // ponytail: returns a pre-downscaled JPEG so scroll views never pay a
+    // full-resolution decode or a multi-hundred-KB FFI transfer per cell.
+    pub fn get_track_thumbnail(&self, index: u64, max_size: u32) -> Option<Vec<u8>> {
+        self.inner
+            .track_thumbnail(index as usize, max_size)
+            .map(|b| b.as_ref().clone())
+    }
+
+    pub fn get_album_thumbnail(&self, index: u64, max_size: u32) -> Option<Vec<u8>> {
+        self.inner
+            .album_thumbnail(index as usize, max_size)
+            .map(|b| b.as_ref().clone())
+    }
+
+    pub fn get_current_thumbnail(&self, max_size: u32) -> Option<Vec<u8>> {
+        self.inner
+            .current_thumbnail(max_size)
+            .map(|b| b.as_ref().clone())
+    }
+
+    // ponytail: async variants offload the blocking decode to the tokio pool so
+    // SwiftUI's main thread never stalls while a scroll view populates rows.
+    pub async fn load_track_thumbnail(&self, index: u64, max_size: u32) -> Option<Vec<u8>> {
+        self.get_track_thumbnail(index, max_size)
+    }
+
+    pub async fn load_album_thumbnail(&self, index: u64, max_size: u32) -> Option<Vec<u8>> {
+        self.get_album_thumbnail(index, max_size)
+    }
+
+    pub async fn load_current_thumbnail(&self, max_size: u32) -> Option<Vec<u8>> {
+        self.get_current_thumbnail(max_size)
+    }
+
     pub fn generate_background_for_current(&self, width: u32, height: u32) -> Option<Vec<u8>> {
         let (raw, _, _) = self.inner.generate_background_for_current(width, height);
         Some(raw)
+    }
+
+    /// Async twin of `generate_background_for_current`. Blurring and the palette
+    /// decode are blocking work, so the UI must not call the sync variant on the
+    /// main thread.
+    pub async fn load_animated_background(
+        &self,
+        width: u32,
+        height: u32,
+    ) -> Option<view_models::AnimatedBackgroundFrame> {
+        let (rgba, w, h) = self.inner.generate_background_for_current(width, height);
+        Some(view_models::AnimatedBackgroundFrame {
+            rgba,
+            width: w,
+            height: h,
+        })
     }
 }
 

@@ -76,13 +76,14 @@ impl LibraryState {
                     }
                 }
                 if !search_lc.is_empty() {
-                    let matches = [&m.title, &m.artist, &m.album, &m.album_artist]
-                        .iter()
-                        .any(|f| {
-                            f.as_deref()
-                                .map(|v| v.to_lowercase().contains(&search_lc))
-                                .unwrap_or(false)
-                        });
+                    let matches =
+                        [&m.title, &m.artist, &m.album, &m.album_artist]
+                            .iter()
+                            .any(|f| {
+                                f.as_deref()
+                                    .map(|v| v.to_lowercase().contains(&search_lc))
+                                    .unwrap_or(false)
+                            });
                     return matches;
                 }
                 true

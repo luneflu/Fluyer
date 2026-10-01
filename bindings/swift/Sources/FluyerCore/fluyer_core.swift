@@ -594,6 +594,8 @@ public protocol FluyerAppEngineProtocol : AnyObject {
     
     func getAlbumImage(index: UInt64)  -> Data?
     
+    func getAlbumThumbnail(index: UInt64, maxSize: UInt32)  -> Data?
+    
     func getAlbumThumbnailRgba(index: UInt64, width: UInt32, height: UInt32)  -> Data?
     
     func getAlbumTracks(albumIndex: UInt64)  -> [TrackItemViewModel]
@@ -602,11 +604,15 @@ public protocol FluyerAppEngineProtocol : AnyObject {
     
     func getCurrentImage()  -> Data?
     
+    func getCurrentThumbnail(maxSize: UInt32)  -> Data?
+    
     func getLyrics()  -> [LyricLine]
     
     func getPlayView()  -> PlayViewModel
     
     func getPlayerBarView()  -> PlayerBarViewModel
+    
+    func getPosition()  -> UInt64
     
     func getScanStatus()  -> ScanStatusViewModel
     
@@ -614,9 +620,24 @@ public protocol FluyerAppEngineProtocol : AnyObject {
     
     func getTrackImage(index: UInt64)  -> Data?
     
+    func getTrackThumbnail(index: UInt64, maxSize: UInt32)  -> Data?
+    
     func getTrackThumbnailRgba(index: UInt64, width: UInt32, height: UInt32)  -> Data?
     
     func getTrackView(index: UInt64)  -> TrackItemViewModel?
+    
+    func loadAlbumThumbnail(index: UInt64, maxSize: UInt32) async  -> Data?
+    
+    /**
+     * Async twin of `generate_background_for_current`. Blurring and the palette
+     * decode are blocking work, so the UI must not call the sync variant on the
+     * main thread.
+     */
+    func loadAnimatedBackground(width: UInt32, height: UInt32) async  -> AnimatedBackgroundFrame?
+    
+    func loadCurrentThumbnail(maxSize: UInt32) async  -> Data?
+    
+    func loadTrackThumbnail(index: UInt64, maxSize: UInt32) async  -> Data?
     
     func next() 
     
@@ -768,6 +789,15 @@ open func getAlbumImage(index: UInt64) -> Data? {
 })
 }
     
+open func getAlbumThumbnail(index: UInt64, maxSize: UInt32) -> Data? {
+    return try!  FfiConverterOptionData.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_get_album_thumbnail(self.uniffiClonePointer(),
+        FfiConverterUInt64.lower(index),
+        FfiConverterUInt32.lower(maxSize),$0
+    )
+})
+}
+    
 open func getAlbumThumbnailRgba(index: UInt64, width: UInt32, height: UInt32) -> Data? {
     return try!  FfiConverterOptionData.lift(try! rustCall() {
     uniffi_fluyer_core_fn_method_fluyerappengine_get_album_thumbnail_rgba(self.uniffiClonePointer(),
@@ -801,6 +831,14 @@ open func getCurrentImage() -> Data? {
 })
 }
     
+open func getCurrentThumbnail(maxSize: UInt32) -> Data? {
+    return try!  FfiConverterOptionData.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_get_current_thumbnail(self.uniffiClonePointer(),
+        FfiConverterUInt32.lower(maxSize),$0
+    )
+})
+}
+    
 open func getLyrics() -> [LyricLine] {
     return try!  FfiConverterSequenceTypeLyricLine.lift(try! rustCall() {
     uniffi_fluyer_core_fn_method_fluyerappengine_get_lyrics(self.uniffiClonePointer(),$0
@@ -818,6 +856,13 @@ open func getPlayView() -> PlayViewModel {
 open func getPlayerBarView() -> PlayerBarViewModel {
     return try!  FfiConverterTypePlayerBarViewModel.lift(try! rustCall() {
     uniffi_fluyer_core_fn_method_fluyerappengine_get_player_bar_view(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+open func getPosition() -> UInt64 {
+    return try!  FfiConverterUInt64.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_get_position(self.uniffiClonePointer(),$0
     )
 })
 }
@@ -844,6 +889,15 @@ open func getTrackImage(index: UInt64) -> Data? {
 })
 }
     
+open func getTrackThumbnail(index: UInt64, maxSize: UInt32) -> Data? {
+    return try!  FfiConverterOptionData.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_get_track_thumbnail(self.uniffiClonePointer(),
+        FfiConverterUInt64.lower(index),
+        FfiConverterUInt32.lower(maxSize),$0
+    )
+})
+}
+    
 open func getTrackThumbnailRgba(index: UInt64, width: UInt32, height: UInt32) -> Data? {
     return try!  FfiConverterOptionData.lift(try! rustCall() {
     uniffi_fluyer_core_fn_method_fluyerappengine_get_track_thumbnail_rgba(self.uniffiClonePointer(),
@@ -860,6 +914,83 @@ open func getTrackView(index: UInt64) -> TrackItemViewModel? {
         FfiConverterUInt64.lower(index),$0
     )
 })
+}
+    
+open func loadAlbumThumbnail(index: UInt64, maxSize: UInt32)async  -> Data? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_load_album_thumbnail(
+                    self.uniffiClonePointer(),
+                    FfiConverterUInt64.lower(index),FfiConverterUInt32.lower(maxSize)
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionData.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+    /**
+     * Async twin of `generate_background_for_current`. Blurring and the palette
+     * decode are blocking work, so the UI must not call the sync variant on the
+     * main thread.
+     */
+open func loadAnimatedBackground(width: UInt32, height: UInt32)async  -> AnimatedBackgroundFrame? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_load_animated_background(
+                    self.uniffiClonePointer(),
+                    FfiConverterUInt32.lower(width),FfiConverterUInt32.lower(height)
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeAnimatedBackgroundFrame.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func loadCurrentThumbnail(maxSize: UInt32)async  -> Data? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_load_current_thumbnail(
+                    self.uniffiClonePointer(),
+                    FfiConverterUInt32.lower(maxSize)
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionData.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func loadTrackThumbnail(index: UInt64, maxSize: UInt32)async  -> Data? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_load_track_thumbnail(
+                    self.uniffiClonePointer(),
+                    FfiConverterUInt64.lower(index),FfiConverterUInt32.lower(maxSize)
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionData.lift,
+            errorHandler: nil
+            
+        )
 }
     
 open func next() {try! rustCall() {
@@ -1215,6 +1346,84 @@ public func FfiConverterTypeAlbumDetailViewModel_lift(_ buf: RustBuffer) throws 
 #endif
 public func FfiConverterTypeAlbumDetailViewModel_lower(_ value: AlbumDetailViewModel) -> RustBuffer {
     return FfiConverterTypeAlbumDetailViewModel.lower(value)
+}
+
+
+/**
+ * One pre-blurred ambient background frame: raw RGBA at `width` x `height`.
+ * The UI stretches this to fill, so it does not need to know the scale factor.
+ */
+public struct AnimatedBackgroundFrame {
+    public var rgba: Data
+    public var width: UInt32
+    public var height: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(rgba: Data, width: UInt32, height: UInt32) {
+        self.rgba = rgba
+        self.width = width
+        self.height = height
+    }
+}
+
+
+
+extension AnimatedBackgroundFrame: Equatable, Hashable {
+    public static func ==(lhs: AnimatedBackgroundFrame, rhs: AnimatedBackgroundFrame) -> Bool {
+        if lhs.rgba != rhs.rgba {
+            return false
+        }
+        if lhs.width != rhs.width {
+            return false
+        }
+        if lhs.height != rhs.height {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(rgba)
+        hasher.combine(width)
+        hasher.combine(height)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAnimatedBackgroundFrame: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AnimatedBackgroundFrame {
+        return
+            try AnimatedBackgroundFrame(
+                rgba: FfiConverterData.read(from: &buf), 
+                width: FfiConverterUInt32.read(from: &buf), 
+                height: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AnimatedBackgroundFrame, into buf: inout [UInt8]) {
+        FfiConverterData.write(value.rgba, into: &buf)
+        FfiConverterUInt32.write(value.width, into: &buf)
+        FfiConverterUInt32.write(value.height, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnimatedBackgroundFrame_lift(_ buf: RustBuffer) throws -> AnimatedBackgroundFrame {
+    return try FfiConverterTypeAnimatedBackgroundFrame.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAnimatedBackgroundFrame_lower(_ value: AnimatedBackgroundFrame) -> RustBuffer {
+    return FfiConverterTypeAnimatedBackgroundFrame.lower(value)
 }
 
 
@@ -2243,6 +2452,30 @@ fileprivate struct FfiConverterOptionTypeAlbumDetailViewModel: FfiConverterRustB
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionTypeAnimatedBackgroundFrame: FfiConverterRustBuffer {
+    typealias SwiftType = AnimatedBackgroundFrame?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeAnimatedBackgroundFrame.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeAnimatedBackgroundFrame.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionTypeTrackItemViewModel: FfiConverterRustBuffer {
     typealias SwiftType = TrackItemViewModel?
 
@@ -2387,6 +2620,52 @@ fileprivate struct FfiConverterSequenceTypeTrackItemViewModel: FfiConverterRustB
         return seq
     }
 }
+private let UNIFFI_RUST_FUTURE_POLL_READY: Int8 = 0
+private let UNIFFI_RUST_FUTURE_POLL_MAYBE_READY: Int8 = 1
+
+fileprivate let uniffiContinuationHandleMap = UniffiHandleMap<UnsafeContinuation<Int8, Never>>()
+
+fileprivate func uniffiRustCallAsync<F, T>(
+    rustFutureFunc: () -> UInt64,
+    pollFunc: (UInt64, @escaping UniffiRustFutureContinuationCallback, UInt64) -> (),
+    completeFunc: (UInt64, UnsafeMutablePointer<RustCallStatus>) -> F,
+    freeFunc: (UInt64) -> (),
+    liftFunc: (F) throws -> T,
+    errorHandler: ((RustBuffer) throws -> Swift.Error)?
+) async throws -> T {
+    // Make sure to call uniffiEnsureInitialized() since future creation doesn't have a
+    // RustCallStatus param, so doesn't use makeRustCall()
+    uniffiEnsureInitialized()
+    let rustFuture = rustFutureFunc()
+    defer {
+        freeFunc(rustFuture)
+    }
+    var pollResult: Int8;
+    repeat {
+        pollResult = await withUnsafeContinuation {
+            pollFunc(
+                rustFuture,
+                uniffiFutureContinuationCallback,
+                uniffiContinuationHandleMap.insert(obj: $0)
+            )
+        }
+    } while pollResult != UNIFFI_RUST_FUTURE_POLL_READY
+
+    return try liftFunc(makeRustCall(
+        { completeFunc(rustFuture, $0) },
+        errorHandler: errorHandler
+    ))
+}
+
+// Callback handlers for an async calls.  These are invoked by Rust when the future is ready.  They
+// lift the return value or error and resume the suspended function.
+fileprivate func uniffiFutureContinuationCallback(handle: UInt64, pollResult: Int8) {
+    if let continuation = try? uniffiContinuationHandleMap.remove(handle: handle) {
+        continuation.resume(returning: pollResult)
+    } else {
+        print("uniffiFutureContinuationCallback invalid handle")
+    }
+}
 public func formatTimeLabel(ms: UInt64) -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_fluyer_core_fn_func_format_time_label(
@@ -2444,6 +2723,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_image() != 8223) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_thumbnail() != 15426) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_thumbnail_rgba() != 35604) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -2456,6 +2738,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_current_image() != 14012) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_current_thumbnail() != 29066) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_lyrics() != 3464) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -2463,6 +2748,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_player_bar_view() != 64426) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_position() != 45143) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_scan_status() != 20235) {
@@ -2474,10 +2762,25 @@ private var initializationResult: InitializationResult = {
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_image() != 12325) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_thumbnail() != 41648) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_thumbnail_rgba() != 54932) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_view() != 48451) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_load_album_thumbnail() != 48618) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_load_animated_background() != 14573) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_load_current_thumbnail() != 58446) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_load_track_thumbnail() != 9651) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_next() != 33101) {

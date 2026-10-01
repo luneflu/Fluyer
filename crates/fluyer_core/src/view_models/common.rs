@@ -41,3 +41,12 @@ pub struct ColorRgb {
     pub g: u8,
     pub b: u8,
 }
+
+/// One pre-blurred ambient background frame: raw RGBA at `width` x `height`.
+/// The UI stretches this to fill, so it does not need to know the scale factor.
+#[derive(uniffi::Record, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AnimatedBackgroundFrame {
+    pub rgba: Vec<u8>,
+    pub width: u32,
+    pub height: u32,
+}

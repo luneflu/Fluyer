@@ -129,10 +129,8 @@ impl LyricService {
         score += title_sim * 0.4;
 
         let primary_artist = query.artist.split(" • ").next().unwrap_or(&query.artist);
-        let artist_sim = calculate_similarity(
-            &normalize(&result.artist_name),
-            &normalize(primary_artist),
-        );
+        let artist_sim =
+            calculate_similarity(&normalize(&result.artist_name), &normalize(primary_artist));
         score += artist_sim * 0.3;
 
         if let (Some(res_dur), Some(q_dur)) = (result.duration, query.duration) {
