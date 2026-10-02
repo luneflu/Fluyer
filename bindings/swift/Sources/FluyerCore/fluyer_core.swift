@@ -626,6 +626,8 @@ public protocol FluyerAppEngineProtocol : AnyObject {
     
     func getTrackView(index: UInt64)  -> TrackItemViewModel?
     
+    func getVolume()  -> Float
+    
     func loadAlbumThumbnail(index: UInt64, maxSize: UInt32) async  -> Data?
     
     /**
@@ -912,6 +914,13 @@ open func getTrackView(index: UInt64) -> TrackItemViewModel? {
     return try!  FfiConverterOptionTypeTrackItemViewModel.lift(try! rustCall() {
     uniffi_fluyer_core_fn_method_fluyerappengine_get_track_view(self.uniffiClonePointer(),
         FfiConverterUInt64.lower(index),$0
+    )
+})
+}
+    
+open func getVolume() -> Float {
+    return try!  FfiConverterFloat.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_get_volume(self.uniffiClonePointer(),$0
     )
 })
 }
@@ -2769,6 +2778,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_view() != 48451) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_volume() != 58439) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_load_album_thumbnail() != 48618) {

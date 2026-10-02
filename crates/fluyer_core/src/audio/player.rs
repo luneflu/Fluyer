@@ -42,6 +42,7 @@ pub struct MusicPlayer {
     queue: Arc<Mutex<PlaybackQueue>>,
     temp_wav_path: Arc<Mutex<Option<PathBuf>>>,
     event_sink: Option<Arc<dyn EventSink>>,
+    volume: Arc<AtomicU32>,
 }
 
 struct SyncData {
@@ -204,6 +205,7 @@ impl MusicPlayer {
             queue: Arc::new(Mutex::new(PlaybackQueue::default())),
             temp_wav_path: Arc::new(Mutex::new(None)),
             event_sink,
+            volume: Arc::new(AtomicU32::new(1.0f32.to_bits())),
         };
 
         player.init_bass();
@@ -756,6 +758,7 @@ impl MusicPlayer {
     pub fn set_volume(&self, volume: f32) {
         let bass_mixer = self.bass_mixer.load(Ordering::SeqCst);
         let clamped = volume.clamp(0.0, 2.0);
+        self.volume.store(clamped.to_bits(), Ordering::SeqCst);
 
         unsafe {
             if bass_mixer != 0
@@ -764,6 +767,10 @@ impl MusicPlayer {
                 log::error!("Failed to set volume, error: {}", BASS_ErrorGetCode());
             }
         }
+    }
+
+    pub fn get_volume(&self) -> f32 {
+        f32::from_bits(self.volume.load(Ordering::SeqCst))
     }
 
     pub fn emit_sync(&self, is_reset: bool) {

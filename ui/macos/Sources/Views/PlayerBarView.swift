@@ -59,11 +59,11 @@ public struct PlayerBarView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                .frame(width: 140, alignment: .leading)
+                .frame(width: 190, alignment: .leading)
 
-                Spacer()
+                Spacer(minLength: 16)
 
-                // Column 2: Track Info (Centered: Cover + Title + Artist)
+                // Column 2: Track Info (Dynamically centered, hugs visual content)
                 HStack(spacing: 10) {
                     // Cover artwork (Clickable -> opens PlayView!)
                     Button(action: {
@@ -87,13 +87,12 @@ public struct PlayerBarView: View {
                             .foregroundColor(.white.opacity(0.6))
                             .lineLimit(1)
                     }
-                    .frame(maxWidth: 240, alignment: .leading)
                 }
 
-                Spacer()
+                Spacer(minLength: 16)
 
-                // Column 3: Secondary controls (Repeat, Shuffle, Volume, Time)
-                HStack(spacing: 12) {
+                // Column 3: Secondary controls (Repeat, Shuffle, Volume)
+                HStack(spacing: 10) {
                     Button(action: { state.cycleRepeat() }) {
                         Image(systemName: repeatIconName)
                             .font(.system(size: 13))
@@ -110,12 +109,22 @@ public struct PlayerBarView: View {
                     }
                     .buttonStyle(.plain)
 
-                    Text(state.playerBar.timeLabel)
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.6))
-                        .padding(.leading, 4)
+                    Button(action: { state.toggleMute() }) {
+                        Image(systemName: volumeIconName)
+                            .font(.system(size: 13))
+                            .foregroundColor(state.playerBar.volume > 0.001 ? .white.opacity(0.85) : .white.opacity(0.4))
+                            .frame(width: 24, height: 24)
+                    }
+                    .buttonStyle(.plain)
+                    .help(state.playerBar.volume <= 0.001 ? "Unmute" : "Mute")
+
+                    VolumeBar(volume: Binding(
+                        get: { state.playerBar.volume },
+                        set: { state.setVolume($0) }
+                    ))
+                    .frame(width: 80, height: 24)
                 }
-                .frame(width: 170, alignment: .trailing)
+                .frame(width: 190, alignment: .trailing)
             }
             .padding(.horizontal, 18)
             .frame(height: 52)
@@ -127,8 +136,22 @@ public struct PlayerBarView: View {
                             .stroke(Color.white.opacity(0.18), lineWidth: 1)
                     )
             )
+            .animation(.easeInOut(duration: 0.25), value: state.playerBar.title)
             .padding(.horizontal, 16)
             .padding(.bottom, 10)
+        }
+    }
+
+    private var volumeIconName: String {
+        let vol = state.playerBar.volume
+        if vol <= 0.001 {
+            return "speaker.slash.fill"
+        } else if vol < 0.33 {
+            return "speaker.wave.1.fill"
+        } else if vol < 0.66 {
+            return "speaker.wave.2.fill"
+        } else {
+            return "speaker.wave.3.fill"
         }
     }
 
@@ -136,6 +159,42 @@ public struct PlayerBarView: View {
         switch state.playerBar.repeatMode {
         case .one: return "repeat.1"
         case .all, .none: return "repeat"
+        }
+    }
+}
+
+// MARK: - Volume Bar
+
+private struct VolumeBar: View {
+    @Binding var volume: Float
+    @State private var isHovering = false
+
+    var body: some View {
+        GeometryReader { geo in
+            let width = geo.size.width
+            let progress = CGFloat(max(0.0, min(1.0, volume)))
+
+            ZStack(alignment: .leading) {
+                // Background track
+                Capsule()
+                    .fill(Color.white.opacity(0.18))
+                    .frame(height: isHovering ? 5 : 4)
+
+                // Fill track
+                Capsule()
+                    .fill(Color.white.opacity(isHovering ? 1.0 : 0.85))
+                    .frame(width: max(0, width * progress), height: isHovering ? 5 : 4)
+            }
+            .frame(maxHeight: .infinity, alignment: .center)
+            .contentShape(Rectangle())
+            .onHover { isHovering = $0 }
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        let pct = Float(value.location.x / width)
+                        volume = max(0.0, min(1.0, pct))
+                    }
+            )
         }
     }
 }

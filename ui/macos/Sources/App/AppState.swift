@@ -296,6 +296,25 @@ public final class AppState: FluyerEventListener {
         engine?.shuffle()
     }
 
+    private var lastNonZeroVolume: Float = 1.0
+
+    public func setVolume(_ volume: Float) {
+        let clamped = volume.clamped(to: 0.0...1.0)
+        if clamped > 0.001 {
+            lastNonZeroVolume = clamped
+        }
+        playerBar.volume = clamped
+        engine?.setVolume(volume: clamped)
+    }
+
+    public func toggleMute() {
+        if playerBar.volume > 0.001 {
+            setVolume(0.0)
+        } else {
+            setVolume(lastNonZeroVolume > 0.05 ? lastNonZeroVolume : 1.0)
+        }
+    }
+
     public func playTrack(at index: Int) {
         if let albumIndex = selectedAlbumIndex {
             engine?.playAlbumTrack(albumIndex: UInt64(albumIndex), trackIndex: UInt64(index))

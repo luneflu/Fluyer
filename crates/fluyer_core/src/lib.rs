@@ -166,6 +166,10 @@ impl FluyerEngine {
         self.player.set_volume(volume);
     }
 
+    pub fn get_volume(&self) -> f32 {
+        self.player.get_volume()
+    }
+
     pub fn set_repeat_mode(&self, mode: RepeatMode) {
         self.player.set_repeat_mode(mode);
     }
@@ -455,7 +459,7 @@ impl FluyerEngine {
             is_playing: sync.is_playing,
             repeat_mode: sync.repeat_mode.into(),
             is_shuffled: sync.is_shuffled,
-            volume: 1.0,
+            volume: self.player.get_volume(),
         }
     }
 

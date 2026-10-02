@@ -197,6 +197,10 @@ impl FluyerAppEngine {
         self.inner.set_volume(volume);
     }
 
+    pub fn get_volume(&self) -> f32 {
+        self.inner.get_volume()
+    }
+
     pub fn set_repeat_mode(&self, mode: NativeRepeatMode) {
         self.inner.set_repeat_mode(mode.into());
     }
