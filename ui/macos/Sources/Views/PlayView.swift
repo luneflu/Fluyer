@@ -1,231 +1,349 @@
-import SwiftUI
 import FluyerCore
+import SwiftUI
 
+/// Now-playing surface mirroring `Fluyer/src/routes/play/+page.svelte`.
+///
+/// ponytail: the Svelte page is a two-column grid — cover art (col 1, row 1), the
+/// control card (col 1, row 2) and the lyrics scroller spanning both rows (col 2).
+/// Without lyrics the page collapses to a single centered column. The proportions
+/// below mirror `md:grid-cols-[40%_55%]` / `md:grid-cols-[50%]`.
 public struct PlayView: View {
     @Bindable var state: AppState
 
+    @State private var isIdle = false
+    @State private var backButtonHidden = false
+    @State private var idleTask: Task<Void, Never>?
+
+    /// Svelte hides the control-card column entirely below a single lyric line.
+    private var hasLyrics: Bool { state.playView.lyrics.count > 1 }
+
+    private var activeLyricIndex: Int { Int(state.playView.currentLyricIndex) }
+
     public var body: some View {
         GeometryReader { geo in
-            ZStack {
-                VStack(spacing: 0) {
-                    // Top: Back Button matching wxWidgets ("Back" button)
-                    HStack {
-                        Button(action: {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                                state.showPlayView = false
-                            }
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 13, weight: .semibold))
-                                Text("Back")
-                                    .font(.system(size: 13))
-                            }
-                            .foregroundColor(.white.opacity(0.85))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(Color.white.opacity(0.12))
-                            .clipShape(Capsule())
-                        }
-                        .buttonStyle(.plain)
+            ZStack(alignment: .topLeading) {
+                HStack(alignment: .top, spacing: 0) {
+                    // Single column instance for both states: the offset below is what
+                    // slides it between centered (no lyrics) and left-rail (lyrics).
+                    leftColumn(
+                        columnWidth: geo.size.width * (hasLyrics ? 0.40 : 0.50),
+                        isCentered: !hasLyrics
+                    )
+                    .padding(.top, 24)
 
-                        Spacer()
+                    if hasLyrics {
+                        lyricsColumn
+                            .frame(width: geo.size.width * 0.55)
+                            .transition(.move(edge: .trailing))
                     }
-                    .padding(.horizontal, 32)
-                    .padding(.top, 20)
+                }
+                .padding(.trailing, 20)
+                .animation(.easeInOut(duration: 0.4), value: hasLyrics)
 
-                    // Center Content: Left Control Card + Right Lyrics Card
-                    HStack(alignment: .center, spacing: 32) {
-                        // Left: Glass Control Card matching wxWidgets ControlCardPanel
-                        VStack(spacing: 20) {
-                            // Cover art with rounded corners
-                            CurrentCoverView(state: state, side: 290)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                                )
-                                .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 8)
-
-                            // Track Metadata
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(state.playerBar.title.isEmpty ? "No track playing" : state.playerBar.title)
-                                    .font(.system(size: 20, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .lineLimit(1)
-
-                                Text(state.playerBar.artist.isEmpty ? "Fluyer" : state.playerBar.artist)
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.7))
-                                    .lineLimit(1)
-
-                                if !state.playerBar.album.isEmpty {
-                                    Text(state.playerBar.album)
-                                        .font(.system(size: 12))
-                                        .foregroundColor(.white.opacity(0.45))
-                                        .lineLimit(1)
-                                }
-                            }
-                            .frame(maxWidth: 290, alignment: .leading)
-
-                            // Scrubber & Time
-                            VStack(spacing: 6) {
-                                GeometryReader { geo in
-                                    ZStack(alignment: .leading) {
-                                        Capsule()
-                                            .fill(Color.white.opacity(0.15))
-                                            .frame(height: 5)
-
-                                        Capsule()
-                                            .fill(Color.white)
-                                            .frame(width: geo.size.width * CGFloat(state.playerBar.progressPct), height: 5)
-                                    }
-                                    .contentShape(Rectangle())
-                                    .gesture(
-                                        DragGesture(minimumDistance: 0)
-                                            .onChanged { value in
-                                                let pct = Float(value.location.x / geo.size.width)
-                                                state.seekPercent(pct)
-                                            }
-                                    )
-                                }
-                                .frame(height: 5)
-
-                                HStack {
-                                    Text(formatTime(state.playerBar.positionMs))
-                                        .font(.system(size: 11, design: .monospaced))
-                                        .foregroundColor(.white.opacity(0.5))
-                                    Spacer()
-                                    Text(formatTime(state.playerBar.durationMs))
-                                        .font(.system(size: 11, design: .monospaced))
-                                        .foregroundColor(.white.opacity(0.5))
-                                }
-                            }
-                            .frame(width: 290)
-
-                            // Controls Capsule
-                            HStack(spacing: 24) {
-                                Button(action: { state.previous() }) {
-                                    Image(systemName: "backward.fill")
-                                        .font(.system(size: 18))
-                                        .foregroundColor(.white)
-                                }
-                                .buttonStyle(.plain)
-
-                                Button(action: { state.togglePlay() }) {
-                                    Image(systemName: state.playerBar.isPlaying ? "pause.fill" : "play.fill")
-                                        .font(.system(size: 24))
-                                        .foregroundColor(.white)
-                                }
-                                .buttonStyle(.plain)
-
-                                Button(action: { state.next() }) {
-                                    Image(systemName: "forward.fill")
-                                        .font(.system(size: 18))
-                                        .foregroundColor(.white)
-                                }
-                                .buttonStyle(.plain)
-
-                                Button(action: { state.shuffle() }) {
-                                    Image(systemName: "shuffle")
-                                        .font(.system(size: 15))
-                                        .foregroundColor(state.playerBar.isShuffled ? .white : .white.opacity(0.4))
-                                }
-                                .buttonStyle(.plain)
-
-                                Button(action: { state.cycleRepeat() }) {
-                                    Image(systemName: repeatIconName)
-                                        .font(.system(size: 15))
-                                        .foregroundColor(state.playerBar.repeatMode != .none ? .white : .white.opacity(0.4))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 10)
-                            .background(
-                                Capsule()
-                                    .fill(Color.white.opacity(0.08))
-                                    .overlay(
-                                        Capsule()
-                                            .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                                    )
-                            )
-                        }
-                        .padding(24)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.white.opacity(0.06))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                                )
-                        )
-
-                        // Right: Glass Lyrics Card matching wxWidgets LyricsCtrl
-                        lyricsCard
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 20)
+                backButton
             }
-        }
+            .frame(width: geo.size.width, height: geo.size.height)
+            .onContinuousHover { phase in
+                switch phase {
+                case .active:
+                    resetIdleTimer()
+                case .ended:
+                    break
+                }
+            }
+            .onExitCommand {
+                handleBackWithDelay()
+            }
+            .onAppear {
+                resetIdleTimer()
+            }
+            .onDisappear {
+                idleTask?.cancel()
+            }
         }
     }
 
-    private var lyricsCard: some View {
-        let lyrics = state.playView.lyrics
-        let activeIndex = Int(state.playView.currentLyricIndex)
+    // MARK: - Left Column (cover art + control card)
 
-        return ZStack {
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.06))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+    /// Cover art and the control card share one width so the card always lines up with
+    /// the artwork edge; the card hugs its own content vertically. Both are centred
+    /// vertically: trailing-aligned against the lyrics column (`ms-auto` in the Svelte
+    /// markup, with a 40pt gutter) when lyrics exist, centred on the window when not.
+    ///
+    /// ponytail: the horizontal placement is an explicit `offset` rather than a frame
+    /// alignment, because alignment is resolved at layout time and would snap instead of
+    /// sliding when lyrics appear or disappear on a track change.
+    private func leftColumn(columnWidth: CGFloat, isCentered: Bool) -> some View {
+        let side = min(max(columnWidth - 40, 200), 360)
+        let dx = isCentered ? (columnWidth - side) / 2 : max(columnWidth - 40 - side, 0)
+
+        return VStack(spacing: 16) {
+            CurrentCoverView(state: state, side: side)
+                .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 8)
+
+            controlCard
+                .frame(width: side)
+        }
+        .frame(minWidth: columnWidth, maxWidth: columnWidth, maxHeight: .infinity, alignment: .leading)
+        .offset(x: dx)
+    }
+
+    private var controlCard: some View {
+        VStack(spacing: 0) {
+            trackInfoRow
+                .padding(.top, 4)
+                .padding(.bottom, 12)
+
+            ProgressTrack(
+                progress: Binding(
+                    get: { state.playerBar.progressPct },
+                    set: { state.seekPercent($0) }
                 )
+            )
+            .frame(height: 8)
 
-            if lyrics.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "music.mic")
-                        .font(.system(size: 32))
-                        .foregroundColor(.white.opacity(0.2))
-                    Text("No lyrics found")
-                        .font(.system(size: 15))
-                        .foregroundColor(.white.opacity(0.4))
+            transportControls
+                .padding(.top, 4)
+
+            volumeRow
+        }
+        // .padding(20)
+        // .background(
+        //     RoundedRectangle(cornerRadius: 8)
+        //         .fill(Color.white.opacity(0.06))
+        //         .overlay(
+        //             RoundedRectangle(cornerRadius: 8)
+        //                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
+        //         )
+        // )
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// Elapsed time on the left, `artist • title` centred, total duration right.
+    ///
+    /// ponytail: `.transition(.identity)` keeps the metadata from cross-fading when a
+    /// track change swaps the string while the lyrics layout is still animating.
+    private var trackInfoRow: some View {
+        HStack(spacing: 10) {
+            Text(formatTime(state.playerBar.positionMs))
+                .font(.system(size: 12))
+                .foregroundColor(.white.opacity(0.75))
+                .frame(width: 48, alignment: .leading)
+                .contentTransition(.identity)
+                .transition(.identity)
+
+            Text(
+                "\(state.playerBar.artist.isEmpty ? "Fluyer" : state.playerBar.artist) • \(state.playerBar.title.isEmpty ? "No track playing" : state.playerBar.title)"
+            )
+            .font(.system(size: 15, weight: .medium))
+            .foregroundColor(.white.opacity(0.9))
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .frame(maxWidth: .infinity)
+            .transition(.identity)
+            .contentTransition(.identity)
+
+            Text(formatTime(state.playerBar.durationMs))
+                .font(.system(size: 12))
+                .foregroundColor(.white.opacity(0.75))
+                .frame(width: 48, alignment: .trailing)
+                .contentTransition(.identity)
+                .transition(.identity)
+        }
+        .monospacedDigit()
+    }
+
+    /// Mirrors `grid-cols-[1fr_auto_auto_auto_1fr]`: repeat hugs the transport group on
+    /// its left, shuffle on its right, play/pause stays centred.
+    private var transportControls: some View {
+        HStack(spacing: 8) {
+            Color.clear.frame(maxWidth: .infinity)
+
+            iconButton(
+                icon: repeatIconName,
+                size: 15,
+                isActive: state.playerBar.repeatMode != .none,
+                help: "Repeat",
+                action: { state.cycleRepeat() }
+            )
+
+            iconButton(
+                icon: "backward.fill", size: 18, help: "Previous", action: { state.previous() })
+
+            iconButton(
+                icon: state.playerBar.isPlaying ? "pause.fill" : "play.fill",
+                size: 24,
+                help: state.playerBar.isPlaying ? "Pause" : "Play",
+                action: { state.togglePlay() }
+            )
+
+            iconButton(icon: "forward.fill", size: 18, help: "Next", action: { state.next() })
+
+            iconButton(
+                icon: "shuffle",
+                size: 15,
+                isActive: state.playerBar.isShuffled,
+                help: "Shuffle",
+                action: { state.shuffle() }
+            )
+
+            Color.clear.frame(maxWidth: .infinity)
+        }
+    }
+
+    private var volumeRow: some View {
+        HStack(spacing: 12) {
+            iconButton(
+                icon: "speaker.slash.fill",
+                size: 13,
+                isActive: state.playerBar.volume > 0.001,
+                help: state.playerBar.volume <= 0.001 ? "Unmute" : "Mute",
+                action: { state.toggleMute() }
+            )
+            .frame(width: 20)
+
+            ProgressTrack(
+                progress: Binding(
+                    get: { state.playerBar.volume },
+                    set: { state.setVolume($0) }
+                ), isThin: true
+            )
+            .frame(height: 14)
+
+            iconButton(
+                icon: volumeIconName,
+                size: 13,
+                isActive: state.playerBar.volume > 0.001,
+                help: "Max volume",
+                action: { state.setVolume(1.0) }
+            )
+            .frame(width: 20)
+        }
+    }
+
+    private func iconButton(
+        icon: String,
+        size: CGFloat,
+        isActive: Bool = true,
+        help: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: size))
+                .foregroundColor(.white.opacity(isActive ? 0.9 : 0.4))
+                .frame(width: size + 18, height: size + 18)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(help)
+    }
+
+    // MARK: - Lyrics Column
+
+    private var lyricsColumn: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.vertical) {
+                LazyVStack(alignment: .leading, spacing: 28) {
+                    ForEach(Array(state.playView.lyrics.indices), id: \.self) { i in
+                        lyricLine(i)
+                    }
                 }
-            } else {
-                ScrollViewReader { proxy in
-                    ScrollView(showsIndicators: false) {
-                        LazyVStack(alignment: .leading, spacing: 22) {
-                            ForEach(0..<lyrics.count, id: \.self) { i in
-                                let line = lyrics[i]
-                                let isActive = (i == activeIndex)
-
-                                Text(line.text.isEmpty ? "♪" : line.text)
-                                    .font(.system(size: isActive ? 22 : 16, weight: isActive ? .bold : .regular))
-                                    .foregroundColor(isActive ? .white : .white.opacity(0.38))
-                                    .scaleEffect(isActive ? 1.02 : 1.0, anchor: .leading)
-                                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isActive)
-                                    .contentShape(Rectangle())
-                                    .onTapGesture {
-                                        state.seek(positionMs: line.timestampMs)
-                                    }
-                                    .id(i)
-                            }
-                        }
-                        .padding(.horizontal, 32)
-                        .padding(.vertical, 140)
-                    }
-                    .onChange(of: activeIndex) { _, newIndex in
-                        if newIndex >= 0 && newIndex < lyrics.count {
-                            withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
-                                proxy.scrollTo(newIndex, anchor: .center)
-                            }
-                        }
-                    }
+                .padding(.vertical, 260)
+                .padding(.horizontal, 28)
+            }
+            .scrollIndicators(.hidden)
+            .mask(
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0),
+                        .init(color: .black, location: 0.4),
+                        .init(color: .black, location: 0.6),
+                        .init(color: .clear, location: 1),
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .onChange(of: activeLyricIndex) { _, newIndex in
+                guard newIndex >= 0, newIndex < state.playView.lyrics.count else { return }
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+                    proxy.scrollTo(newIndex, anchor: .center)
                 }
             }
         }
     }
+
+    private func lyricLine(_ i: Int) -> some View {
+        let line = state.playView.lyrics[i]
+        let isActive = (i == activeLyricIndex)
+
+        return Group {
+            if line.text.isEmpty {
+                Image(systemName: "music.note")
+                    .font(.system(size: isActive ? 33 : 27))
+                    .foregroundColor(.white.opacity(isActive ? 0.95 : 0.5))
+                    .frame(width: isActive ? 38 : 32, alignment: .leading)
+            } else {
+                Text(line.text)
+                    .font(.system(size: isActive ? 30 : 25, weight: .bold))
+                    .foregroundColor(.white.opacity(isActive ? 1 : 0.4))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 20)
+        .scaleEffect(isActive ? 1.0 : 0.94, anchor: .leading)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isActive)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            state.seek(positionMs: line.timestampMs)
+        }
+        .id(i)
+    }
+
+    // MARK: - Back Button
+
+    private var backButton: some View {
+        Button(action: { handleBackWithDelay() }) {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white)
+                .frame(width: 28, height: 28)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("Back (Esc)")
+        .padding(.leading, 12)
+        .padding(.top, 24)
+        .opacity(backButtonHidden ? 0 : (isIdle ? 0 : 0.7))
+        .animation(.easeInOut(duration: 0.25), value: isIdle)
+        .allowsHitTesting(!isIdle && !backButtonHidden)
+    }
+
+    private func handleBackWithDelay() {
+        guard !backButtonHidden else { return }
+        backButtonHidden = true
+        idleTask?.cancel()
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                state.showPlayView = false
+            }
+        }
+    }
+
+    private func resetIdleTimer() {
+        if isIdle { isIdle = false }
+        idleTask?.cancel()
+        idleTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard !Task.isCancelled else { return }
+            isIdle = true
+        }
+    }
+
+    // MARK: - Helpers
 
     private var repeatIconName: String {
         switch state.playerBar.repeatMode {
@@ -234,10 +352,59 @@ public struct PlayView: View {
         }
     }
 
+    private var volumeIconName: String {
+        let vol = state.playerBar.volume
+        if vol <= 0.001 { return "speaker.slash.fill" }
+        if vol < 0.33 { return "speaker.wave.1.fill" }
+        if vol < 0.66 { return "speaker.wave.2.fill" }
+        return "speaker.wave.3.fill"
+    }
+
     private func formatTime(_ ms: UInt64) -> String {
         let totalSec = ms / 1000
         let min = totalSec / 60
         let sec = totalSec % 60
         return String(format: "%d:%02d", min, sec)
+    }
+}
+
+// MARK: - Progress Track
+
+/// Draggable progress bar matching the Svelte `ProgressBar` (size `md` / `sm`).
+private struct ProgressTrack: View {
+    @Binding var progress: Float
+    var isThin: Bool = false
+
+    @State private var isHovering = false
+
+    private var thickness: CGFloat {
+        if isThin { return isHovering ? 5 : 4 }
+        return isHovering ? 6 : 5
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            let width = geo.size.width
+            let pct = CGFloat(max(0.0, min(1.0, progress)))
+
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.white.opacity(0.18))
+                    .frame(height: thickness)
+
+                Capsule()
+                    .fill(Color.white.opacity(isHovering ? 1.0 : 0.9))
+                    .frame(width: max(0, width * pct), height: thickness)
+            }
+            .frame(maxHeight: .infinity, alignment: .center)
+            .contentShape(Rectangle())
+            .onHover { isHovering = $0 }
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        progress = Float(value.location.x / width)
+                    }
+            )
+        }
     }
 }

@@ -97,12 +97,12 @@ private struct TrackCard: View {
                 .font(.system(size: 11, design: .monospaced))
                 .foregroundColor(.white.opacity(0.4))
         }
-        .padding(.horizontal, 10)
+        // .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(isCurrent ? Color.white.opacity(0.12) : Color.white.opacity(0.04))
-        )
+        // .background(
+        //     RoundedRectangle(cornerRadius: 2)
+        //         .fill(isCurrent ? Color.white.opacity(0.12) : Color.white.opacity(0.04))
+        // )
         .contentShape(Rectangle())
         .onTapGesture {
             state.playTrack(at: rowIndex)
@@ -132,7 +132,7 @@ private struct TrackCard: View {
             }
         }
         .frame(width: 44, height: 44)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        // .clipShape(RoundedRectangle(cornerRadius: 2))
     }
 
     private func loadThumbnail() async {

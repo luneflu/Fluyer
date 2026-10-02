@@ -110,11 +110,11 @@ private struct AlbumCarouselCard: View {
                 }
             }
             .frame(width: coverSize, height: coverSize)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.white : Color.clear, lineWidth: 2)
-            )
+            // .clipShape(RoundedRectangle(cornerRadius: 4))
+            // .overlay(
+            //     RoundedRectangle(cornerRadius: 4)
+            //         .stroke(isSelected ? Color.white : Color.clear, lineWidth: 2)
+            // )
             .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 3)
 
             VStack(alignment: .leading, spacing: 2) {

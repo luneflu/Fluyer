@@ -117,8 +117,6 @@ public final class AppState: FluyerEventListener {
             self.playView = vm
 
         case .trackChanged(let track, _):
-            ThumbnailStore.shared.invalidate("current-\(80)")
-            ThumbnailStore.shared.invalidate("current-\(600)")
             if let engine = engine {
                 self.playerBar = engine.getPlayerBarView()
                 self.playView = engine.getPlayView()

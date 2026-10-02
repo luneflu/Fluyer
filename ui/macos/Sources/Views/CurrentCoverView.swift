@@ -16,6 +16,14 @@ struct CurrentCoverView: View {
         state.playView.track?.path ?? "none"
     }
 
+    // ponytail: the cache key must carry the track identity. Keying on the pixel size
+    // alone (`current-720`) made every track change hit the LRU and keep rendering the
+    // previous song's artwork, and the size-based invalidation in AppState only ever
+    // cleared two hardcoded sizes that no caller used.
+    private var cacheKey: String {
+        "current-\(Int(side))-\(trackPath)"
+    }
+
     var body: some View {
         ZStack {
             if let thumbnail {
@@ -33,21 +41,20 @@ struct CurrentCoverView: View {
             }
         }
         .frame(width: side, height: side)
-        .clipShape(RoundedRectangle(cornerRadius: side * 0.15))
+        // .clipShape(RoundedRectangle(cornerRadius: side * 0.15))
         .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
         .task(id: trackPath) {
             guard let engine = state.engine else { return }
             let maxPx = UInt32(max(32, Int(side * 2)))
-            let data = await engine.loadCurrentThumbnail(maxSize: maxPx)
-            guard let data, !data.isEmpty else {
-                thumbnail = nil
-                return
-            }
-            thumbnail = await ThumbnailStore.shared.image(
-                key: "current-\(maxPx)",
+            let loaded = await ThumbnailStore.shared.image(
+                key: cacheKey,
                 maxPixelSize: Int(maxPx),
-                load: { data }
+                load: { await engine.loadCurrentThumbnail(maxSize: maxPx) }
             )
+            // A cancelled task can still resume after its `await`; drop the result so a
+            // slow load from the previous track cannot overwrite the new artwork.
+            guard !Task.isCancelled else { return }
+            thumbnail = loaded
         }
     }
 }
