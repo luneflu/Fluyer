@@ -2,7 +2,7 @@
 
 Desktop music player. Rust core (`fluyer_core`) holds all logic — library scanning,
 metadata, playback, and view models — and exposes it over C ABI + UniFFI. UIs are thin
-SwiftUI/C++ shells that only render view models and forward events.
+native shells that only render view models and forward events.
 
 ## Layout
 
@@ -11,11 +11,11 @@ SwiftUI/C++ shells that only render view models and forward events.
 | `crates/fluyer_core/` | Core crate: engine, services, view models. Produces `libfluyer_core.dylib` |
 | `crates/fluyer_core/src/view_models/` | Per-component view models (player bar, play view, track item, album card, …) |
 | `bindings/swift/` | **Generated** UniFFI Swift bindings + SPM package `FluyerCore` |
-| `ui/macos/` | macOS SwiftUI app (SPM executable `FluyerApp`) — the current UI |
-| `ui/macos/Sources/State/` | Observable state: `AppState` (coordinator) + `Playback`/`Library`/`Selection`/`Toast` |
-| `ui/macos/Tests/` | `FluyerAppTests` — XCTest over the pure logic in `Support/` and `State/` |
+| `ui/macos/` | macOS SwiftUI app (SPM executable `FluyerApp`) |
+| `ui/windows/` | Windows WinUI 3 app (`Fluyer`) + `Fluyer.Core` (P/Invoke/state) + `Fluyer.Tests` (xUnit) |
 | `libs/macos/` | Prebuilt `libbass.dylib`, `libbassmix.dylib` |
-| `scripts/` | `generate_swift_bindings.sh`, `bundle_macos_app.sh` |
+| `libs/windows/` | Prebuilt `bass.dll`, `bassmix.dll`, plugins (`.dll` + `.lib`) |
+| `scripts/` | `generate_swift_bindings.sh`, `bundle_macos_app.sh`, `bundle_windows_app.ps1` |
 | `dist/` | Build output: `Fluyer.app`, `Fluyer.dmg` |
 
 Runtime state (created on first launch):
@@ -107,6 +107,52 @@ This does the whole chain: builds the core for the chosen profile, regenerates b
 builds the Swift executable, copies `libfluyer_core` + BASS into `Contents/Frameworks`,
 adds an rpath, generates `Info.plist`, and ad-hoc signs. Release builds are what to
 measure — debug Swift carries far larger unoptimized images.
+
+## Windows (WinUI 3)
+
+UniFFI 0.28 has no C# backend, so the Windows shell talks to the core over the C ABI
+(`crates/fluyer_core/src/ffi.rs`) via P/Invoke in `ui/windows/Fluyer.Core/Native/`.
+View models cross as JSON and are deserialized into matching records. The state layer
+(`AppState` + `Playback`/`Library`/`Selection`/`Toast`/`Clock`) is a 1:1 port of
+`ui/macos/Sources/State/` onto `INotifyPropertyChanged`; views are XAML ports of
+`ui/macos/Sources/Views/`. The Metal backdrop is ported to D3D11 in
+`ui/windows/Rendering/` (same spinning instances, warp mesh, timing and 0.5s
+crossfade; MPS gaussian becomes a calibrated half-res Kawase chain, and the
+final frame is presented via staging readback since WinUI 3's SwapChainPanel
+does not expose the UWP native interop contract). The core's pre-blurred
+ambient frame remains as the static fallback when Direct3D is unavailable.
+
+Runtime state (created on first launch):
+
+- Database — `%AppData%\org.alvindimas05.fluyer\fluyer.db`
+- Cover + lyrics cache — `%LocalAppData%\org.alvindimas05.fluyer\`
+
+### Prerequisites
+
+- Rust (stable) and the .NET 8 SDK
+- `libs/windows/*.dll` must be present (they are gitignored; copy them in on a fresh clone)
+
+### Build
+
+```powershell
+cargo build -p fluyer_core              # debug -> target/debug/fluyer_core.dll
+dotnet test ui/windows/Fluyer.Tests     # xUnit: state/support ports + native smoke test
+dotnet run --project ui/windows         # unpackaged, self-contained WinAppSDK
+```
+
+The `CopyNativeDeps` target in `Fluyer.csproj` stages `fluyer_core.dll` + BASS next to
+the managed exe after every build (the Windows equivalent of the macOS rpath step),
+so no `PATH` tweaks are needed. First run needs the Windows 10 SDK (10.0.22621+) only
+at build time.
+
+### Bundle
+
+```powershell
+./scripts/bundle_windows_app.ps1              # debug   -> dist/Fluyer-windows-x64.zip
+./scripts/bundle_windows_app.ps1 -Release     # release -> dist/Fluyer-windows-x64.zip
+```
+
+Framework-dependent: the zip needs the .NET 8 desktop runtime on the target machine.
 
 ## Debug
 

@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Fluyer (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Fluyer (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

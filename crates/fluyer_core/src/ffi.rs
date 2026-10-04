@@ -237,6 +237,55 @@ pub unsafe extern "C" fn fluyer_player_shuffle(engine: *mut FluyerEngine) {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn fluyer_player_cycle_repeat(engine: *mut FluyerEngine) {
+    if let Some(e) = engine.as_ref() {
+        let current = e.player.get_sync_info(false).repeat_mode;
+        let next = match current {
+            RepeatMode::None => RepeatMode::All,
+            RepeatMode::All => RepeatMode::One,
+            RepeatMode::One => RepeatMode::None,
+        };
+        e.set_repeat_mode(next);
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_player_get_volume(engine: *mut FluyerEngine) -> f32 {
+    if let Some(e) = engine.as_ref() {
+        e.get_volume()
+    } else {
+        1.0
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_player_get_active_lyric_index(
+    engine: *mut FluyerEngine,
+    position_ms: u64,
+) -> i32 {
+    if let Some(e) = engine.as_ref() {
+        e.active_lyric_index(position_ms)
+    } else {
+        -1
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_player_get_play_view_json(
+    engine: *mut FluyerEngine,
+) -> *mut c_char {
+    if let Some(e) = engine.as_ref() {
+        let view = e.get_play_view();
+        if let Ok(json) = serde_json::to_string(&view) {
+            if let Ok(c_str) = CString::new(json) {
+                return c_str.into_raw();
+            }
+        }
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn fluyer_player_get_position(engine: *mut FluyerEngine) -> u64 {
     if let Some(e) = engine.as_ref() {
         e.player.get_sync_info(false).position_ms()
@@ -362,6 +411,16 @@ pub unsafe extern "C" fn fluyer_library_play_index(engine: *mut FluyerEngine, in
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn fluyer_library_play_all_from_index(
+    engine: *mut FluyerEngine,
+    index: usize,
+) {
+    if let Some(e) = engine.as_ref() {
+        e.play_all_from_library(index);
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn fluyer_library_play_album(engine: *mut FluyerEngine, index: usize) {
     if let Some(e) = engine.as_ref() {
         e.play_album(index);
@@ -422,6 +481,50 @@ pub unsafe extern "C" fn fluyer_library_get_album_image(
             .album_get_by_index(index)
             .and_then(|a| e.resolve_album_cover(&a, Some(index)))
     });
+    raw_bytes_into_ptr(bytes, out_len)
+}
+
+// ponytail: pre-downscaled JPEG thumbnails so list views never pay a
+// full-resolution decode or transfer per cell. Mirrors the UniFFI
+// `get_*_thumbnail` variants used by the SwiftUI grid/carousel.
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_library_get_track_thumbnail(
+    engine: *mut FluyerEngine,
+    index: usize,
+    max_size: u32,
+    out_len: *mut usize,
+) -> *mut u8 {
+    let bytes = engine
+        .as_ref()
+        .and_then(|e| e.track_thumbnail(index, max_size))
+        .map(|b| b.as_ref().clone());
+    raw_bytes_into_ptr(bytes, out_len)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_library_get_album_thumbnail(
+    engine: *mut FluyerEngine,
+    index: usize,
+    max_size: u32,
+    out_len: *mut usize,
+) -> *mut u8 {
+    let bytes = engine
+        .as_ref()
+        .and_then(|e| e.album_thumbnail(index, max_size))
+        .map(|b| b.as_ref().clone());
+    raw_bytes_into_ptr(bytes, out_len)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_player_get_current_thumbnail(
+    engine: *mut FluyerEngine,
+    max_size: u32,
+    out_len: *mut usize,
+) -> *mut u8 {
+    let bytes = engine
+        .as_ref()
+        .and_then(|e| e.current_thumbnail(max_size))
+        .map(|b| b.as_ref().clone());
     raw_bytes_into_ptr(bytes, out_len)
 }
 
@@ -634,6 +737,23 @@ pub unsafe extern "C" fn fluyer_library_get_album_view_json(
 ) -> *mut c_char {
     if let Some(e) = engine.as_ref() {
         if let Some(view) = e.get_album_view(index) {
+            if let Ok(json) = serde_json::to_string(&view) {
+                if let Ok(c_str) = CString::new(json) {
+                    return c_str.into_raw();
+                }
+            }
+        }
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_library_get_album_detail_json(
+    engine: *mut FluyerEngine,
+    index: usize,
+) -> *mut c_char {
+    if let Some(e) = engine.as_ref() {
+        if let Some(view) = e.get_album_detail(index) {
             if let Ok(json) = serde_json::to_string(&view) {
                 if let Ok(c_str) = CString::new(json) {
                     return c_str.into_raw();

@@ -1,0 +1,60 @@
+<UserControl
+    x:Class="Fluyer.Views.AlbumCarouselView"
+    x:Name="CarouselRoot"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:native="using:Fluyer.Core.Native">
+    <!-- Horizontal album strip. Port of AlbumCarouselView
+         (ui/macos/Sources/Views/Album/AlbumCarouselView.swift), including the
+         responsive width rules transcribed from AlbumListCtrl. -->
+    <ListView
+        x:Name="Strip"
+        Height="{Binding CarouselHeight, ElementName=CarouselRoot}"
+        IsItemClickEnabled="True"
+        ItemClick="OnItemClick"
+        ItemsSource="{x:Bind State.Library.Albums, Mode=OneWay}"
+        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+        ScrollViewer.HorizontalScrollMode="Enabled"
+        ScrollViewer.VerticalScrollBarVisibility="Disabled"
+        ScrollViewer.VerticalScrollMode="Disabled"
+        SelectionMode="None">
+        <ListView.ItemsPanel>
+            <ItemsPanelTemplate>
+                <ItemsStackPanel Orientation="Horizontal" />
+            </ItemsPanelTemplate>
+        </ListView.ItemsPanel>
+        <ListView.ItemTemplate>
+            <DataTemplate x:DataType="native:AlbumCardViewModel">
+                <StackPanel Width="{Binding CardItemWidth, ElementName=CarouselRoot}" Spacing="5">
+                    <Grid
+                        Width="{Binding CardCoverSize, ElementName=CarouselRoot}"
+                        Height="{Binding CardCoverSize, ElementName=CarouselRoot}">
+                        <Rectangle Fill="#14FFFFFF" />
+                        <FontIcon
+                            FontSize="32"
+                            Foreground="#4DFFFFFF"
+                            Glyph="&#xE8D2;"
+                            Tag="art" />
+                        <Image x:Name="Cover" Stretch="UniformToFill" Opacity="0" />
+                    </Grid>
+                    <StackPanel
+                        Width="{Binding CardCoverSize, ElementName=CarouselRoot}"
+                        Spacing="2">
+                        <TextBlock
+                            FontSize="13"
+                            MaxLines="1"
+                            Tag="albumtitle"
+                            Text="{x:Bind Name}"
+                            TextTrimming="CharacterEllipsis" />
+                        <TextBlock
+                            FontSize="11"
+                            MaxLines="1"
+                            Opacity="0.6"
+                            Text="{x:Bind Artist}"
+                            TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </StackPanel>
+            </DataTemplate>
+        </ListView.ItemTemplate>
+    </ListView>
+</UserControl>

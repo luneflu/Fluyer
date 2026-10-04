@@ -1,0 +1,19 @@
+<UserControl
+    x:Class="Fluyer.Views.CurrentCoverView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Shared cover-art image for the player bar and now-playing screen.
+         Port of CurrentCoverView (ui/macos/Sources/Views/Shared/CurrentCoverView.swift). -->
+    <Grid x:Name="Root">
+        <Rectangle Fill="#1AFFFFFF" />
+        <FontIcon
+            x:Name="Placeholder"
+            FontSize="16"
+            Foreground="#66FFFFFF"
+            Glyph="&#xE8D2;" />
+        <Image
+            x:Name="Cover"
+            Stretch="UniformToFill"
+            Opacity="0" />
+    </Grid>
+</UserControl>
