@@ -124,23 +124,37 @@
             </StackPanel>
         </StackPanel>
 
-        <!-- Lyrics column -->
+        <!-- Lyrics column. Padding mirrors Swift's .padding(.vertical, 260)
+             + .horizontal(28): top/bottom room lets the first/last lines
+             scroll to viewport center. Indicators hidden like Swift's
+             .scrollIndicators(.hidden); scrolling still works. -->
         <ListView
             x:Name="Lyrics"
             Grid.Column="1"
+            Padding="28,260,28,260"
             IsItemClickEnabled="True"
             ItemClick="OnLyricClick"
             ItemsSource="{x:Bind State.Playback.PlayView.Lyrics, Mode=OneWay}"
+            ScrollViewer.VerticalScrollBarVisibility="Hidden"
             SelectionMode="None">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="native:LyricLine">
-                    <TextBlock
-                        Margin="0,20"
-                        FontSize="25"
-                        FontWeight="Bold"
-                        Opacity="0.4"
-                        Text="{x:Bind Text}"
-                        TextWrapping="Wrap" />
+                    <Grid Margin="0,20">
+                        <!-- Empty (instrumental) lines: Swift's music.note. -->
+                        <FontIcon
+                            HorizontalAlignment="Left"
+                            FontSize="27"
+                            Foreground="#FFFFFFFF"
+                            Glyph="&#xEC4F;"
+                            Opacity="0.5"
+                            Visibility="Collapsed" />
+                        <TextBlock
+                            FontSize="25"
+                            FontWeight="Bold"
+                            Opacity="0.4"
+                            Text="{x:Bind Text}"
+                            TextWrapping="Wrap" />
+                    </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>

@@ -29,7 +29,7 @@
                             <FontIcon
                                 FontSize="16"
                                 Foreground="#4DFFFFFF"
-                                Glyph="&#xE8D2;"
+                                Glyph="&#xEC4F;"
                                 Tag="art" />
                             <Image x:Name="Thumb" Stretch="UniformToFill" Opacity="0" />
                         </Grid>
@@ -77,7 +77,7 @@
                 HorizontalAlignment="Center"
                 FontSize="36"
                 Foreground="#33FFFFFF"
-                Glyph="&#xE8D2;" />
+                Glyph="&#xEC4F;" />
             <TextBlock
                 x:Name="EmptyLabel"
                 FontSize="14"

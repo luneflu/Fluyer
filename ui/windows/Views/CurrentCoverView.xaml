@@ -10,7 +10,7 @@
             x:Name="Placeholder"
             FontSize="16"
             Foreground="#66FFFFFF"
-            Glyph="&#xE8D2;" />
+            Glyph="&#xEC4F;" />
         <Image
             x:Name="Cover"
             Stretch="UniformToFill"

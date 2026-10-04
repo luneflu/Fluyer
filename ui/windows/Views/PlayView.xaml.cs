@@ -106,7 +106,11 @@ public sealed partial class PlayView : UserControl
         ControlCard.Width = side;
     }
 
-    private void HighlightActiveLyric()
+    // Sequence guard: clock ticks fire faster than the settle delay below,
+    // so a stale continuation must not fight the newest glide.
+    private int _lyricScrollSeq;
+
+    private async void HighlightActiveLyric()
     {
         var state = State;
         if (state is null)
@@ -118,37 +122,112 @@ public sealed partial class PlayView : UserControl
         foreach (var item in Lyrics.Items)
         {
             if (Lyrics.ContainerFromItem(item) is ListViewItem container
-                && CoverImages.FindChild<TextBlock>(container) is { } text)
+                && item is LyricLine line
+                && ResolveLyricParts(container, out var note, out var text)
+                && text is not null)
             {
-                var index = lyrics.IndexOf((LyricLine)item);
+                var index = lyrics.IndexOf(line);
                 var isActive = index == active;
-                text.Opacity = isActive ? 1 : 0.4;
-                text.FontSize = isActive ? 30 : 25;
+                if (string.IsNullOrEmpty(line.Text))
+                {
+                    if (note is not null)
+                    {
+                        note.FontSize = isActive ? 33 : 27;
+                        note.Opacity = isActive ? 0.95 : 0.5;
+                    }
+                }
+                else
+                {
+                    text.Opacity = isActive ? 1 : 0.4;
+                    text.FontSize = isActive ? 30 : 25;
+                }
             }
         }
         if (active >= 0 && active < lyrics.Count)
         {
-            Lyrics.ScrollIntoView(lyrics[active]);
+            // Swift's proxy.scrollTo(anchor: .center) is ONE animated glide
+            // from the current offset. The old code called ScrollIntoView
+            // first (instant snap to top-aligned) then ChangeView — that
+            // snap-then-glide is the 0-to-target weirdness. Now: only ever
+            // ChangeView from wherever the scroller already sits.
+            var seq = ++_lyricScrollSeq;
+            await Task.Delay(50); // let the FontSize re-layout settle
+            if (seq != _lyricScrollSeq)
+            {
+                return; // superseded by a newer tick
+            }
+            if (!TryCenterLyric(active, animate: true) && seq == _lyricScrollSeq)
+            {
+                // Container virtualized away: realize it with a snap (no
+                // glide from a bogus origin), then center without animation.
+                Lyrics.ScrollIntoView(lyrics[active], ScrollIntoViewAlignment.Leading);
+                await Task.Delay(50);
+                if (seq != _lyricScrollSeq)
+                {
+                    return;
+                }
+                TryCenterLyric(active, animate: false);
+            }
         }
+    }
+
+    // Glide/snap the inner ScrollViewer so row <paramref name="active"/> sits
+    // at viewport center. False when the container isn't realized (or the
+    // scroller isn't found yet) — caller falls back to ScrollIntoView.
+    private bool TryCenterLyric(int active, bool animate)
+    {
+        if (Lyrics.ContainerFromIndex(active) is not ListViewItem activeContainer
+            || CoverImages.FindChild<ScrollViewer>(Lyrics) is not { } scroller)
+        {
+            return false;
+        }
+        var itemPos = activeContainer.TransformToVisual(scroller)
+            .TransformPoint(new Windows.Foundation.Point(0, 0));
+        var target = scroller.VerticalOffset + itemPos.Y
+            - scroller.ViewportHeight / 2
+            + activeContainer.ActualHeight / 2;
+        scroller.ChangeView(null, Math.Max(0, target), null, disableAnimation: !animate);
+        return true;
+    }
+
+    // Template parts for one lyric row: the note placeholder (instrumental
+    // gaps) and the lyric text. True when at least one part resolved.
+    private static bool ResolveLyricParts(
+        DependencyObject container, out FontIcon? note, out TextBlock? text)
+    {
+        note = null;
+        text = null;
+        foreach (var icon in CoverImages.FindChildren<FontIcon>(container))
+        {
+            note = icon;
+            break;
+        }
+        text = CoverImages.FindChild<TextBlock>(container);
+        return note is not null || text is not null;
     }
 
     private void OnLyricContainerChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
     {
         if (args.Item is LyricLine line
             && args.ItemContainer is ListViewItem container
-            && CoverImages.FindChild<TextBlock>(container) is { } text)
+            && ResolveLyricParts(container, out var note, out var text)
+            && text is not null)
         {
-            if (string.IsNullOrEmpty(line.Text))
+            // Swift uses the same music.note placeholder for instrumental gaps.
+            var empty = string.IsNullOrEmpty(line.Text);
+            var lyrics = State?.Playback.PlayView.Lyrics;
+            var isActive = lyrics is not null && State is not null
+                && lyrics.IndexOf(line) == State.Playback.Clock.CurrentLyricIndex;
+            if (note is not null)
             {
-                text.Text = "♪";
+                note.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+                note.FontSize = isActive ? 33 : 27;
+                note.Opacity = isActive ? 0.95 : 0.5;
             }
-            var state = State;
-            if (state is not null)
-            {
-                var isActive = state.Playback.PlayView.Lyrics.IndexOf(line) == state.Playback.Clock.CurrentLyricIndex;
-                text.Opacity = isActive ? 1 : 0.4;
-                text.FontSize = isActive ? 30 : 25;
-            }
+            text.Visibility = empty ? Visibility.Collapsed : Visibility.Visible;
+            text.Text = empty ? string.Empty : line.Text;
+            text.Opacity = isActive ? 1 : 0.4;
+            text.FontSize = isActive ? 30 : 25;
         }
     }
 

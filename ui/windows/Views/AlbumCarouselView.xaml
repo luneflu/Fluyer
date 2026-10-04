@@ -37,7 +37,7 @@
                         <FontIcon
                             FontSize="32"
                             Foreground="#4DFFFFFF"
-                            Glyph="&#xE8D2;"
+                            Glyph="&#xEC4F;"
                             Tag="art" />
                         <Image x:Name="Cover" Stretch="UniformToFill" Opacity="0" />
                     </Grid>
