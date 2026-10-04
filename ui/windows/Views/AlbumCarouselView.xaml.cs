@@ -109,6 +109,9 @@ public sealed partial class AlbumCarouselView : UserControl
 
     private static double Dpr()
     {
+        // Layout-rule input only (mirrors NSScreen.backingScaleFactor).
+        // Pixel requests intentionally ignore this and use fixed 2x like
+        // Swift — see PixelSize.
         try
         {
             return DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
@@ -152,9 +155,11 @@ public sealed partial class AlbumCarouselView : UserControl
     }
 
     private int PixelSize()
-        // Quantized: every 1px resize otherwise mints a new cache key,
-        // misses, and blinks every card while the backdrop reallocates.
-        => Math.Max(16, ((int)(CardCoverSize * Dpr()) / 32) * 32);
+        // Fixed 2x like Swift (coverSize * 2), quantized to 32px so resizes
+        // reuse cache entries. Prior code used the live monitor scale, which
+        // minted small keys on 1x displays (e.g. 148px source shown at ~300px
+        // wide) and every card upscaled soft.
+        => Math.Max(16, ((int)(CardCoverSize * 2) / 32) * 32);
 
     private void RefreshSelectionEmphasis()
     {
