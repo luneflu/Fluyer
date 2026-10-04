@@ -93,7 +93,15 @@ public sealed partial class AlbumCarouselView : UserControl
         => RefreshVisibility();
 
     private void OnSelectionChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-        => RefreshSelectionEmphasis();
+    {
+        // Emphasis only depends on Index; Detail/DisplayedTracks fire
+        // alongside the same switch and re-walking here contends with the
+        // backdrop frame loop for no gain (recycle re-applies via PrepareContainer).
+        if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(AlbumSelection.Index))
+        {
+            RefreshSelectionEmphasis();
+        }
+    }
 
     private void RefreshVisibility()
         => Visibility = State is not null && State.Library.Albums.Count > 0
@@ -129,26 +137,24 @@ public sealed partial class AlbumCarouselView : UserControl
         }
         itemWidth = Math.Max(1, itemWidth);
         var cover = Math.Max(16, itemWidth - CarouselPadding * 2);
+        // DP sets re-measure every card and resize the Strip row, which
+        // resizes the backdrop and reallocates its D3D targets — so ignore
+        // sub-pixel drift and never re-walk covers here (recycle already
+        // fires OnContainerChanging for realized rows).
+        if (Math.Abs(itemWidth - CardItemWidth) < 0.5
+            && Math.Abs(cover - CardCoverSize) < 0.5)
+        {
+            return;
+        }
         CardItemWidth = itemWidth;
         CardCoverSize = cover;
         CarouselHeight = cover + LabelHeight;
-        RefreshVisibleCovers();
     }
 
     private int PixelSize()
-        => Math.Max(16, (int)(CardCoverSize * Dpr()));
-
-    private void RefreshVisibleCovers()
-    {
-        foreach (var item in Strip.Items)
-        {
-            if (Strip.ContainerFromItem(item) is ListViewItem container
-                && item is AlbumCardViewModel album)
-            {
-                PrepareContainer(container, album);
-            }
-        }
-    }
+        // Quantized: every 1px resize otherwise mints a new cache key,
+        // misses, and blinks every card while the backdrop reallocates.
+        => Math.Max(16, ((int)(CardCoverSize * Dpr()) / 32) * 32);
 
     private void RefreshSelectionEmphasis()
     {

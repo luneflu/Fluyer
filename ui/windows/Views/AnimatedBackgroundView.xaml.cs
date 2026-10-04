@@ -12,8 +12,9 @@ namespace Fluyer.Views;
 /// <summary>
 /// Animated, blurred artwork backdrop behind the whole window. Refresh key
 /// mirrors macOS (<c>track path + palette</c>): artwork re-uploads only when
-/// the song or its colors change; the GPU animates continuously at 30fps and
-/// each frame is uploaded as a bitmap. When Direct3D is unavailable, falls
+/// the song or its colors change; the GPU animates continuously at 15fps and
+/// each frame is uploaded as a bitmap (capped ~640px long edge — blurred to
+/// mush either way). When Direct3D is unavailable, falls
 /// back to the core's pre-blurred ambient frame as a static bitmap.
 /// </summary>
 public sealed partial class AnimatedBackgroundView : UserControl
@@ -33,6 +34,8 @@ public sealed partial class AnimatedBackgroundView : UserControl
     private Microsoft.UI.Dispatching.DispatcherQueueTimer? _frameTimer;
     private string _appliedKey = string.Empty;
     private bool _frameBusy;
+    private int _lastW;
+    private int _lastH;
 
     public AnimatedBackgroundView()
     {
@@ -109,7 +112,11 @@ public sealed partial class AnimatedBackgroundView : UserControl
         }
         var queue = DispatcherQueue;
         _frameTimer = queue.CreateTimer();
-        _frameTimer.Interval = TimeSpan.FromMilliseconds(1000.0 / 30);
+        // Blurred to mush — 15fps at a capped size uploads ~1/4 the pixels
+        // of 30fps full-res with no visible difference. List scrolls and
+        // cover decodes then stop starving the frame loop (the starvation
+        // reads as flicker).
+        _frameTimer.Interval = TimeSpan.FromMilliseconds(1000.0 / 15);
         _frameTimer.Tick += (_, _) => TickFrame();
         _frameTimer.Start();
     }
@@ -140,12 +147,27 @@ public sealed partial class AnimatedBackgroundView : UserControl
         _frameBusy = true;
         try
         {
-            var targetW = Math.Max(1, (int)(ActualWidth * CompositionScaleX()));
-            var targetH = Math.Max(1, (int)(ActualHeight * CompositionScaleY()));
+            // Cap: final frame dithers display detail away, so rendering past
+            // ~640px long edge only costs D3D time and upload bytes. Ignore
+            // sub-pixel layout churn too — reallocating D3D targets mid-loop
+            // drops a frame (visible blink).
+            const double MaxEdge = 640;
+            var rawW = ActualWidth * CompositionScaleX();
+            var rawH = ActualHeight * CompositionScaleY();
+            var scale = Math.Min(1.0, MaxEdge / Math.Max(rawW, rawH));
+            var targetW = Math.Max(1, (int)(rawW * scale));
+            var targetH = Math.Max(1, (int)(rawH * scale));
+            if (Math.Abs(targetW - _lastW) < 2 && Math.Abs(targetH - _lastH) < 2 && _lastW > 0)
+            {
+                targetW = _lastW;
+                targetH = _lastH;
+            }
             if (!_renderer.TryRender(targetW, targetH, out var pixels, out var w, out var h))
             {
                 return;
             }
+            _lastW = targetW;
+            _lastH = targetH;
             var bitmap = new SoftwareBitmap(BitmapPixelFormat.Bgra8, w, h, BitmapAlphaMode.Premultiplied);
             bitmap.CopyFromBuffer(pixels.AsBuffer());
             await _frameSource.SetBitmapAsync(bitmap).AsTask().ConfigureAwait(true);

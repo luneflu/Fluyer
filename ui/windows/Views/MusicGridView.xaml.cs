@@ -61,6 +61,13 @@ public sealed partial class MusicGridView : UserControl
             or nameof(AlbumSelection.Detail))
         {
             RefreshEmptyState();
+        }
+        // Index alone changes every row's cache key. Detail/DisplayedTracks
+        // fire alongside the same switch — recycling covers those containers,
+        // and LoadInto no-ops repeats, so re-walking here only contends with
+        // the backdrop frame loop for no gain.
+        if (e.PropertyName == nameof(AlbumSelection.Index))
+        {
             RefreshVisibleCovers();
         }
     }

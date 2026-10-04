@@ -14,6 +14,13 @@ public static class CoverImages
 {
     public static Task LoadInto(Image target, string key, object token, Func<byte[]?> load)
     {
+        // Already showing (or already loading) this exact item: no-op. This
+        // also collapses the duplicate refresh passes the grid/carousel fire
+        // per selection change into a single load.
+        if (target.Tag is (string k, object t) && k == key && ReferenceEquals(t, token))
+        {
+            return Task.CompletedTask;
+        }
         var store = ThumbnailStore.Shared;
         if (store.Peek(key) is { } hit)
         {
@@ -23,22 +30,28 @@ public static class CoverImages
             return Task.CompletedTask;
         }
 
+        // Miss: keep the old bitmap on screen until the new one arrives.
+        // Clearing Source/Opacity here blanks every realized row at once and
+        // the backdrop flashes through the gap — that blank-then-pop is the
+        // flicker. A briefly stale cover on a recycled row is far cheaper
+        // than a transparent hole; fresh rows already sit at Opacity 0 from XAML.
         target.Tag = (key, token);
-        target.Source = null;
-        target.Opacity = 0;
         return LoadAsync(target, key, token, load);
     }
 
     private static async Task LoadAsync(Image target, string key, object token, Func<byte[]?> load)
     {
         var image = await ThumbnailStore.Shared.GetAsync(key, load).ConfigureAwait(true);
-        if (image is null)
-        {
-            return;
-        }
         // Recycled since? Drop the result.
         if (target.Tag is not (string k, object t) || k != key || !ReferenceEquals(t, token))
         {
+            return;
+        }
+        if (image is null)
+        {
+            // No art for this key — fall back to the placeholder glyph.
+            target.Source = null;
+            target.Opacity = 0;
             return;
         }
         target.Source = image;

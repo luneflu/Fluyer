@@ -18,6 +18,10 @@
         ScrollViewer.VerticalScrollBarVisibility="Disabled"
         ScrollViewer.VerticalScrollMode="Disabled"
         SelectionMode="None">
+        <!-- Same as rows: no entrance replay on ItemsSource/metric resets. -->
+        <ListView.ItemContainerTransitions>
+            <TransitionCollection />
+        </ListView.ItemContainerTransitions>
         <ListView.ItemsPanel>
             <ItemsPanelTemplate>
                 <ItemsStackPanel Orientation="Horizontal" />
