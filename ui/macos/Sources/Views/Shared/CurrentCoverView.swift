@@ -13,16 +13,15 @@ struct CurrentCoverView: View {
 
     // ponytail: keyed on the published track path, not a fresh FFI round-trip.
     private var trackPath: String {
-        state.playView.track?.path ?? "none"
+        state.playback.playView.track?.path ?? "none"
     }
 
-    // ponytail: the cache key must carry the track identity. Keying on the pixel size
-    // alone (`current-720`) made every track change hit the LRU and keep rendering the
-    // previous song's artwork, and the size-based invalidation in AppState only ever
-    // cleared two hardcoded sizes that no caller used.
-    private var cacheKey: String {
-        "current-\(Int(side))-\(trackPath)"
-    }
+    // ponytail: the cache key must carry the track identity *and* the pixel size.
+    // Keying on the pixel size alone (`current-720`) made every track change hit the
+    // LRU and keep rendering the previous song's artwork.
+    private var pixelSize: Int { max(32, Int(side * 2)) }
+
+    private var cacheKey: String { ThumbnailKey.current(side: pixelSize, path: trackPath) }
 
     var body: some View {
         ZStack {
@@ -41,16 +40,13 @@ struct CurrentCoverView: View {
             }
         }
         .frame(width: side, height: side)
-        // .clipShape(RoundedRectangle(cornerRadius: side * 0.15))
         .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
         .task(id: trackPath) {
             guard let engine = state.engine else { return }
-            let maxPx = UInt32(max(32, Int(side * 2)))
-            let loaded = await ThumbnailStore.shared.image(
-                key: cacheKey,
-                maxPixelSize: Int(maxPx),
-                load: { await engine.loadCurrentThumbnail(maxSize: maxPx) }
-            )
+            let maxSize = UInt32(pixelSize)
+            let loaded = await ThumbnailStore.shared.image(key: cacheKey) {
+                await engine.loadCurrentThumbnail(maxSize: maxSize)
+            }
             // A cancelled task can still resume after its `await`; drop the result so a
             // slow load from the previous track cannot overwrite the new artwork.
             guard !Task.isCancelled else { return }

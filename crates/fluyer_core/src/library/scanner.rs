@@ -99,7 +99,11 @@ where
                 });
             }
         }
-        let _ = repo::upsert_music_batch(&db, &records);
+        // ponytail: was `let _ = ...`, so a failed write still went on to emit
+        // "Library scan completed" and report an empty library.
+        if let Err(e) = repo::upsert_music_batch(&db, &records) {
+            crate::flog_err!("Scanner", "Failed to persist {} records: {}", records.len(), e);
+        }
     }
 
     repo::load_all_music(&db)

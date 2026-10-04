@@ -42,5 +42,8 @@ DerivedData/
 *.xcuserdatad/
 *.xcuserstate
 
-Fluyer
+# Fluyer
 build
+dist/
+*.dmg
+*.app/

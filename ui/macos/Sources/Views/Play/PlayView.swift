@@ -1,13 +1,13 @@
-import FluyerCore
 import SwiftUI
+import FluyerCore
 
-/// Now-playing surface mirroring `Fluyer/src/routes/play/+page.svelte`.
+/// Full-screen now-playing surface, mirroring `Fluyer/src/routes/play/+page.svelte`.
 ///
 /// ponytail: the Svelte page is a two-column grid — cover art (col 1, row 1), the
 /// control card (col 1, row 2) and the lyrics scroller spanning both rows (col 2).
 /// Without lyrics the page collapses to a single centered column. The proportions
 /// below mirror `md:grid-cols-[40%_55%]` / `md:grid-cols-[50%]`.
-public struct PlayView: View {
+struct PlayView: View {
     @Bindable var state: AppState
 
     @State private var isIdle = false
@@ -15,11 +15,11 @@ public struct PlayView: View {
     @State private var idleTask: Task<Void, Never>?
 
     /// Svelte hides the control-card column entirely below a single lyric line.
-    private var hasLyrics: Bool { state.playView.lyrics.count > 1 }
+    private var hasLyrics: Bool { state.playback.playView.lyrics.count > 1 }
 
-    private var activeLyricIndex: Int { Int(state.playView.currentLyricIndex) }
+    private var activeLyricIndex: Int { state.playback.clock.currentLyricIndex }
 
-    public var body: some View {
+    var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .topLeading) {
                 HStack(alignment: .top, spacing: 0) {
@@ -44,15 +44,12 @@ public struct PlayView: View {
             }
             .frame(width: geo.size.width, height: geo.size.height)
             .onContinuousHover { phase in
-                switch phase {
-                case .active:
+                if case .active = phase {
                     resetIdleTimer()
-                case .ended:
-                    break
                 }
             }
             .onExitCommand {
-                handleBackWithDelay()
+                handleBack()
             }
             .onAppear {
                 resetIdleTimer()
@@ -94,10 +91,10 @@ public struct PlayView: View {
                 .padding(.top, 4)
                 .padding(.bottom, 12)
 
-            ProgressTrack(
-                progress: Binding(
-                    get: { state.playerBar.progressPct },
-                    set: { state.seekPercent($0) }
+            SliderTrack(
+                fraction: Binding(
+                    get: { state.playback.playerBar.progressPct },
+                    set: { state.playback.seek(toFraction: $0) }
                 )
             )
             .frame(height: 8)
@@ -107,15 +104,6 @@ public struct PlayView: View {
 
             volumeRow
         }
-        // .padding(20)
-        // .background(
-        //     RoundedRectangle(cornerRadius: 8)
-        //         .fill(Color.white.opacity(0.06))
-        //         .overlay(
-        //             RoundedRectangle(cornerRadius: 8)
-        //                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
-        //         )
-        // )
         .fixedSize(horizontal: false, vertical: true)
     }
 
@@ -124,26 +112,26 @@ public struct PlayView: View {
     /// ponytail: `.transition(.identity)` keeps the metadata from cross-fading when a
     /// track change swaps the string while the lyrics layout is still animating.
     private var trackInfoRow: some View {
-        HStack(spacing: 10) {
-            Text(formatTime(state.playerBar.positionMs))
+        let bar = state.playback.playerBar
+
+        return HStack(spacing: 10) {
+            Text(TimeFormat.elapsed(bar.positionMs))
                 .font(.system(size: 12))
                 .foregroundColor(.white.opacity(0.75))
                 .frame(width: 48, alignment: .leading)
                 .contentTransition(.identity)
                 .transition(.identity)
 
-            Text(
-                "\(state.playerBar.artist.isEmpty ? "Fluyer" : state.playerBar.artist) • \(state.playerBar.title.isEmpty ? "No track playing" : state.playerBar.title)"
-            )
-            .font(.system(size: 15, weight: .medium))
-            .foregroundColor(.white.opacity(0.9))
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .frame(maxWidth: .infinity)
-            .transition(.identity)
-            .contentTransition(.identity)
+            Text("\(bar.artist.isEmpty ? "Fluyer" : bar.artist) • \(bar.title.isEmpty ? "No track playing" : bar.title)")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(.white.opacity(0.9))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity)
+                .transition(.identity)
+                .contentTransition(.identity)
 
-            Text(formatTime(state.playerBar.durationMs))
+            Text(TimeFormat.elapsed(bar.durationMs))
                 .font(.system(size: 12))
                 .foregroundColor(.white.opacity(0.75))
                 .frame(width: 48, alignment: .trailing)
@@ -160,63 +148,74 @@ public struct PlayView: View {
             Color.clear.frame(maxWidth: .infinity)
 
             iconButton(
-                icon: repeatIconName,
+                icon: PlaybackIcons.repeatIcon(state.playback.playerBar.repeatMode),
                 size: 15,
-                isActive: state.playerBar.repeatMode != .none,
-                help: "Repeat",
-                action: { state.cycleRepeat() }
-            )
+                isActive: state.playback.playerBar.repeatMode != .none,
+                help: "Repeat"
+            ) {
+                state.playback.cycleRepeat()
+            }
+
+            iconButton(icon: "backward.fill", size: 18, help: "Previous") {
+                state.playback.previous()
+            }
 
             iconButton(
-                icon: "backward.fill", size: 18, help: "Previous", action: { state.previous() })
-
-            iconButton(
-                icon: state.playerBar.isPlaying ? "pause.fill" : "play.fill",
+                icon: state.playback.playerBar.isPlaying ? "pause.fill" : "play.fill",
                 size: 24,
-                help: state.playerBar.isPlaying ? "Pause" : "Play",
-                action: { state.togglePlay() }
-            )
+                help: state.playback.playerBar.isPlaying ? "Pause" : "Play"
+            ) {
+                state.playback.togglePlay()
+            }
 
-            iconButton(icon: "forward.fill", size: 18, help: "Next", action: { state.next() })
+            iconButton(icon: "forward.fill", size: 18, help: "Next") {
+                state.playback.next()
+            }
 
             iconButton(
                 icon: "shuffle",
                 size: 15,
-                isActive: state.playerBar.isShuffled,
-                help: "Shuffle",
-                action: { state.shuffle() }
-            )
+                isActive: state.playback.playerBar.isShuffled,
+                help: "Shuffle"
+            ) {
+                state.playback.shuffle()
+            }
 
             Color.clear.frame(maxWidth: .infinity)
         }
     }
 
     private var volumeRow: some View {
-        HStack(spacing: 12) {
+        let volume = state.playback.playerBar.volume
+
+        return HStack(spacing: 12) {
             iconButton(
                 icon: "speaker.slash.fill",
                 size: 13,
-                isActive: state.playerBar.volume > 0.001,
-                help: state.playerBar.volume <= 0.001 ? "Unmute" : "Mute",
-                action: { state.toggleMute() }
-            )
+                isActive: volume > 0.001,
+                help: volume <= 0.001 ? "Unmute" : "Mute"
+            ) {
+                state.playback.toggleMute()
+            }
             .frame(width: 20)
 
-            ProgressTrack(
-                progress: Binding(
-                    get: { state.playerBar.volume },
-                    set: { state.setVolume($0) }
-                ), isThin: true
+            SliderTrack(
+                fraction: Binding(
+                    get: { state.playback.playerBar.volume },
+                    set: { state.playback.setVolume($0) }
+                ),
+                isThin: true
             )
             .frame(height: 14)
 
             iconButton(
-                icon: volumeIconName,
+                icon: PlaybackIcons.volume(volume),
                 size: 13,
-                isActive: state.playerBar.volume > 0.001,
-                help: "Max volume",
-                action: { state.setVolume(1.0) }
-            )
+                isActive: volume > 0.001,
+                help: "Max volume"
+            ) {
+                state.playback.setVolume(1.0)
+            }
             .frame(width: 20)
         }
     }
@@ -245,7 +244,7 @@ public struct PlayView: View {
         ScrollViewReader { proxy in
             ScrollView(.vertical) {
                 LazyVStack(alignment: .leading, spacing: 28) {
-                    ForEach(Array(state.playView.lyrics.indices), id: \.self) { i in
+                    ForEach(Array(state.playback.playView.lyrics.indices), id: \.self) { i in
                         lyricLine(i)
                     }
                 }
@@ -266,7 +265,7 @@ public struct PlayView: View {
                 )
             )
             .onChange(of: activeLyricIndex) { _, newIndex in
-                guard newIndex >= 0, newIndex < state.playView.lyrics.count else { return }
+                guard newIndex >= 0, newIndex < state.playback.playView.lyrics.count else { return }
                 withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
                     proxy.scrollTo(newIndex, anchor: .center)
                 }
@@ -275,7 +274,7 @@ public struct PlayView: View {
     }
 
     private func lyricLine(_ i: Int) -> some View {
-        let line = state.playView.lyrics[i]
+        let line = state.playback.playView.lyrics[i]
         let isActive = (i == activeLyricIndex)
 
         return Group {
@@ -297,7 +296,7 @@ public struct PlayView: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isActive)
         .contentShape(Rectangle())
         .onTapGesture {
-            state.seek(positionMs: line.timestampMs)
+            state.playback.seek(toMs: line.timestampMs)
         }
         .id(i)
     }
@@ -305,7 +304,7 @@ public struct PlayView: View {
     // MARK: - Back Button
 
     private var backButton: some View {
-        Button(action: { handleBackWithDelay() }) {
+        Button(action: handleBack) {
             Image(systemName: "chevron.left")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(.white)
@@ -321,14 +320,14 @@ public struct PlayView: View {
         .allowsHitTesting(!isIdle && !backButtonHidden)
     }
 
-    private func handleBackWithDelay() {
+    private func handleBack() {
         guard !backButtonHidden else { return }
         backButtonHidden = true
         idleTask?.cancel()
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 300_000_000)
             withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                state.showPlayView = false
+                state.playback.showPlayView = false
             }
         }
     }
@@ -340,71 +339,6 @@ public struct PlayView: View {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             guard !Task.isCancelled else { return }
             isIdle = true
-        }
-    }
-
-    // MARK: - Helpers
-
-    private var repeatIconName: String {
-        switch state.playerBar.repeatMode {
-        case .one: return "repeat.1"
-        case .all, .none: return "repeat"
-        }
-    }
-
-    private var volumeIconName: String {
-        let vol = state.playerBar.volume
-        if vol <= 0.001 { return "speaker.slash.fill" }
-        if vol < 0.33 { return "speaker.wave.1.fill" }
-        if vol < 0.66 { return "speaker.wave.2.fill" }
-        return "speaker.wave.3.fill"
-    }
-
-    private func formatTime(_ ms: UInt64) -> String {
-        let totalSec = ms / 1000
-        let min = totalSec / 60
-        let sec = totalSec % 60
-        return String(format: "%d:%02d", min, sec)
-    }
-}
-
-// MARK: - Progress Track
-
-/// Draggable progress bar matching the Svelte `ProgressBar` (size `md` / `sm`).
-private struct ProgressTrack: View {
-    @Binding var progress: Float
-    var isThin: Bool = false
-
-    @State private var isHovering = false
-
-    private var thickness: CGFloat {
-        if isThin { return isHovering ? 5 : 4 }
-        return isHovering ? 6 : 5
-    }
-
-    var body: some View {
-        GeometryReader { geo in
-            let width = geo.size.width
-            let pct = CGFloat(max(0.0, min(1.0, progress)))
-
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Color.white.opacity(0.18))
-                    .frame(height: thickness)
-
-                Capsule()
-                    .fill(Color.white.opacity(isHovering ? 1.0 : 0.9))
-                    .frame(width: max(0, width * pct), height: thickness)
-            }
-            .frame(maxHeight: .infinity, alignment: .center)
-            .contentShape(Rectangle())
-            .onHover { isHovering = $0 }
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { value in
-                        progress = Float(value.location.x / width)
-                    }
-            )
         }
     }
 }
