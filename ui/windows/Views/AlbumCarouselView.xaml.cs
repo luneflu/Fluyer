@@ -211,7 +211,7 @@ public sealed partial class AlbumCarouselView : UserControl
         if (cover is not null)
         {
             var index = album.Index;
-            _ = CoverImages.LoadInto(cover, key, album, () => engine.GetAlbumThumbnail(index, (uint)pixels));
+            _ = CoverImages.LoadInto(cover, key, album, () => engine.GetAlbumThumbnailAsync(index, (uint)pixels));
         }
         var label = FindTitle(container);
         if (label is not null && State is not null)

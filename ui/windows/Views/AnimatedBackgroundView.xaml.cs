@@ -217,7 +217,7 @@ public sealed partial class AnimatedBackgroundView : UserControl
         _appliedKey = key;
 
         // Backdrop source is blurred to mush, so 1200px is ample (macOS backdropPixels).
-        var jpeg = await Task.Run(() => engine.GetCurrentThumbnail(1200)).ConfigureAwait(true);
+        var jpeg = await engine.GetCurrentThumbnailAsync(1200).ConfigureAwait(true);
         if (key != CurrentKey())
         {
             return; // track changed mid-load — drop the stale upload

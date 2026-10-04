@@ -56,9 +56,12 @@ public interface IFluyerEngine : IDisposable
     void QueueAlbum(ulong index);
     void ShuffleAlbum(ulong index);
 
-    byte[]? GetTrackThumbnail(ulong index, uint maxSize);
-    byte[]? GetAlbumThumbnail(ulong index, uint maxSize);
-    byte[]? GetCurrentThumbnail(uint maxSize);
+    public byte[]? GetTrackThumbnail(ulong index, uint maxSize);
+    public byte[]? GetAlbumThumbnail(ulong index, uint maxSize);
+    public byte[]? GetCurrentThumbnail(uint maxSize);
+    public Task<byte[]?> GetTrackThumbnailAsync(ulong index, uint maxSize);
+    public Task<byte[]?> GetAlbumThumbnailAsync(ulong index, uint maxSize);
+    public Task<byte[]?> GetCurrentThumbnailAsync(uint maxSize);
     (byte[] Rgba, uint Width, uint Height)? GenerateBackground(uint width, uint height);
 }
 
@@ -236,6 +239,10 @@ public sealed class FluyerEngine : IFluyerEngine
 
     // MARK: - Images
 
+    // Sync thumbnails decode on the calling thread (JPEG parse + Triangle
+    // downscale + re-encode). List rows must use the Async twins below, which
+    // hop the FFI call onto a worker — calling these from a container callback
+    // stalls layout and drops frames.
     public byte[]? GetTrackThumbnail(ulong index, uint maxSize)
     {
         if (_handle == IntPtr.Zero)
@@ -265,6 +272,15 @@ public sealed class FluyerEngine : IFluyerEngine
         var ptr = FluyerNative.fluyer_player_get_current_thumbnail(_handle, maxSize, out var len);
         return TakeBytes(ptr, len);
     }
+
+    public Task<byte[]?> GetTrackThumbnailAsync(ulong index, uint maxSize)
+        => Task.Run(() => GetTrackThumbnail(index, maxSize));
+
+    public Task<byte[]?> GetAlbumThumbnailAsync(ulong index, uint maxSize)
+        => Task.Run(() => GetAlbumThumbnail(index, maxSize));
+
+    public Task<byte[]?> GetCurrentThumbnailAsync(uint maxSize)
+        => Task.Run(() => GetCurrentThumbnail(maxSize));
 
     public (byte[] Rgba, uint Width, uint Height)? GenerateBackground(uint width, uint height)
     {

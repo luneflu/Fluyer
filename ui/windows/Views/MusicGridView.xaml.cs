@@ -126,18 +126,18 @@ public sealed partial class MusicGridView : UserControl
         }
 
         string key;
-        Func<byte[]?> load;
+        Func<Task<byte[]?>> load;
         if (state!.Selection.Index is { } albumIndex)
         {
             var i = (ulong)albumIndex;
             key = ThumbnailKey.Album(i, Pixels);
-            load = () => engine.GetAlbumThumbnail(i, Pixels);
+            load = () => engine.GetAlbumThumbnailAsync(i, Pixels);
         }
         else
         {
             var i = track.Index;
             key = ThumbnailKey.Track(i, Pixels);
-            load = () => engine.GetTrackThumbnail(i, Pixels);
+            load = () => engine.GetTrackThumbnailAsync(i, Pixels);
         }
         _ = CoverImages.LoadInto(thumb, key, track, load);
 

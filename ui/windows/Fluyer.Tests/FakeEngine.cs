@@ -63,6 +63,9 @@ internal sealed class FakeEngine : IFluyerEngine
     public byte[]? GetTrackThumbnail(ulong index, uint maxSize) => null;
     public byte[]? GetAlbumThumbnail(ulong index, uint maxSize) => null;
     public byte[]? GetCurrentThumbnail(uint maxSize) => null;
+    public Task<byte[]?> GetTrackThumbnailAsync(ulong index, uint maxSize) => Task.FromResult<byte[]?>(null);
+    public Task<byte[]?> GetAlbumThumbnailAsync(ulong index, uint maxSize) => Task.FromResult<byte[]?>(null);
+    public Task<byte[]?> GetCurrentThumbnailAsync(uint maxSize) => Task.FromResult<byte[]?>(null);
     public (byte[] Rgba, uint Width, uint Height)? GenerateBackground(uint width, uint height) => null;
 
     internal static TrackItemViewModel Track(ulong index, bool current = false) => new(

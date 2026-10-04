@@ -88,7 +88,7 @@ public sealed partial class CurrentCoverView : UserControl
         {
             return;
         }
-        await CoverImages.LoadInto(Cover, key, path, () => engine.GetCurrentThumbnail((uint)pixels));
+        await CoverImages.LoadInto(Cover, key, path, () => engine.GetCurrentThumbnailAsync((uint)pixels));
         var hasArt = Cover.Source is not null;
         Placeholder.Visibility = hasArt ? Visibility.Collapsed : Visibility.Visible;
         Cover.Opacity = hasArt ? 1 : 0;
