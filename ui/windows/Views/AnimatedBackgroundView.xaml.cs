@@ -50,10 +50,12 @@ public sealed partial class AnimatedBackgroundView : UserControl
         if (e.OldValue is AppState oldState)
         {
             oldState.Playback.PropertyChanged -= self.OnPlaybackChanged;
+            oldState.Settings.PropertyChanged -= self.OnSettingsChanged;
         }
         if (e.NewValue is AppState newState)
         {
             newState.Playback.PropertyChanged += self.OnPlaybackChanged;
+            newState.Settings.PropertyChanged += self.OnSettingsChanged;
         }
         _ = self.RefreshArtworkAsync();
     }
@@ -66,25 +68,46 @@ public sealed partial class AnimatedBackgroundView : UserControl
         }
     }
 
+    private void OnSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SettingsState.AnimatedBackground) && IsLoaded)
+        {
+            ApplyMode();
+        }
+    }
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        try
-        {
-            _renderer = new ArtworkBackdropRenderer();
-            _renderer.ReduceMotion = !AnimationsEnabled();
-        }
-        catch (ArtworkBackdropRenderer.BackdropUnavailableException ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Backdrop GPU unavailable, using static fallback: {ex.Message}");
-            _renderer = null;
-        }
         _frameSource = new SoftwareBitmapSource();
-        Backdrop.Source = _frameSource;
+        ApplyMode();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e) => DisableRenderer();
+
+    /// <summary>GPU loop when the setting is on, else the static blurred bitmap.</summary>
+    private void ApplyMode()
+    {
+        DisableRenderer();
+        if (State?.Settings.AnimatedBackground != false)
+        {
+            try
+            {
+                _renderer = new ArtworkBackdropRenderer();
+                _renderer.ReduceMotion = !AnimationsEnabled();
+                Backdrop.Source = _frameSource;
+            }
+            catch (ArtworkBackdropRenderer.BackdropUnavailableException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Backdrop GPU unavailable, using static fallback: {ex.Message}");
+                _renderer = null;
+            }
+        }
+        _appliedKey = string.Empty; // force artwork re-upload into the new mode
         _ = RefreshArtworkAsync();
         StartFrameLoop();
     }
 
-    private void OnUnloaded(object sender, RoutedEventArgs e)
+    private void DisableRenderer()
     {
         StopFrameLoop();
         _renderer?.Dispose();

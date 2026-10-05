@@ -34,8 +34,8 @@ public sealed partial class MusicGridView : UserControl
         private set => SetValue(CardItemWidthProperty, value);
     }
 
-    /// <summary>Raised when the empty-state button needs a folder pick (handled by the window).</summary>
-    public event Action? OpenFolderRequested;
+    /// <summary>Raised when the empty-state button needs to open settings (handled by the window).</summary>
+    public event Action? OpenSettingsRequested;
 
     // x:Bind static function binding for the artist • album line.
     public static string ArtistAlbumLine(string artist, string album) => $"{artist} • {album}";
@@ -223,5 +223,5 @@ public sealed partial class MusicGridView : UserControl
         }
     }
 
-    private void OnOpenFolder(object sender, RoutedEventArgs e) => OpenFolderRequested?.Invoke();
+    private void OnOpenSettings(object sender, RoutedEventArgs e) => OpenSettingsRequested?.Invoke();
 }

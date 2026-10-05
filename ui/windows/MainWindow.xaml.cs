@@ -29,7 +29,7 @@ public sealed partial class MainWindow : Window
         State.Library.PropertyChanged += OnLibraryChanged;
         State.Toast.PropertyChanged += OnToastChanged;
         State.Selection.PropertyChanged += OnSelectionChanged;
-        MusicGrid.OpenFolderRequested += () => _ = PickAndScanAsync();
+        MusicGrid.OpenSettingsRequested += ShowSettings;
 
         RefreshOverlays();
         RefreshScan();
@@ -80,7 +80,6 @@ public sealed partial class MainWindow : Window
     {
         var status = State.Library.ScanStatus;
         ScanStatus.Visibility = status.IsScanning ? Visibility.Visible : Visibility.Collapsed;
-        OpenFolderButton.Visibility = status.IsScanning ? Visibility.Collapsed : Visibility.Visible;
         ScanLabel.Text = status.StatusLabel;
     }
 
@@ -101,5 +100,33 @@ public sealed partial class MainWindow : Window
     {
         var paths = await FolderPicker.PickMusicFoldersAsync(this);
         State.ScanFolders(paths);
+        RefreshFolders();
+    }
+
+    private void OnOpenSettings(object sender, RoutedEventArgs e) => ShowSettings();
+
+    private void ShowSettings()
+    {
+        RefreshFolders();
+        SettingsDialog.XamlRoot = Content.XamlRoot;
+        _ = SettingsDialog.ShowAsync();
+    }
+
+    private void OnRescan(object sender, RoutedEventArgs e) => State.ScanSavedFolders();
+
+    private void OnRemoveFolder(object sender, RoutedEventArgs e)
+    {
+        if (((FrameworkElement)sender).Tag is string path)
+        {
+            State.RemoveFolder(path);
+            RefreshFolders();
+        }
+    }
+
+    private void RefreshFolders()
+    {
+        var empty = State.Settings.MusicFolders.Count == 0;
+        NoFolders.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+        RescanButton.IsEnabled = !empty;
     }
 }

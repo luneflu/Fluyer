@@ -54,6 +54,8 @@ internal sealed class FakeEngine : IFluyerEngine
     public void Shuffle() => Calls.Add("shuffle");
     public void RequestSync() => Calls.Add("sync");
     public void ScanDirectories(string[] directories) => Scanned.Add(directories);
+    public void RemoveFolder(string directory) => Calls.Add($"removefolder:{directory}");
+    public void SetDiscordEnabled(bool enabled) => Calls.Add($"discord:{enabled}");
     public void PlaySingleFromLibrary(ulong index) => Calls.Add($"single:{index}");
     public void PlayAllFromLibrary(ulong startIndex) => Calls.Add($"all:{startIndex}");
     public void PlayAlbum(ulong index) => Calls.Add($"album:{index}");

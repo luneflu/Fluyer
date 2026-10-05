@@ -114,6 +114,8 @@ impl FluyerEngine {
         })
     }
 
+    /// Upserts files under `directories` and drops rows for files under those
+    /// same roots that no longer exist. Rows outside the roots are untouched.
     pub fn scan_and_update(&self, directories: &[String]) {
         let db = Arc::clone(&self.db);
         let library = Arc::clone(&self.library);
@@ -122,9 +124,15 @@ impl FluyerEngine {
 
         self.runtime.spawn(async move {
             let file_paths = scan_directories(&dirs);
+            // Missing root (unplugged drive) walks as empty: never prune it.
+            let roots: Vec<&Path> = dirs.iter().map(Path::new).filter(|p| p.is_dir()).collect();
+            let found: std::collections::HashSet<String> =
+                file_paths.iter().map(|p| p.display().to_string()).collect();
+            prune_rows(&db, |p| !found.contains(p) && roots.iter().any(|r| Path::new(p).starts_with(r)));
+
             let progress_sink = sink.clone();
             let on_progress = move |cur: usize, tot: usize| {
-                if let Some(ref s) = progress_sink {
+                if let Some(s) = &progress_sink {
                     s.on_scan_progress(cur, tot);
                 }
             };
@@ -132,10 +140,19 @@ impl FluyerEngine {
             let updated_music = process_supported_files(&file_paths, db, Some(on_progress)).await;
             library.write().unwrap().rebuild(updated_music);
 
-            if let Some(ref s) = sink {
+            if let Some(s) = &sink {
                 s.on_toast("Library scan completed");
             }
         });
+    }
+
+    /// Synchronously drops every row under `directory` (removed library folder)
+    /// and rebuilds the in-memory library; caller re-reads afterwards.
+    pub fn remove_folder(&self, directory: &str) {
+        let root = Path::new(directory);
+        prune_rows(&self.db, |p| Path::new(p).starts_with(root));
+        let music = library::load_all_music_from_db(&self.db);
+        self.library.write().unwrap().rebuild(music);
     }
 
     pub fn play(&self) {
@@ -630,5 +647,41 @@ impl FluyerEngine {
         let lines = Arc::new(view_models::parse_lrc(&lrc));
         *self.lyrics_cache.write().unwrap() = Some((track.path.clone(), Arc::clone(&lines)));
         Some(lines)
+    }
+}
+
+/// Deletes DB rows whose path matches `stale`.
+fn prune_rows(db: &Database, stale: impl Fn(&str) -> bool) {
+    let paths: Vec<String> = db::repo::get_known_music_files(db)
+        .unwrap_or_default()
+        .into_keys()
+        .filter(|p| stale(p))
+        .collect();
+    if let Err(e) = db::repo::delete_music_paths(db, &paths) {
+        crate::flog_err!("Scanner", "Failed to prune {} rows: {}", paths.len(), e);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn prune_rows_by_folder_is_component_scoped() {
+        let mut conn = rusqlite::Connection::open_in_memory().unwrap();
+        db::migrations::DATABASE_MIGRATIONS.to_latest(&mut conn).unwrap();
+        conn.execute_batch(
+            "INSERT INTO musics (path, modified_at) VALUES ('/music/a.flac', 't');
+             INSERT INTO musics (path, modified_at) VALUES ('/music/sub/b.flac', 't');
+             INSERT INTO musics (path, modified_at) VALUES ('/music2/c.flac', 't');",
+        )
+        .unwrap();
+        let db = Database { conn: std::sync::Mutex::new(conn) };
+
+        let root = Path::new("/music");
+        prune_rows(&db, |p| Path::new(p).starts_with(root));
+
+        let left: Vec<String> = db::repo::get_known_music_files(&db).unwrap().into_keys().collect();
+        assert_eq!(left, vec!["/music2/c.flac".to_string()]);
     }
 }

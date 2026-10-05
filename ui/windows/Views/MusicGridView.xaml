@@ -106,8 +106,8 @@
             <Button
                 x:Name="EmptyAction"
                 HorizontalAlignment="Center"
-                Click="OnOpenFolder"
-                Content="Open Music Folder..."
+                Click="OnOpenSettings"
+                Content="Open Settings"
                 Style="{StaticResource AccentButtonStyle}" />
         </StackPanel>
     </Grid>

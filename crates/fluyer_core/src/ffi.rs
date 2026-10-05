@@ -301,6 +301,22 @@ pub unsafe extern "C" fn fluyer_player_request_sync(engine: *mut FluyerEngine) {
     }
 }
 
+unsafe fn c_str_array(paths: *const *const c_char, count: usize) -> Vec<String> {
+    let mut dirs = Vec::with_capacity(count);
+    if paths.is_null() {
+        return dirs;
+    }
+    for i in 0..count {
+        let p = *paths.add(i);
+        if !p.is_null() {
+            if let Ok(s) = CStr::from_ptr(p).to_str() {
+                dirs.push(s.to_string());
+            }
+        }
+    }
+    dirs
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn fluyer_library_scan(
     engine: *mut FluyerEngine,
@@ -308,19 +324,25 @@ pub unsafe extern "C" fn fluyer_library_scan(
     count: usize,
 ) {
     if let Some(e) = engine.as_ref() {
-        if !paths.is_null() && count > 0 {
-            let mut dirs = Vec::with_capacity(count);
-            for i in 0..count {
-                let p = *paths.add(i);
-                if !p.is_null() {
-                    if let Ok(s) = CStr::from_ptr(p).to_str() {
-                        dirs.push(s.to_string());
-                    }
-                }
-            }
-            e.scan_and_update(&dirs);
+        if count > 0 {
+            e.scan_and_update(&c_str_array(paths, count));
         }
     }
+}
+
+/// Drops every library row under `path` (a removed library folder).
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_library_remove_folder(engine: *mut FluyerEngine, path: *const c_char) {
+    if let (Some(e), false) = (engine.as_ref(), path.is_null()) {
+        if let Ok(s) = CStr::from_ptr(path).to_str() {
+            e.remove_folder(s);
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_discord_set_enabled(enabled: bool) {
+    crate::services::DiscordRpc::set_enabled(enabled);
 }
 
 unsafe fn raw_bytes_into_ptr(bytes: Option<Vec<u8>>, out_len: *mut usize) -> *mut u8 {

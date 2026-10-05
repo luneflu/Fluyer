@@ -100,10 +100,49 @@ public sealed class AppStateTests
     }
 
     [Fact]
-    public void ScanFolders_ForwardsToCore()
+    public void ScanFolders_RemembersFolder_AndForwardsToCore()
     {
         var (app, engine, _) = Create();
         app.ScanFolders(["C:\\Music"]);
-        Assert.Single(engine.Scanned);
+        Assert.Equal(new[] { "C:\\Music" }, Assert.Single(engine.Scanned));
+        Assert.Equal(new[] { "C:\\Music" }, app.Settings.MusicFolders);
+    }
+
+    [Fact]
+    public void Attach_RestoresSettings_AndRescansSavedFolders()
+    {
+        var settings = new SettingsState();
+        settings.AddFolders(["C:\\A", "D:\\B"]);
+        settings.DiscordRpc = false;
+        settings.Volume = 0.25f;
+        var engine = new FakeEngine();
+
+        var app = new AppState(engine, settings: settings);
+
+        Assert.Equal(new[] { "C:\\A", "D:\\B" }, Assert.Single(engine.Scanned));
+        Assert.Contains("discord:False", engine.Calls);
+        Assert.Equal(new[] { 0.25f }, engine.VolumeSets);
+        Assert.Equal(0.25f, app.Playback.Bar.Volume);
+    }
+
+    [Fact]
+    public void RemoveFolder_OnlyKnownFolder_HitsCore()
+    {
+        var (app, engine, _) = Create();
+        app.ScanFolders(["C:\\Music"]);
+
+        app.RemoveFolder("C:\\Other");
+        app.RemoveFolder("c:\\music\\");
+
+        Assert.Equal(new[] { "removefolder:C:\\Music" }, engine.Calls.Where(c => c.StartsWith("removefolder")));
+        Assert.Empty(app.Settings.MusicFolders);
+    }
+
+    [Fact]
+    public void DiscordToggle_ForwardsToCore()
+    {
+        var (app, engine, _) = Create();
+        app.Settings.DiscordRpc = false;
+        Assert.Equal("discord:False", engine.Calls.Last());
     }
 }

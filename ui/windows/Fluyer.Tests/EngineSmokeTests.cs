@@ -75,6 +75,10 @@ public sealed class EngineSmokeTests
         engine.QueueRemove(3);
         engine.QueueMove(0, 1);
         Assert.Empty(engine.GetQueue());
+        // Removing an unknown folder is a no-op; Discord toggle must not throw.
+        engine.RemoveFolder(Path.Combine(Path.GetTempPath(), "fluyer-no-such-folder"));
+        Assert.Equal(0UL, engine.GetTrackCount());
+        engine.SetDiscordEnabled(false);
     }
 
     private sealed class NullSink : IFluyerEventSink

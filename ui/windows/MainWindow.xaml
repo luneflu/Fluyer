@@ -51,11 +51,12 @@
                             Opacity="0.7" />
                     </StackPanel>
                     <Button
-                        x:Name="OpenFolderButton"
-                        Click="OnOpenFolder"
-                        Content="Open Music Folder..."
+                        AutomationProperties.Name="Settings"
+                        Click="OnOpenSettings"
                         Style="{StaticResource IconButtonStyle}"
-                        ToolTipService.ToolTip="Open Music Folder" />
+                        ToolTipService.ToolTip="Settings">
+                        <FontIcon FontSize="14" Glyph="&#xE713;" />
+                    </Button>
                 </StackPanel>
             </TitleBar>
 
@@ -101,5 +102,62 @@
                 FontWeight="SemiBold"
                 Foreground="White" />
         </Border>
+
+        <ContentDialog
+            x:Name="SettingsDialog"
+            Title="Settings"
+            CloseButtonText="Done"
+            DefaultButton="Close">
+            <StackPanel Width="440" Spacing="16">
+                <StackPanel Spacing="8">
+                    <TextBlock FontWeight="SemiBold" Text="Music folders" />
+                    <ListView
+                        x:Name="FolderList"
+                        MaxHeight="220"
+                        ItemsSource="{x:Bind State.Settings.MusicFolders, Mode=OneWay}"
+                        SelectionMode="None">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        Text="{x:Bind}"
+                                        TextTrimming="CharacterEllipsis"
+                                        ToolTipService.ToolTip="{x:Bind}" />
+                                    <Button
+                                        Grid.Column="1"
+                                        AutomationProperties.Name="Remove folder"
+                                        Click="OnRemoveFolder"
+                                        Style="{StaticResource IconButtonStyle}"
+                                        Tag="{x:Bind}"
+                                        ToolTipService.ToolTip="Remove folder and its songs">
+                                        <FontIcon FontSize="12" Glyph="&#xE711;" />
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                    <TextBlock
+                        x:Name="NoFolders"
+                        Opacity="0.6"
+                        Text="No folders yet."
+                        Visibility="Collapsed" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Click="OnOpenFolder" Content="Add folder..." />
+                        <Button x:Name="RescanButton" Click="OnRescan" Content="Rescan" />
+                    </StackPanel>
+                </StackPanel>
+                <ToggleSwitch
+                    Header="Animated background"
+                    IsOn="{x:Bind State.Settings.AnimatedBackground, Mode=TwoWay}" />
+                <ToggleSwitch
+                    Header="Discord Rich Presence"
+                    IsOn="{x:Bind State.Settings.DiscordRpc, Mode=TwoWay}" />
+            </StackPanel>
+        </ContentDialog>
     </Grid>
 </Window>

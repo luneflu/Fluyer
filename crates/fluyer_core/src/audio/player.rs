@@ -1,6 +1,7 @@
 use super::bass::*;
 use super::queue::{PlaybackQueue, RepeatMode};
 use crate::events::EventSink;
+use crate::services::discord::{ActivityData, DiscordRpc};
 use crate::metadata::MusicMetadata;
 use serde::{Deserialize, Serialize};
 use std::ffi::CString;
@@ -916,16 +917,32 @@ impl MusicPlayer {
             }
         };
 
-        let (index, repeat_mode, is_shuffled) = queue
+        let (index, repeat_mode, is_shuffled, track) = queue
             .lock()
             .map(|q| {
                 (
                     q.current_index().map(|i| i as i64).unwrap_or(-1),
                     q.repeat_mode(),
                     q.is_shuffled(),
+                    q.current_track(),
                 )
             })
-            .unwrap_or((-1, RepeatMode::None, false));
+            .unwrap_or((-1, RepeatMode::None, false, None));
+
+        // Same trigger as legacy: every player sync refreshes presence; no-op when disabled.
+        match &track {
+            Some(t) => DiscordRpc::update(ActivityData {
+                title: t
+                    .title
+                    .clone()
+                    .unwrap_or_else(|| MusicMetadata::default_title().to_string()),
+                artist: t.artist.clone(),
+                position_ms: current_position.map(|s| s * 1000.0),
+                duration_ms: t.duration,
+                is_playing,
+            }),
+            None => DiscordRpc::clear(),
+        }
 
         let sync_state = MusicPlayerSync {
             index,

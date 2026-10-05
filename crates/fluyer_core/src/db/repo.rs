@@ -99,6 +99,34 @@ pub fn upsert_music_batch(db: &Database, records: &[MusicRecord]) -> Result<(), 
     Ok(())
 }
 
+/// Deletes the rows for `paths`. Returns rows removed.
+pub fn delete_music_paths(db: &Database, paths: &[String]) -> Result<usize, String> {
+    if paths.is_empty() {
+        return Ok(0);
+    }
+    let mut conn = db
+        .conn
+        .lock()
+        .map_err(|e| format!("DB lock error: {}", e))?;
+    let tx = conn
+        .transaction()
+        .map_err(|e| format!("Transaction begin failed: {}", e))?;
+    let mut removed = 0;
+    {
+        let mut stmt = tx
+            .prepare("DELETE FROM musics WHERE path = ?1")
+            .map_err(|e| format!("Failed to prepare delete: {}", e))?;
+        for path in paths {
+            removed += stmt
+                .execute([path])
+                .map_err(|e| format!("Failed to delete '{}': {}", path, e))?;
+        }
+    }
+    tx.commit()
+        .map_err(|e| format!("Transaction commit failed: {}", e))?;
+    Ok(removed)
+}
+
 pub fn load_all_music(db: &Database) -> Vec<MusicMetadata> {
     let conn = match db.conn.lock() {
         Ok(c) => c,
@@ -331,5 +359,22 @@ mod tests {
 
         upsert_music_batch(&db, &[record("/m/a.flac", "A", "t0")]).unwrap();
         assert_eq!(rows(&db).len(), 1);
+    }
+
+    #[test]
+    fn delete_music_paths_removes_only_listed() {
+        let db = db();
+        upsert_music_batch(
+            &db,
+            &[
+                record("/m/a.flac", "A", "t0"),
+                record("/m/b.flac", "B", "t0"),
+            ],
+        )
+        .unwrap();
+
+        let removed = delete_music_paths(&db, &["/m/a.flac".into(), "/m/zz.flac".into()]).unwrap();
+        assert_eq!(removed, 1);
+        assert_eq!(rows(&db), vec![(2, "/m/b.flac".into(), "B".into(), "t0".into())]);
     }
 }

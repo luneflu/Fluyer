@@ -49,6 +49,8 @@ public interface IFluyerEngine : IDisposable
     void Shuffle();
     void RequestSync();
     void ScanDirectories(string[] directories);
+    void RemoveFolder(string directory);
+    void SetDiscordEnabled(bool enabled);
     void PlaySingleFromLibrary(ulong index);
     void PlayAllFromLibrary(ulong startIndex);
     void PlayAlbum(ulong index);
@@ -237,6 +239,13 @@ public sealed class FluyerEngine : IFluyerEngine
 
     public void QueueAlbum(ulong index)
         => Invoke(() => FluyerNative.fluyer_library_queue_album(_handle, index));
+
+    public void RemoveFolder(string directory)
+        => Invoke(() => FluyerNative.fluyer_library_remove_folder(_handle, directory));
+
+    // Process-global in the core (not per engine), but gated on a live engine like every command.
+    public void SetDiscordEnabled(bool enabled)
+        => Invoke(() => FluyerNative.fluyer_discord_set_enabled(enabled));
 
     public void ShuffleAlbum(ulong index)
         => Invoke(() => FluyerNative.fluyer_library_shuffle_album(_handle, index));

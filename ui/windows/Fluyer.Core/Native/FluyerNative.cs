@@ -133,6 +133,13 @@ internal static class FluyerNative
     public static extern void fluyer_library_scan(IntPtr engine, IntPtr paths, ulong count);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void fluyer_library_remove_folder(
+        IntPtr engine, [MarshalAs(UnmanagedType.LPUTF8Str)] string path);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void fluyer_discord_set_enabled([MarshalAs(UnmanagedType.U1)] bool enabled);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     public static extern ulong fluyer_library_get_count(IntPtr engine);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]

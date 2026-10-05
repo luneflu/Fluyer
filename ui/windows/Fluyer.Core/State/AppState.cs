@@ -65,15 +65,24 @@ public sealed class AppState : Support.ObservableObject, IFluyerEventSink
     public AlbumSelection Selection { get; }
     public ToastState Toast { get; } = new();
     public QueueState Queue { get; } = new();
+    public SettingsState Settings { get; }
 
     public IFluyerEngine? Engine { get; private set; }
 
     private readonly IThumbnailInvalidator? _thumbnails;
 
-    public AppState(IFluyerEngine? engine, IThumbnailInvalidator? thumbnails = null)
+    public AppState(IFluyerEngine? engine, IThumbnailInvalidator? thumbnails = null, SettingsState? settings = null)
     {
         Selection = new AlbumSelection(Library);
         _thumbnails = thumbnails;
+        Settings = settings ?? new SettingsState();
+        Settings.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(SettingsState.DiscordRpc))
+            {
+                Engine?.SetDiscordEnabled(Settings.DiscordRpc);
+            }
+        };
 
         AttachEngine(engine);
     }
@@ -91,6 +100,15 @@ public sealed class AppState : Support.ObservableObject, IFluyerEventSink
         Queue.Engine = engine;
 
         Refresh();
+        if (engine is null)
+        {
+            return;
+        }
+        // Restore persisted settings, then re-scan saved folders so files
+        // added/removed while closed show up (unchanged files are skipped by mtime).
+        engine.SetDiscordEnabled(Settings.DiscordRpc);
+        Playback.SetVolume(Settings.Volume);
+        ScanSavedFolders();
     }
 
     /// <summary>Re-read everything the window shows from the core.</summary>
@@ -103,15 +121,42 @@ public sealed class AppState : Support.ObservableObject, IFluyerEventSink
         Queue.Reload();
     }
 
-    /// <summary>Ask the core to scan folders. The UI picks them via FileOpenPicker first.</summary>
+    /// <summary>Remember picked folders and scan them.</summary>
     public void ScanFolders(string[] paths)
     {
         if (paths.Length == 0)
         {
             return;
         }
+        Settings.AddFolders(paths);
         Engine?.ScanDirectories(paths);
     }
+
+    /// <summary>Re-scan every saved folder.</summary>
+    public void ScanSavedFolders()
+    {
+        var folders = Settings.MusicFolders.ToArray();
+        if (folders.Length > 0)
+        {
+            Engine?.ScanDirectories(folders);
+        }
+    }
+
+    /// <summary>Forget a folder and drop its tracks from the library.</summary>
+    public void RemoveFolder(string path)
+    {
+        // Forward the stored spelling: DB rows carry the scan root's exact casing.
+        var stored = Settings.RemoveFolder(path);
+        if (stored is null)
+        {
+            return;
+        }
+        Engine?.RemoveFolder(stored);
+        Refresh();
+    }
+
+    /// <summary>Persist session state that changes too often to save live (volume).</summary>
+    public void SaveSession() => Settings.Volume = Playback.Bar.Volume;
 
     // MARK: - IFluyerEventSink (already on the UI thread — FluyerEngine hops)
 

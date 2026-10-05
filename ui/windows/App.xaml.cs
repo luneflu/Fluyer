@@ -34,13 +34,15 @@ public partial class App : Application
             }
         }
 
-        State = new AppState(null, Thumbnails);
+        var settings = new SettingsState(Path.Combine(EngineHandle.DataDirectory, SettingsState.FileName));
+        State = new AppState(null, Thumbnails, settings);
         State.AttachEngine(EngineHandle.Attach(State));
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         _window = new MainWindow(State);
+        _window.Closed += (_, _) => State.SaveSession();
         _window.Activate();
     }
 }
