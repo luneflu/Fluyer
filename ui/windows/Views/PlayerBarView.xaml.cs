@@ -34,10 +34,12 @@ public sealed partial class PlayerBarView : UserControl
         if (e.OldValue is AppState oldState)
         {
             oldState.Playback.PropertyChanged -= self.OnPlaybackChanged;
+            oldState.Queue.PropertyChanged -= self.OnQueueChanged;
         }
         if (e.NewValue is AppState newState)
         {
             newState.Playback.PropertyChanged += self.OnPlaybackChanged;
+            newState.Queue.PropertyChanged += self.OnQueueChanged;
         }
         self.RefreshIcons();
     }
@@ -78,4 +80,52 @@ public sealed partial class PlayerBarView : UserControl
             State.Playback.ShowPlayView = true;
         }
     }
+
+    // MARK: - Queue flyout
+
+    public static Windows.UI.Text.FontWeight RowWeight(bool isCurrent)
+        => isCurrent ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
+
+    private void OnQueueOpening(object? sender, object e)
+    {
+        if (State is null)
+        {
+            return;
+        }
+        State.Queue.IsOpen = true;
+        RefreshQueueEmpty();
+    }
+
+    private void OnQueueClosed(object? sender, object e)
+    {
+        if (State is not null)
+        {
+            State.Queue.IsOpen = false;
+        }
+    }
+
+    private void OnQueueChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(QueueState.Tracks))
+        {
+            RefreshQueueEmpty();
+        }
+    }
+
+    private void RefreshQueueEmpty()
+        => QueueEmpty.Visibility = State?.Queue.Tracks.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+
+    private void OnQueueItemClick(object sender, ItemClickEventArgs e)
+    {
+        if (e.ClickedItem is Core.Native.TrackItemViewModel t)
+        {
+            State?.Queue.Goto((int)t.Index);
+        }
+    }
+
+    private static int RowIndex(object sender) => (int)(ulong)((FrameworkElement)sender).Tag;
+
+    private void OnQueueUp(object sender, RoutedEventArgs e) => State?.Queue.Move(RowIndex(sender), -1);
+    private void OnQueueDown(object sender, RoutedEventArgs e) => State?.Queue.Move(RowIndex(sender), 1);
+    private void OnQueueRemove(object sender, RoutedEventArgs e) => State?.Queue.Remove(RowIndex(sender));
 }

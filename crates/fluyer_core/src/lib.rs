@@ -241,6 +241,30 @@ impl FluyerEngine {
         self.player.add_track(vec![track]);
     }
 
+    /// Queue in play order; `index` is the queue position, not a library index.
+    pub fn get_queue_view(&self) -> Vec<view_models::TrackItemViewModel> {
+        let (tracks, current) = self.player.queue_snapshot();
+        tracks
+            .iter()
+            .enumerate()
+            .map(|(i, t)| view_models::TrackItemViewModel::from_metadata(i, t, current == Some(i)))
+            .collect()
+    }
+
+    pub fn queue_goto(&self, index: usize) {
+        if index < self.player.queue_count() {
+            self.player.goto_track(index);
+        }
+    }
+
+    pub fn queue_remove(&self, index: usize) {
+        self.player.remove_track(index);
+    }
+
+    pub fn queue_move(&self, from: usize, to: usize) {
+        self.player.move_track(from, to);
+    }
+
     pub fn resolve_track_cover(
         &self,
         track: &MusicMetadata,

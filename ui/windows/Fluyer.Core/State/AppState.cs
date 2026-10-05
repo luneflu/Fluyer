@@ -64,6 +64,7 @@ public sealed class AppState : Support.ObservableObject, IFluyerEventSink
     public LibraryState Library { get; } = new();
     public AlbumSelection Selection { get; }
     public ToastState Toast { get; } = new();
+    public QueueState Queue { get; } = new();
 
     public IFluyerEngine? Engine { get; private set; }
 
@@ -87,6 +88,7 @@ public sealed class AppState : Support.ObservableObject, IFluyerEventSink
         Playback.Engine = engine;
         Library.Engine = engine;
         Selection.Engine = engine;
+        Queue.Engine = engine;
 
         Refresh();
     }
@@ -98,6 +100,7 @@ public sealed class AppState : Support.ObservableObject, IFluyerEventSink
         Playback.ReloadPlayView();
         Library.Reload();
         Selection.Reload();
+        Queue.Reload();
     }
 
     /// <summary>Ask the core to scan folders. The UI picks them via FileOpenPicker first.</summary>
@@ -112,12 +115,17 @@ public sealed class AppState : Support.ObservableObject, IFluyerEventSink
 
     // MARK: - IFluyerEventSink (already on the UI thread — FluyerEngine hops)
 
-    public void OnPlayerSync() => Playback.ReloadBar();
+    public void OnPlayerSync()
+    {
+        Playback.ReloadBar();
+        Queue.Reload();
+    }
 
     public void OnTrackChanged(ulong index)
     {
         Playback.ApplyTrackChange();
         Library.ReloadActiveFlags();
+        Queue.Reload();
     }
 
     public void OnScanProgress(ulong current, ulong total)

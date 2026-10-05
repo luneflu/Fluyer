@@ -340,6 +340,21 @@ impl MusicPlayer {
         self.queue.lock().ok().and_then(|q| q.get(index))
     }
 
+    /// Tracks in play order plus the current index, read under one lock.
+    pub fn queue_snapshot(&self) -> (Vec<MusicMetadata>, Option<usize>) {
+        self.queue
+            .lock()
+            .map(|q| (q.all_tracks(), q.current_index()))
+            .unwrap_or_default()
+    }
+
+    pub fn move_track(&self, from: usize, to: usize) {
+        if let Ok(mut q) = self.queue.lock() {
+            q.move_track(from, to);
+        }
+        self.emit_sync(false);
+    }
+
     pub fn shuffle_track(&self) {
         if let Ok(mut q) = self.queue.lock() {
             q.shuffle();
@@ -482,6 +497,7 @@ impl MusicPlayer {
         if is_current {
             self.stop_current_stream();
         }
+        self.emit_sync(false);
     }
 
     pub fn goto_track(&self, index: usize) {

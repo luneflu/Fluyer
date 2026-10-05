@@ -18,6 +18,7 @@ internal sealed class FakeEngine : IFluyerEngine
 
     public List<TrackItemViewModel> TrackList { get; } = new();
     public List<AlbumCardViewModel> AlbumList { get; } = new();
+    public List<TrackItemViewModel> QueueList { get; } = new();
 
     public List<string> Calls { get; } = new();
     public List<ulong> SeekTargets { get; } = new();
@@ -59,6 +60,16 @@ internal sealed class FakeEngine : IFluyerEngine
     public void PlayAlbumTrack(ulong albumIndex, ulong trackIndex) => Calls.Add($"albumtrack:{albumIndex}:{trackIndex}");
     public void QueueAlbum(ulong index) => Calls.Add($"queue:{index}");
     public void ShuffleAlbum(ulong index) => Calls.Add($"shufflealbum:{index}");
+    public IReadOnlyList<TrackItemViewModel> GetQueue() => QueueList.ToList();
+    public void QueueGoto(ulong index) => Calls.Add($"goto:{index}");
+    public void QueueRemove(ulong index) { Calls.Add($"remove:{index}"); QueueList.RemoveAt((int)index); }
+    public void QueueMove(ulong from, ulong to)
+    {
+        Calls.Add($"move:{from}:{to}");
+        var item = QueueList[(int)from];
+        QueueList.RemoveAt((int)from);
+        QueueList.Insert((int)to, item);
+    }
 
     public byte[]? GetTrackThumbnail(ulong index, uint maxSize) => null;
     public byte[]? GetAlbumThumbnail(ulong index, uint maxSize) => null;

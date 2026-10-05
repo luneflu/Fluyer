@@ -452,6 +452,40 @@ pub unsafe extern "C" fn fluyer_library_shuffle_album(engine: *mut FluyerEngine,
     }
 }
 
+/// JSON array of `TrackItemViewModel` in queue order; `index` = queue position.
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_queue_get_json(engine: *mut FluyerEngine) -> *mut c_char {
+    if let Some(e) = engine.as_ref() {
+        if let Ok(json) = serde_json::to_string(&e.get_queue_view()) {
+            if let Ok(c_str) = CString::new(json) {
+                return c_str.into_raw();
+            }
+        }
+    }
+    std::ptr::null_mut()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_queue_goto(engine: *mut FluyerEngine, index: usize) {
+    if let Some(e) = engine.as_ref() {
+        e.queue_goto(index);
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_queue_remove(engine: *mut FluyerEngine, index: usize) {
+    if let Some(e) = engine.as_ref() {
+        e.queue_remove(index);
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_queue_move(engine: *mut FluyerEngine, from: usize, to: usize) {
+    if let Some(e) = engine.as_ref() {
+        e.queue_move(from, to);
+    }
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn fluyer_library_get_track_image(
     engine: *mut FluyerEngine,

@@ -69,6 +69,12 @@ public sealed class EngineSmokeTests
         Assert.Equal(0UL, engine.GetTrackCount());
         Assert.Null(engine.GetTrackThumbnail(0, 88));
         Assert.Null(engine.GetCurrentThumbnail(400));
+        // Queue exports: empty list round-trips; out-of-range ops are no-ops.
+        Assert.Empty(engine.GetQueue());
+        engine.QueueGoto(3);
+        engine.QueueRemove(3);
+        engine.QueueMove(0, 1);
+        Assert.Empty(engine.GetQueue());
     }
 
     private sealed class NullSink : IFluyerEventSink

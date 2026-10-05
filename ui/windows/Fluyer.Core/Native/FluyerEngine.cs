@@ -55,6 +55,10 @@ public interface IFluyerEngine : IDisposable
     void PlayAlbumTrack(ulong albumIndex, ulong trackIndex);
     void QueueAlbum(ulong index);
     void ShuffleAlbum(ulong index);
+    IReadOnlyList<TrackItemViewModel> GetQueue();
+    void QueueGoto(ulong index);
+    void QueueRemove(ulong index);
+    void QueueMove(ulong from, ulong to);
 
     public byte[]? GetTrackThumbnail(ulong index, uint maxSize);
     public byte[]? GetAlbumThumbnail(ulong index, uint maxSize);
@@ -236,6 +240,15 @@ public sealed class FluyerEngine : IFluyerEngine
 
     public void ShuffleAlbum(ulong index)
         => Invoke(() => FluyerNative.fluyer_library_shuffle_album(_handle, index));
+
+    public IReadOnlyList<TrackItemViewModel> GetQueue()
+        => DeserializeNullable<List<TrackItemViewModel>>(
+            () => TakeString(FluyerNative.fluyer_queue_get_json(_handle)))
+           ?? (IReadOnlyList<TrackItemViewModel>)Array.Empty<TrackItemViewModel>();
+
+    public void QueueGoto(ulong index) => Invoke(() => FluyerNative.fluyer_queue_goto(_handle, index));
+    public void QueueRemove(ulong index) => Invoke(() => FluyerNative.fluyer_queue_remove(_handle, index));
+    public void QueueMove(ulong from, ulong to) => Invoke(() => FluyerNative.fluyer_queue_move(_handle, from, to));
 
     // MARK: - Images
 
