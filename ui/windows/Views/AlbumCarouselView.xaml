@@ -13,7 +13,7 @@
         IsItemClickEnabled="True"
         ItemClick="OnItemClick"
         ItemsSource="{x:Bind State.Library.Albums, Mode=OneWay}"
-        ScrollViewer.HorizontalScrollBarVisibility="Auto"
+        ScrollViewer.HorizontalScrollBarVisibility="Hidden"
         ScrollViewer.HorizontalScrollMode="Enabled"
         ScrollViewer.VerticalScrollBarVisibility="Disabled"
         ScrollViewer.VerticalScrollMode="Disabled"

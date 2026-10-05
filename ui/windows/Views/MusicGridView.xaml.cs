@@ -18,10 +18,20 @@ public sealed partial class MusicGridView : UserControl
         DependencyProperty.Register(nameof(State), typeof(AppState), typeof(MusicGridView),
             new PropertyMetadata(null, OnStateChanged));
 
+    public static readonly DependencyProperty CardItemWidthProperty =
+        DependencyProperty.Register(nameof(CardItemWidth), typeof(double), typeof(MusicGridView),
+            new PropertyMetadata(280.0));
+
     public AppState? State
     {
         get => (AppState?)GetValue(StateProperty);
         set => SetValue(StateProperty, value);
+    }
+
+    public double CardItemWidth
+    {
+        get => (double)GetValue(CardItemWidthProperty);
+        private set => SetValue(CardItemWidthProperty, value);
     }
 
     /// <summary>Raised when the empty-state button needs a folder pick (handled by the window).</summary>
@@ -35,7 +45,65 @@ public sealed partial class MusicGridView : UserControl
     public MusicGridView()
     {
         InitializeComponent();
+        ScrollViewer.SetVerticalScrollBarVisibility(Rows, ScrollBarVisibility.Hidden);
+        ScrollViewer.SetHorizontalScrollBarVisibility(Rows, ScrollBarVisibility.Disabled);
         Rows.ContainerContentChanging += OnContainerChanging;
+        Rows.Loaded += (_, _) =>
+        {
+            if (Rows.ItemsPanelRoot is ItemsWrapGrid wrapGrid)
+            {
+                wrapGrid.ItemWidth = CardItemWidth;
+            }
+        };
+        Rows.SizeChanged += (_, _) => UpdateMetrics(ActualWidth);
+        SizeChanged += (_, e) => UpdateMetrics(e.NewSize.Width);
+        Loaded += (_, _) => UpdateMetrics(ActualWidth);
+    }
+
+#if DEBUG
+    static MusicGridView()
+    {
+        var (c1, w1) = ComputeMetrics(500);
+        System.Diagnostics.Debug.Assert(c1 == 1 && w1 == 480);
+        var (c2, w2) = ComputeMetrics(700);
+        System.Diagnostics.Debug.Assert(c2 == 2 && w2 == 340);
+        var (c3, w3) = ComputeMetrics(1050);
+        System.Diagnostics.Debug.Assert(c3 == 3 && w3 == 343);
+    }
+#endif
+
+    internal static (int Cols, double ItemWidth) ComputeMetrics(double width)
+    {
+        if (width <= 0)
+        {
+            return (1, 280);
+        }
+        const double padding = 20;
+        const double minColWidth = 280;
+        const double spacing = 12;
+        var available = Math.Max(1, width - padding);
+        var cols = Math.Max(1, (int)((available + spacing) / (minColWidth + spacing)));
+        // ponytail: floor itemWidth to prevent sub-pixel rounding from wrapping last column prematurely.
+        var itemWidth = Math.Max(1, Math.Floor(available / cols));
+        return (cols, itemWidth);
+    }
+
+    private void UpdateMetrics(double width)
+    {
+        if (width <= 0)
+        {
+            return;
+        }
+        var (_, itemWidth) = ComputeMetrics(width);
+        if (Math.Abs(itemWidth - CardItemWidth) < 0.5)
+        {
+            return;
+        }
+        CardItemWidth = itemWidth;
+        if (Rows.ItemsPanelRoot is ItemsWrapGrid wrapGrid)
+        {
+            wrapGrid.ItemWidth = itemWidth;
+        }
     }
 
     private static void OnStateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

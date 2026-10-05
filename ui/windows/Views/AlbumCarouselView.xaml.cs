@@ -68,6 +68,7 @@ public sealed partial class AlbumCarouselView : UserControl
     public AlbumCarouselView()
     {
         InitializeComponent();
+        ScrollViewer.SetHorizontalScrollBarVisibility(Strip, ScrollBarVisibility.Hidden);
         Strip.ContainerContentChanging += OnContainerChanging;
         SizeChanged += (_, e) => UpdateMetrics(e.NewSize.Width);
         Loaded += (_, _) => UpdateMetrics(ActualWidth);

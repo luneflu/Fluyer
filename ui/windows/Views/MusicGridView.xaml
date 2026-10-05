@@ -1,5 +1,6 @@
 <UserControl
     x:Class="Fluyer.Views.MusicGridView"
+    x:Name="MusicGridRoot"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:native="using:Fluyer.Core.Native"
@@ -9,13 +10,32 @@
     <Grid>
         <ListView
             x:Name="Rows"
+            Padding="10,4"
             IsItemClickEnabled="True"
             ItemClick="OnItemClick"
             ItemsSource="{x:Bind State.Selection.DisplayedTracks, Mode=OneWay}"
+            ScrollViewer.VerticalScrollBarVisibility="Hidden"
+            ScrollViewer.VerticalScrollMode="Enabled"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+            ScrollViewer.HorizontalScrollMode="Disabled"
             SelectionMode="None">
             <ListView.ItemContainerTransitions>
                 <TransitionCollection />
             </ListView.ItemContainerTransitions>
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ItemsWrapGrid
+                        Orientation="Horizontal"
+                        ItemWidth="{Binding CardItemWidth, ElementName=MusicGridRoot}" />
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="8,0" />
+                    <Setter Property="Margin" Value="6,4" />
+                </Style>
+            </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="native:TrackItemViewModel">
                     <Grid Padding="0,6" ColumnSpacing="10">
