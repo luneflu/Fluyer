@@ -5,11 +5,11 @@ namespace Fluyer.Rendering;
 /// <c>ui/macos/Sources/Rendering/ArtworkBackdropRenderer.swift</c>,
 /// plus two helpers Metal gets for free:
 ///
-/// - <c>copy_vs/copy_ps</c>: bilinear downsample of the rotation target
-///   into the half-res blur chain.
-/// - <c>kawase_vs/kawase_ps</c>: 4-tap Kawase blur, iterated. A single
-///   gaussian kernel at MPS's sigma (~50px at 960p) would need hundreds of
-///   taps; Kawase approximates the same mush in 5 cheap iterations.
+/// - <c>down4_ps</c>: 4x4 box downsample of the rotation target into the
+///   quarter-res blur chain (four bilinear taps on texel corners).
+/// - <c>gauss_ps</c>: separable gaussian at quarter-res, one axis at a time.
+///   A true lowpass, unlike the former 5-iteration Kawase chain whose
+///   wide-spaced taps left gaps and produced staircase banding.
 ///
 /// Layout: the b0 cbuffer must stay byte-identical to
 /// <see cref="Core.Rendering.BackdropUniforms"/> (368 bytes). HLSL vectors
@@ -57,8 +57,9 @@ public static class BackdropShaders
         };
 
         cbuffer BlurConstants : register(b1) {
-            float2 blurTexelSize;
-            float2 kawaseOffsetUv;
+            float2 blurStepUv;   // down4: 1 source texel in UV. gauss: 1 blur texel along the axis
+            float  blurSigma;    // in blur-texture texels
+            float  blurPad;
         };
 
         // One pair shared by every pass: the rotation pass reads the two
@@ -111,7 +112,10 @@ public static class BackdropShaders
             float3 cur = srcA.Sample(linearClamp, i.uv).rgb;
             float3 prv = srcB.Sample(linearClamp, i.uv).rgb;
             float3 rgb = lerp(cur, prv, textureTransitionMix);
-            return float4(saturateColor(rgb, saturation), 1);
+            // Metal's bgra8Unorm intermediates clamp to [0,1] here; FP16
+            // targets don't, so saturate to match the Mac colors before the
+            // second saturation pass.
+            return float4(saturate(saturateColor(rgb, saturation)), 1);
         }
 
         struct FullscreenVsOut {
@@ -131,13 +135,27 @@ public static class BackdropShaders
             return srcA.Sample(linearClamp, i.uv);
         }
 
-        float4 kawase_ps(FullscreenVsOut i) : SV_Target {
-            float2 d = kawaseOffsetUv;
-            float3 c0 = srcA.Sample(linearClamp, i.uv + float2(d.x, d.y)).rgb;
-            float3 c1 = srcA.Sample(linearClamp, i.uv - float2(d.x, d.y)).rgb;
-            float3 c2 = srcA.Sample(linearClamp, i.uv + float2(-d.x, d.y)).rgb;
-            float3 c3 = srcA.Sample(linearClamp, i.uv + float2(d.x, -d.y)).rgb;
-            return float4((c0 + c1 + c2 + c3) * 0.25, 1);
+        // Four bilinear taps on texel corners = 4x4 box.
+        float4 down4_ps(FullscreenVsOut i) : SV_Target {
+            float2 d = blurStepUv;
+            float3 c = srcA.Sample(linearClamp, i.uv + float2(-d.x, -d.y)).rgb
+                     + srcA.Sample(linearClamp, i.uv + float2( d.x, -d.y)).rgb
+                     + srcA.Sample(linearClamp, i.uv + float2(-d.x,  d.y)).rgb
+                     + srcA.Sample(linearClamp, i.uv + float2( d.x,  d.y)).rgb;
+            return float4(c * 0.25, 1);
+        }
+
+        float4 gauss_ps(FullscreenVsOut i) : SV_Target {
+            int r = min((int)ceil(blurSigma * 3.0), 64);
+            float inv = -0.5 / (blurSigma * blurSigma);
+            float3 sum = 0;
+            float wsum = 0;
+            for (int k = -r; k <= r; k++) {
+                float w = exp(k * k * inv);
+                sum += srcA.SampleLevel(linearClamp, i.uv + blurStepUv * k, 0).rgb * w;
+                wsum += w;
+            }
+            return float4(sum / wsum, 1);
         }
 
         struct PinchVin {

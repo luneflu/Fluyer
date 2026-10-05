@@ -21,10 +21,9 @@ namespace Fluyer.Rendering;
 /// 1. Rotation — the current + previous artwork drawn as three fullscreen
 ///    instances spinning at 60/45/35s per revolution (painter-ordered, so the
 ///    viewport corners fall through to the slower layers).
-/// 2. Blur — MPS gaussian becomes a half-res 5-iteration Kawase chain
-///    calibrated to the same sigma (see <see cref="KawaseBase"/>). A literal
-///    gaussian at sigma ~50px would need hundreds of taps; the output is
-///    blurred to mush either way.
+/// 2. Blur — a 4x4 box downsample to quarter-res, then a separable gaussian
+///    there at MPS's sigma. A true lowpass; the output is blurred to mush
+///    either way, and at 240x135 even a ~77-tap kernel is trivially cheap.
 /// 3. Pinch — the subdivided Music.app warp mesh, warped by the same
 ///    smoothstep phase, with the same saturation-2 + dark scrim + floor/ceiling.
 ///
@@ -33,11 +32,13 @@ namespace Fluyer.Rendering;
 /// E_NOINTERFACE and the IID is absent from Microsoft.UI.Xaml.dll), so the
 /// final frame is read back through a staging texture and uploaded to XAML as
 /// a bitmap — the same display path as the static fallback. Deviations, all
-/// visually negligible and documented: Kawase instead of MPS gaussian; Clamp
+/// visually negligible and documented: separable gaussian at quarter-res
+/// instead of MPS gaussian at half-res; Clamp
 /// instead of MPS zero edge mode (avoids a dark halo at the frame edge);
-/// float instead of Metal half precision; final frame capped at 960px
-/// (macOS renders the pinch at full drawable size — indistinguishable once
-/// blurred).
+/// float instead of Metal half precision; intermediates capped at 960px
+/// (macOS renders rotation/blur at full drawable size — indistinguishable
+/// once blurred; the final frame stays at display resolution so the
+/// output dither reaches the screen 1:1).
 ///
 /// UI-thread-affine. Any failure throws <see cref="BackdropUnavailableException"/>;
 /// per-frame errors never propagate — the caller stops the loop and shows the
@@ -49,14 +50,6 @@ public sealed class ArtworkBackdropRenderer : IDisposable
         : Exception(message, inner);
 
     private const int UniformBytes = 368;
-    private const int KawaseIterations = 5;
-
-    /// <summary>
-    /// Kawase spread calibration: 5 iterations at offsets k..5k add per-axis
-    /// variance ≈ 27.5k², i.e. spread ≈ 5.2k half-res pixels. Matching MPS's
-    /// sigma at half-res gives k = sigmaHalf / 5.2, clamped to a sane range.
-    /// </summary>
-    private const float KawaseBase = 5.2f;
 
     /// <summary>Long-edge cap for rotation and blur intermediates.</summary>
     private const int MaxEdge = 960;
@@ -73,7 +66,8 @@ public sealed class ArtworkBackdropRenderer : IDisposable
     private readonly ID3D11PixelShader _rotationPs;
     private readonly ID3D11VertexShader _fullscreenVs;
     private readonly ID3D11PixelShader _copyPs;
-    private readonly ID3D11PixelShader _kawasePs;
+    private readonly ID3D11PixelShader _down4Ps;
+    private readonly ID3D11PixelShader _gaussPs;
     private readonly ID3D11VertexShader _pinchVs;
     private readonly ID3D11PixelShader _pinchPs;
     private readonly ID3D11InputLayout _pinchLayout;
@@ -95,12 +89,14 @@ public sealed class ArtworkBackdropRenderer : IDisposable
     private ID3D11Texture2D? _rotationTex;
     private ID3D11RenderTargetView? _rotationRtv;
     private ID3D11ShaderResourceView? _rotationSrv;
-    private readonly ID3D11Texture2D?[] _halfTex = new ID3D11Texture2D?[2];
-    private readonly ID3D11RenderTargetView?[] _halfRtv = new ID3D11RenderTargetView?[2];
-    private readonly ID3D11ShaderResourceView?[] _halfSrv = new ID3D11ShaderResourceView?[2];
+    private readonly ID3D11Texture2D?[] _blurTex = new ID3D11Texture2D?[2];
+    private readonly ID3D11RenderTargetView?[] _blurRtv = new ID3D11RenderTargetView?[2];
+    private readonly ID3D11ShaderResourceView?[] _blurSrv = new ID3D11ShaderResourceView?[2];
     private int _scratchW;
     private int _scratchH;
-    private float _kawaseK = 1;
+    private int _blurW;
+    private int _blurH;
+    private float _blurSigma = 1;
 
     private ID3D11Texture2D? _current;
     private ID3D11ShaderResourceView? _currentSrv;
@@ -127,7 +123,8 @@ public sealed class ArtworkBackdropRenderer : IDisposable
             _rotationPs = CompilePixel("rotation_ps");
             _fullscreenVs = CompileVertex("fullscreen_vs");
             _copyPs = CompilePixel("copy_ps");
-            _kawasePs = CompilePixel("kawase_ps");
+            _down4Ps = CompilePixel("down4_ps");
+            _gaussPs = CompilePixel("gauss_ps");
             _pinchVs = CompileMeshVertex(out _pinchLayout!);
             _pinchPs = CompilePixel("pinch_ps");
 
@@ -256,20 +253,15 @@ public sealed class ArtworkBackdropRenderer : IDisposable
         _context.DrawInstanced(3, 3, 0, 0);
         UnbindShaderResources();
 
-        // Pass 2: downsample into the half-res blur chain, then 5 Kawase
-        // iterations ping-ponging between the two half targets.
-        Blit(_copyPs, _halfRtv[0]!, _rotationSrv!, _scratchW / 2, _scratchH / 2);
-        var read = 0;
-        for (var i = 1; i <= KawaseIterations; i++)
-        {
-            var offsetPx = _kawaseK * i;
-            UploadBlurConstants(
-                new Vector2(2.0f / _scratchW, 2.0f / _scratchH),
-                new Vector2(offsetPx * 2.0f / _scratchW, offsetPx * 2.0f / _scratchH));
-            Blit(_kawasePs, _halfRtv[1 - read]!, _halfSrv[read]!, _scratchW / 2, _scratchH / 2);
-            read = 1 - read;
-        }
-        var blurredSrv = _halfSrv[read]!;
+        // Pass 2-4: 4x4 box downsample to quarter-res, then a separable
+        // gaussian there (horizontal, then vertical).
+        UploadBlurConstants(new Vector4(1f / _scratchW, 1f / _scratchH, 0, 0));
+        Blit(_down4Ps, _blurRtv[0]!, _rotationSrv!, _blurW, _blurH);
+        UploadBlurConstants(new Vector4(1f / _blurW, 0, _blurSigma, 0));
+        Blit(_gaussPs, _blurRtv[1]!, _blurSrv[0]!, _blurW, _blurH);
+        UploadBlurConstants(new Vector4(0, 1f / _blurH, _blurSigma, 0));
+        Blit(_gaussPs, _blurRtv[0]!, _blurSrv[1]!, _blurW, _blurH);
+        var blurredSrv = _blurSrv[0]!;
 
         // Pass 8: warp mesh onto the final frame target.
         uniforms.Saturation = 2;
@@ -430,23 +422,25 @@ public sealed class ArtworkBackdropRenderer : IDisposable
         }
         foreach (var d in new IDisposable?[] {
             _rotationTex, _rotationRtv, _rotationSrv,
-            _halfTex[0], _halfRtv[0], _halfSrv[0],
-            _halfTex[1], _halfRtv[1], _halfSrv[1] })
+            _blurTex[0], _blurRtv[0], _blurSrv[0],
+            _blurTex[1], _blurRtv[1], _blurSrv[1] })
         {
             d?.Dispose();
         }
         (_rotationTex, _rotationRtv, _rotationSrv) = CreateScratch(w, h);
+        _blurW = Math.Max(1, w / 4);
+        _blurH = Math.Max(1, h / 4);
         for (var i = 0; i < 2; i++)
         {
-            (_halfTex[i], _halfRtv[i], _halfSrv[i]) = CreateScratch(Math.Max(1, w / 2), Math.Max(1, h / 2));
+            (_blurTex[i], _blurRtv[i], _blurSrv[i]) = CreateScratch(_blurW, _blurH);
         }
         _scratchW = w;
         _scratchH = h;
 
-        // MPS sigma, ported verbatim: floor(hypot(W,H) * 0.045394707) * scale.
-        var sigma = Math.Max(
-            Math.Floor(Math.Sqrt((double)targetW * targetW + (double)targetH * targetH) * 0.045394707) * scale, 1);
-        _kawaseK = (float)Math.Clamp(sigma * 0.5 / KawaseBase, 1, 6);
+        // MPS sigma, ported verbatim: floor(hypot(W,H) * 0.045394707) * scale,
+        // then scaled into quarter-res blur texels.
+        var sigmaScratch = Math.Floor(Math.Sqrt((double)targetW * targetW + (double)targetH * targetH) * 0.045394707) * scale;
+        _blurSigma = (float)Math.Max(sigmaScratch * _blurW / _scratchW, 0.5);
     }
 
     private (ID3D11Texture2D Tex, ID3D11RenderTargetView Rtv, ID3D11ShaderResourceView Srv) CreateScratch(int w, int h)
@@ -482,13 +476,12 @@ public sealed class ArtworkBackdropRenderer : IDisposable
         }
     }
 
-    private void UploadBlurConstants(Vector2 texelSize, Vector2 offsetUv)
+    private void UploadBlurConstants(Vector4 c)
     {
         var box = _context.Map(_blurConstants, MapMode.WriteDiscard, Vortice.Direct3D11.MapFlags.None);
         try
         {
-            Marshal.StructureToPtr(texelSize, box.DataPointer, false);
-            Marshal.StructureToPtr(offsetUv, box.DataPointer + 8, false);
+            Marshal.StructureToPtr(c, box.DataPointer, false);
         }
         finally
         {
@@ -585,10 +578,10 @@ public sealed class ArtworkBackdropRenderer : IDisposable
         foreach (var d in new IDisposable?[] {
             _rasterizer, _sampler, _uniforms, _blurConstants,
             _meshVertices, _meshIndices, _pinchLayout,
-            _rotationVs, _rotationPs, _fullscreenVs, _copyPs, _kawasePs, _pinchVs, _pinchPs,
+            _rotationVs, _rotationPs, _fullscreenVs, _copyPs, _down4Ps, _gaussPs, _pinchVs, _pinchPs,
             _rotationTex, _rotationRtv, _rotationSrv,
-            _halfTex[0], _halfRtv[0], _halfSrv[0],
-            _halfTex[1], _halfRtv[1], _halfSrv[1],
+            _blurTex[0], _blurRtv[0], _blurSrv[0],
+            _blurTex[1], _blurRtv[1], _blurSrv[1],
             _current, _currentSrv, _previous, _previousSrv, _pending, _pendingSrv,
             _finalTex, _finalRtv, _stagingTex,
             _context, _device })
