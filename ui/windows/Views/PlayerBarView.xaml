@@ -34,18 +34,21 @@
                     Orientation="Horizontal"
                     Spacing="12">
                     <Button
+                        AutomationProperties.Name="Previous"
                         Click="OnPrevious"
                         Style="{StaticResource IconButtonStyle}"
                         ToolTipService.ToolTip="Previous">
                         <FontIcon FontSize="15" Glyph="&#xE892;" />
                     </Button>
                     <Button
+                        AutomationProperties.Name="Play/Pause"
                         Click="OnTogglePlay"
                         Style="{StaticResource IconButtonStyle}"
                         ToolTipService.ToolTip="Play/Pause">
                         <FontIcon x:Name="PlayPauseIcon" FontSize="17" Glyph="&#xE768;" />
                     </Button>
                     <Button
+                        AutomationProperties.Name="Next"
                         Click="OnNext"
                         Style="{StaticResource IconButtonStyle}"
                         ToolTipService.ToolTip="Next">

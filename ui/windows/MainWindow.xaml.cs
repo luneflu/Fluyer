@@ -14,6 +14,7 @@ namespace Fluyer;
 public sealed partial class MainWindow : Window
 {
     public AppState State { get; }
+    private readonly MediaTransportCoordinator _mediaTransport;
 
     public MainWindow(AppState state)
     {
@@ -24,6 +25,9 @@ public sealed partial class MainWindow : Window
         SetTitleBar(AppTitleBar);
         AppWindow.SetIcon("Assets/AppIcon.ico");
         AppWindow.Resize(new SizeInt32(1050, 720));
+
+        _mediaTransport = new MediaTransportCoordinator(this, state);
+        Closed += (_, _) => _mediaTransport.Dispose();
 
         State.Playback.PropertyChanged += OnPlaybackChanged;
         State.Library.PropertyChanged += OnLibraryChanged;

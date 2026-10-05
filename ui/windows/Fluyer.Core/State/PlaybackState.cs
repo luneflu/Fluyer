@@ -143,6 +143,22 @@ public sealed class PlaybackState : Support.ObservableObject
         SyncClockToTransport();
     }
 
+    public void Play()
+    {
+        if (!Bar.IsPlaying)
+        {
+            TogglePlay();
+        }
+    }
+
+    public void Pause()
+    {
+        if (Bar.IsPlaying)
+        {
+            TogglePlay();
+        }
+    }
+
     public void Next() => Engine?.Next();
 
     public void Previous() => Engine?.Previous();

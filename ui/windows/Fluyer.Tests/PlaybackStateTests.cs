@@ -55,6 +55,31 @@ public sealed class PlaybackStateTests
     }
 
     [Fact]
+    public void Play_OnlyTogglesWhenPaused()
+    {
+        var (state, engine) = Create();
+        state.Play(); // paused -> plays
+        Assert.True(state.Bar.IsPlaying);
+        Assert.Equal(1, engine.Calls.Count(c => c == "toggle"));
+        state.Play(); // already playing -> no-op
+        Assert.Equal(1, engine.Calls.Count(c => c == "toggle"));
+        state.Clock.Stop();
+    }
+
+    [Fact]
+    public void Pause_OnlyTogglesWhenPlaying()
+    {
+        var (state, engine) = Create();
+        state.Pause(); // already paused -> no-op
+        Assert.Empty(engine.Calls);
+        state.Play(); // plays
+        state.Pause(); // pauses
+        Assert.False(state.Bar.IsPlaying);
+        Assert.Equal(2, engine.Calls.Count(c => c == "toggle"));
+        state.Clock.Stop();
+    }
+
+    [Fact]
     public void SetVolume_ClampsAndRemembersAudible()
     {
         var (state, engine) = Create();
