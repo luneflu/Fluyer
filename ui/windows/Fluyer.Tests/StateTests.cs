@@ -149,6 +149,23 @@ public sealed class AlbumSelectionTests
     }
 
     [Fact]
+    public void Query_FiltersCaseInsensitive_AndPlaysUnfilteredRow()
+    {
+        var (sel, _, engine) = Create();
+        sel.Query = "t1";
+        Assert.Single(sel.DisplayedTracks);
+        sel.PlayTrack(sel.DisplayedTracks[0]);
+        Assert.Contains("all:1", engine.Calls);
+
+        sel.Query = "al"; // album field
+        Assert.Equal(2, sel.DisplayedTracks.Count);
+        sel.Query = "zz";
+        Assert.Empty(sel.DisplayedTracks);
+        sel.Query = "  ";
+        Assert.Equal(2, sel.DisplayedTracks.Count);
+    }
+
+    [Fact]
     public void Reload_WithoutIndex_ClearsDetail()
     {
         var (sel, _, _) = Create();

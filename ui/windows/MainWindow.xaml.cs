@@ -91,6 +91,10 @@ public sealed partial class MainWindow : Window
         ToastText.Text = message ?? string.Empty;
     }
 
+    private void OnSearchChanged(Microsoft.UI.Xaml.Controls.AutoSuggestBox sender,
+        Microsoft.UI.Xaml.Controls.AutoSuggestBoxTextChangedEventArgs args)
+        => State.Selection.Query = sender.Text;
+
     private void OnOpenFolder(object sender, RoutedEventArgs e) => _ = PickAndScanAsync();
 
     private async Task PickAndScanAsync()

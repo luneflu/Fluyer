@@ -48,9 +48,54 @@ public sealed class AlbumSelection : Support.ObservableObject
 
     public bool IsActive => Index.HasValue;
 
-    /// <summary>Rows the grid renders: the album's tracks, else the whole library.</summary>
-    public IReadOnlyList<TrackItemViewModel> DisplayedTracks =>
+    private string _query = string.Empty;
+
+    /// <summary>Search text; matches title, artist or album (case-insensitive).</summary>
+    public string Query
+    {
+        get => _query;
+        set
+        {
+            if (SetProperty(ref _query, value ?? string.Empty))
+            {
+                OnPropertyChanged(nameof(DisplayedTracks));
+            }
+        }
+    }
+
+    private IReadOnlyList<TrackItemViewModel> Source =>
         (IReadOnlyList<TrackItemViewModel>?)Detail?.Tracks ?? _library.Tracks;
+
+    /// <summary>Rows the grid renders: the album's tracks, else the whole library, narrowed by <see cref="Query"/>.</summary>
+    // ponytail: filtered result is a snapshot, so the now-playing marker under an
+    // active query refreshes on the next keystroke; make it live if that bothers.
+    public IReadOnlyList<TrackItemViewModel> DisplayedTracks
+    {
+        get
+        {
+            var q = Query.Trim();
+            return q.Length == 0 ? Source : Source.Where(t => Matches(t, q)).ToList();
+        }
+    }
+
+    internal static bool Matches(TrackItemViewModel t, string q)
+        => t.Title.Contains(q, StringComparison.OrdinalIgnoreCase)
+        || t.Artist.Contains(q, StringComparison.OrdinalIgnoreCase)
+        || t.Album.Contains(q, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Play a displayed track; resolves its row in the unfiltered list so the queue stays whole.</summary>
+    public void PlayTrack(TrackItemViewModel track)
+    {
+        var source = Source;
+        for (var row = 0; row < source.Count; row++)
+        {
+            if (source[row].Path == track.Path)
+            {
+                PlayTrackAtRow(row);
+                return;
+            }
+        }
+    }
 
     public void Select(int index)
     {
@@ -67,6 +112,11 @@ public sealed class AlbumSelection : Support.ObservableObject
     /// <summary>Re-read the selected album after a library rescan.</summary>
     public void Reload()
     {
+        if (Query.Length > 0)
+        {
+            // Library contents changed under an active filter snapshot.
+            OnPropertyChanged(nameof(DisplayedTracks));
+        }
         if (!Index.HasValue)
         {
             Detail = null;

@@ -217,13 +217,10 @@ public sealed partial class MusicGridView : UserControl
 
     private void OnItemClick(object sender, ItemClickEventArgs e)
     {
-        var state = State;
-        if (state is null || e.ClickedItem is not TrackItemViewModel track)
+        if (e.ClickedItem is TrackItemViewModel track)
         {
-            return;
+            State?.Selection.PlayTrack(track);
         }
-        var row = state.Selection.DisplayedTracks.ToList().IndexOf(track);
-        state.Selection.PlayTrackAtRow(row);
     }
 
     private void OnOpenFolder(object sender, RoutedEventArgs e) => OpenFolderRequested?.Invoke();

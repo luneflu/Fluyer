@@ -27,6 +27,14 @@
                     <ImageIconSource ImageSource="Assets/AppIcon.ico" />
                 </TitleBar.IconSource>
                 <StackPanel Orientation="Horizontal" Spacing="6">
+                    <AutoSuggestBox
+                        x:Name="SearchBox"
+                        Width="240"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="Search songs"
+                        PlaceholderText="Search title, artist, album"
+                        QueryIcon="Find"
+                        TextChanged="OnSearchChanged" />
                     <StackPanel
                         x:Name="ScanStatus"
                         Orientation="Horizontal"
