@@ -13,7 +13,9 @@
     <Grid>
         <views:AnimatedBackgroundView State="{x:Bind State, Mode=OneWay}" />
 
-        <Grid x:Name="LibraryRoot">
+        <Grid
+            x:Name="LibraryRoot"
+            KeyboardAcceleratorPlacementMode="Hidden">
             <Grid.RowDefinitions>
                 <RowDefinition Height="48" />
                 <RowDefinition Height="Auto" />
