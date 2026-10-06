@@ -72,6 +72,7 @@ internal sealed class FakeEngine : IFluyerEngine
         QueueList.RemoveAt((int)from);
         QueueList.Insert((int)to, item);
     }
+    public void QueueClear() { Calls.Add("clear"); QueueList.Clear(); }
 
     public byte[]? GetTrackThumbnail(ulong index, uint maxSize) => null;
     public byte[]? GetAlbumThumbnail(ulong index, uint maxSize) => null;

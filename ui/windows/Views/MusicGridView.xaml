@@ -7,10 +7,15 @@
     xmlns:views="using:Fluyer.Views">
     <!-- Track rows for the whole library or one album. Port of MusicGridView
          (ui/macos/Sources/Views/Library/MusicGridView.swift). -->
+    <UserControl.Resources>
+        <CornerRadius x:Key="ListViewItemCornerRadius">8</CornerRadius>
+    </UserControl.Resources>
     <Grid>
+        <!-- List padding 12 + hover backplate inset 4 = 16 gutter; keep in sync
+             with MusicGridView.ComputeMetrics. Item padding 12 = 8px hover inset. -->
         <ListView
             x:Name="Rows"
-            Padding="10,4"
+            Padding="12,4"
             IsItemClickEnabled="True"
             ItemClick="OnItemClick"
             ItemsSource="{x:Bind State.Selection.DisplayedTracks, Mode=OneWay}"
@@ -32,8 +37,9 @@
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                    <Setter Property="Padding" Value="8,0" />
-                    <Setter Property="Margin" Value="6,4" />
+                    <Setter Property="MinWidth" Value="0" />
+                    <Setter Property="Padding" Value="12,0" />
+                    <Setter Property="Margin" Value="0,2" />
                 </Style>
             </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>

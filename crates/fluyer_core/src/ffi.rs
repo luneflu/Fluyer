@@ -509,6 +509,13 @@ pub unsafe extern "C" fn fluyer_queue_move(engine: *mut FluyerEngine, from: usiz
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn fluyer_queue_clear(engine: *mut FluyerEngine) {
+    if let Some(e) = engine.as_ref() {
+        e.queue_clear();
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn fluyer_library_get_track_image(
     engine: *mut FluyerEngine,
     index: usize,

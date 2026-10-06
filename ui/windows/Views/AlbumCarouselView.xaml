@@ -7,9 +7,17 @@
     <!-- Horizontal album strip. Port of AlbumCarouselView
          (ui/macos/Sources/Views/Album/AlbumCarouselView.swift), including the
          responsive width rules transcribed from AlbumListCtrl. -->
+    <UserControl.Resources>
+        <CornerRadius x:Key="ListViewItemCornerRadius">8</CornerRadius>
+    </UserControl.Resources>
+    <!-- Fluent ListViewItemPresenter insets its hover backplate ~4px horizontally
+         and ~2px vertically. List padding 12 + backplate inset 4 = 16 gutter,
+         matching player bar / header / grid. Item padding 12,10 leaves an 8px
+         hover inset around the card. -->
     <ListView
         x:Name="Strip"
         Height="{Binding CarouselHeight, ElementName=CarouselRoot}"
+        Padding="12,4"
         IsItemClickEnabled="True"
         ItemClick="OnItemClick"
         ItemsSource="{x:Bind State.Library.Albums, Mode=OneWay}"
@@ -27,9 +35,20 @@
                 <ItemsStackPanel Orientation="Horizontal" />
             </ItemsPanelTemplate>
         </ListView.ItemsPanel>
+        <ListView.ItemContainerStyle>
+            <Style TargetType="ListViewItem">
+                <Setter Property="MinWidth" Value="0" />
+                <Setter Property="MinHeight" Value="0" />
+                <Setter Property="Margin" Value="0" />
+                <Setter Property="Padding" Value="12,10" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="VerticalContentAlignment" Value="Top" />
+            </Style>
+        </ListView.ItemContainerStyle>
         <ListView.ItemTemplate>
             <DataTemplate x:DataType="native:AlbumCardViewModel">
-                <StackPanel Width="{Binding CardItemWidth, ElementName=CarouselRoot}" Spacing="5">
+                <StackPanel Width="{Binding CardCoverSize, ElementName=CarouselRoot}" Spacing="5">
                     <Grid
                         Width="{Binding CardCoverSize, ElementName=CarouselRoot}"
                         Height="{Binding CardCoverSize, ElementName=CarouselRoot}">
@@ -41,9 +60,7 @@
                             Tag="art" />
                         <Image x:Name="Cover" Stretch="UniformToFill" Opacity="0" />
                     </Grid>
-                    <StackPanel
-                        Width="{Binding CardCoverSize, ElementName=CarouselRoot}"
-                        Spacing="2">
+                    <StackPanel Spacing="2">
                         <TextBlock
                             FontSize="13"
                             MaxLines="1"

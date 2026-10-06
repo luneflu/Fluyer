@@ -191,6 +191,9 @@ internal static class FluyerNative
     public static extern void fluyer_queue_move(IntPtr engine, ulong from, ulong to);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void fluyer_queue_clear(IntPtr engine);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr fluyer_library_get_track_thumbnail(
         IntPtr engine, ulong index, uint maxSize, out ulong outLen);
 

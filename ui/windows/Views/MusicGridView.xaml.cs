@@ -64,11 +64,11 @@ public sealed partial class MusicGridView : UserControl
     static MusicGridView()
     {
         var (c1, w1) = ComputeMetrics(500);
-        System.Diagnostics.Debug.Assert(c1 == 1 && w1 == 480);
+        System.Diagnostics.Debug.Assert(c1 == 1 && w1 == 476);
         var (c2, w2) = ComputeMetrics(700);
-        System.Diagnostics.Debug.Assert(c2 == 2 && w2 == 340);
+        System.Diagnostics.Debug.Assert(c2 == 2 && w2 == 338);
         var (c3, w3) = ComputeMetrics(1050);
-        System.Diagnostics.Debug.Assert(c3 == 3 && w3 == 343);
+        System.Diagnostics.Debug.Assert(c3 == 3 && w3 == 342);
     }
 #endif
 
@@ -78,11 +78,12 @@ public sealed partial class MusicGridView : UserControl
         {
             return (1, 280);
         }
-        const double padding = 20;
+        // ItemWidth is the whole slot (hover backplate insets itself inside it),
+        // so only the ListView padding (12 per side) comes off the top.
+        const double listPadding = 24;
         const double minColWidth = 280;
-        const double spacing = 12;
-        var available = Math.Max(1, width - padding);
-        var cols = Math.Max(1, (int)((available + spacing) / (minColWidth + spacing)));
+        var available = Math.Max(1, width - listPadding);
+        var cols = Math.Max(1, (int)(available / minColWidth));
         // ponytail: floor itemWidth to prevent sub-pixel rounding from wrapping last column prematurely.
         var itemWidth = Math.Max(1, Math.Floor(available / cols));
         return (cols, itemWidth);

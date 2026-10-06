@@ -22,7 +22,11 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <TitleBar x:Name="AppTitleBar" Title="Fluyer">
+            <TitleBar
+                x:Name="AppTitleBar"
+                IsPaneToggleButtonVisible="True"
+                PaneToggleRequested="OnMenuToggle"
+                Title="Fluyer">
                 <TitleBar.IconSource>
                     <ImageIconSource ImageSource="Assets/AppIcon.ico" />
                 </TitleBar.IconSource>
@@ -60,22 +64,91 @@
                 </StackPanel>
             </TitleBar>
 
-            <views:AlbumCarouselView
+            <SplitView
+                x:Name="MenuPane"
                 Grid.Row="1"
-                State="{x:Bind State, Mode=OneWay}" />
+                Grid.RowSpan="3"
+                DisplayMode="Overlay"
+                OpenPaneLength="260"
+                PaneBackground="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+                PaneOpening="OnMenuOpening"
+                PanePlacement="Left">
+                <SplitView.Pane>
+                    <!-- Left sidebar. Port of Menu.svelte. -->
+                    <StackPanel Padding="12" Spacing="4">
+                        <TextBlock
+                            Margin="12,0,0,8"
+                            FontSize="20"
+                            FontWeight="SemiBold"
+                            Text="Menu" />
+                        <Button
+                            x:Name="PlayAllButton"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Click="OnMenuPlayAll"
+                            Style="{StaticResource IconButtonStyle}">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="14" Glyph="&#xE768;" />
+                                <TextBlock Text="Play All" />
+                            </StackPanel>
+                        </Button>
+                        <Button
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Click="OnMenuPlayScreen"
+                            Style="{StaticResource IconButtonStyle}">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="14" Glyph="&#xE740;" />
+                                <TextBlock Text="Play Screen" />
+                            </StackPanel>
+                        </Button>
+                        <Button
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Click="OnMenuSettings"
+                            Style="{StaticResource IconButtonStyle}">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="14" Glyph="&#xE713;" />
+                                <TextBlock Text="Settings" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </SplitView.Pane>
+                <SplitView
+                    x:Name="QueuePane"
+                    DisplayMode="Overlay"
+                    OpenPaneLength="340"
+                    PaneBackground="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+                    PaneClosed="OnQueuePaneClosed"
+                    PaneOpening="OnQueuePaneOpening"
+                    PanePlacement="Right">
+                    <SplitView.Pane>
+                        <views:QueuePaneView State="{x:Bind State, Mode=OneWay}" />
+                    </SplitView.Pane>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <views:AlbumCarouselView State="{x:Bind State, Mode=OneWay}" />
 
-            <views:CollectionHeaderView
-                x:Name="CollectionHeader"
-                Grid.Row="2"
-                State="{x:Bind State, Mode=OneWay}"
-                Visibility="Collapsed" />
+                        <views:CollectionHeaderView
+                            x:Name="CollectionHeader"
+                            Grid.Row="1"
+                            State="{x:Bind State, Mode=OneWay}"
+                            Visibility="Collapsed" />
 
-            <views:MusicGridView
-                x:Name="MusicGrid"
-                Grid.Row="3"
-                State="{x:Bind State, Mode=OneWay}" />
+                        <views:MusicGridView
+                            x:Name="MusicGrid"
+                            Grid.Row="2"
+                            State="{x:Bind State, Mode=OneWay}" />
+                    </Grid>
+                </SplitView>
+            </SplitView>
 
             <views:PlayerBarView
+                x:Name="PlayerBar"
                 Grid.Row="4"
                 State="{x:Bind State, Mode=OneWay}" />
         </Grid>

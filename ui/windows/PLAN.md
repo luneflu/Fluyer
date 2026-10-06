@@ -20,7 +20,7 @@ Baseline: `ui/windows/` at macOS parity. No stubs. No `TODO`/`NotImplemented` in
 | 1 | Search / filterbar (title/artist/album) | DONE in C# (`AlbumSelection.Query`), no FFI | Titlebar `AutoSuggestBox` | — |
 | 2 | Queue panel (list, goto, remove, move, shuffle) | DONE: `fluyer_queue_get_json`/`goto`/`remove`/`move` | Queue flyout in player bar | — |
 | 3 | Settings page (paths, animated-bg toggle, volume, Discord switch) | DONE: `fluyer_library_remove_folder`, `fluyer_discord_set_enabled`; scans prune missing files; presence updates on every player sync | Settings dialog (titlebar gear) + `settings.json` | — |
-| 4 | SMTC / media keys / taskbar | `souvlaki` in `Cargo.toml`, zero call sites | None | Medium: core wire + SMTC |
+| 4 | SMTC / media keys / taskbar | Removed dead `souvlaki` from core; pure native WinRT in C# | DONE: `MediaTransportCoordinator` via `ISystemMediaTransportControlsInterop` | — |
 | 5 | Playlists CRUD + art | Tables in `db/migrations.rs` (`playlists`, `playlist_musics`), zero engine/FFI methods | None | Big: engine + FFI + UI |
 | 6 | Folder browser / sidebar tree | Scanner only (`scan_directories`); no `folder_items_get` equivalent | Settings folder manager only; `FolderPicker.PickMusicFoldersAsync` uses `PickSingleFolderAsync` (one dir per pick) | Medium |
 | 7 | EQ (10-band) / bit-perfect | Zero matches (`equaliz`, `bit_perfect`, `BASS_FX`) | None | Big, needs DSP design |
@@ -37,9 +37,10 @@ Non-goals: tray, global hotkeys (absent legacy too — no plugin/command); mobil
 
 ### Slice 2 — Queue UI + FFI (DONE)
 - Core: `MusicPlayer::queue_snapshot`/`move_track` (+ `remove_track` now emits sync); `FluyerEngine::get_queue_view`/`queue_goto`/`queue_remove`/`queue_move`; FFI `fluyer_queue_*`.
-- `QueueState` (reads only while flyout open); flyout on player bar: click = goto, up/down/remove buttons. Shuffle reuses existing transport button.
-- Tests: `QueueStateTests` (open-gated load, move clamp, out-of-range no-ops); native smoke calls queue exports.
-- Skipped: drag-reorder, add when up/down feels slow on long queues.
+- `QueueState` (reads only while the queue sidebar is open): click = goto, up/down/remove buttons, Clear queue (`fluyer_queue_clear`). Shuffle reuses existing transport button.
+- Sidebars (port of `Sidebar.svelte`, button-triggered instead of edge hover): right = queue (`QueuePaneView`, player-bar queue button / Ctrl+Q), left = menu (title-bar ☰ / Ctrl+M: Play All, Play Screen, Settings). Both `SplitView` overlay: outside click / Esc closes, opening one closes the other, play view closes both.
+- Tests: `QueueStateTests` (open-gated load, move clamp, out-of-range no-ops, clear), `AppStateTests.PlayAll_*`; native smoke calls queue exports.
+- Skipped: drag-reorder, add when up/down feels slow on long queues; edge-hover trigger (rejected: accidental opens, not keyboard/touch reachable).
 
 ### Slice 3 — Settings + persistence (DONE)
 - Core: `scan_and_update` now drops rows for files gone from scanned roots (skips missing roots, so an unplugged drive keeps its rows); `remove_folder` drops rows under a folder; `DiscordRpc::update`/`clear` called from `emit_sync_inner`; FFI `fluyer_library_remove_folder`, `fluyer_discord_set_enabled`.
@@ -48,11 +49,13 @@ Non-goals: tray, global hotkeys (absent legacy too — no plugin/command); mobil
 - Tests: `SettingsStateTests`, `AppStateTests` (restore/rescan, remove forwards stored spelling, Discord toggle), Rust `delete_music_paths` + component-scoped prune; native smoke covers the new exports.
 - Skipped: icon themes, bit-perfect, EQ (need core design); multi-select folder picker (slice 6).
 
-### Slice 4 — SMTC integration
-- Core: wire `souvlaki` (already dependency) to player sync; expose metadata + transport callbacks.
-- Windows: `SystemMediaTransportControls` hookup for keys/taskbar/now-playing.
+### Slice 4 — SMTC integration (DONE)
+- Native WinRT `SystemMediaTransportControls` via `ISystemMediaTransportControlsInterop` on window HWND. No C++ glue, no unsafe blocks, zero FFI round-trips.
+- Media keys (Play/Pause, Next, Prev, Stop), taskbar thumbnail buttons, lock screen now-playing card, volume flyout widget, timeline scrubber, repeat mode, shuffle.
+- Thumbnail streamed directly from `GetCurrentThumbnailAsync` via `RandomAccessStreamReference`.
+- Removed dead `souvlaki` crate dependency from `fluyer_core/Cargo.toml`.
+- Tests: `PlaybackStateTests` (Play/Pause idempotency), UI automation smoke run verified SMTC attaches cleanly.
 - Skipped: MPRIS/NowPlaying — Windows-only slice.
-
 ### Slice 5 — Playlists (defer, biggest)
 - Core: engine CRUD over existing `playlists`/`playlist_musics` tables + FFI + thumbnails.
 - UI: playlist views in `Views/`, grid integration via `playlist_paths` filter (already param in `filtered_music`).
@@ -60,4 +63,4 @@ Non-goals: tray, global hotkeys (absent legacy too — no plugin/command); mobil
 
 ## Next step
 
-Slice 4 (SMTC): media keys + taskbar/lock-screen now-playing.
+Slice 6 (Folder browser / sidebar tree) or Slice 5 (Playlists). Recommended: slice 6 (folder items navigation).

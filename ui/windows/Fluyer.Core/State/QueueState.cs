@@ -70,4 +70,15 @@ public sealed class QueueState : Support.ObservableObject
         Engine?.QueueMove((ulong)index, (ulong)to);
         Reload();
     }
+
+    /// <summary>Stop playback and empty the queue.</summary>
+    public void Clear()
+    {
+        if (Tracks.Count == 0)
+        {
+            return;
+        }
+        Engine?.QueueClear();
+        Reload();
+    }
 }

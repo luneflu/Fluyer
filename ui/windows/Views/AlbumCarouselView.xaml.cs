@@ -17,10 +17,6 @@ public sealed partial class AlbumCarouselView : UserControl
         DependencyProperty.Register(nameof(State), typeof(AppState), typeof(AlbumCarouselView),
             new PropertyMetadata(null, OnStateChanged));
 
-    public static readonly DependencyProperty CardItemWidthProperty =
-        DependencyProperty.Register(nameof(CardItemWidth), typeof(double), typeof(AlbumCarouselView),
-            new PropertyMetadata(160.0));
-
     public static readonly DependencyProperty CardCoverSizeProperty =
         DependencyProperty.Register(nameof(CardCoverSize), typeof(double), typeof(AlbumCarouselView),
             new PropertyMetadata(148.0));
@@ -33,12 +29,6 @@ public sealed partial class AlbumCarouselView : UserControl
     {
         get => (AppState?)GetValue(StateProperty);
         set => SetValue(StateProperty, value);
-    }
-
-    public double CardItemWidth
-    {
-        get => (double)GetValue(CardItemWidthProperty);
-        private set => SetValue(CardItemWidthProperty, value);
     }
 
     public double CardCoverSize
@@ -62,7 +52,12 @@ public sealed partial class AlbumCarouselView : UserControl
         (1024, 0, 0.2), (768, 0, 0.25), (640, 0, 0.33334),
     ];
 
-    private const double CarouselPadding = 6;
+    // Must match AlbumCarouselView.xaml: list padding 12 per side, item
+    // padding 12 horizontal / 10 vertical (hover backplate is inset ~4/2).
+    private const double ListPadding = 12;
+    private const double ItemPaddingX = 12;
+    private const double ItemPaddingY = 10;
+    private const double ListVerticalPadding = 4;
     private const double LabelHeight = 52;
 
     public AlbumCarouselView()
@@ -130,29 +125,29 @@ public sealed partial class AlbumCarouselView : UserControl
             return;
         }
         var dpr = Dpr();
-        var itemWidth = 0.5 * width;
+        // Ratios split the area inside the list padding into whole slots;
+        // each slot is hover padding + cover.
+        var available = Math.Max(1, width - ListPadding * 2);
+        var itemWidth = 0.5 * available;
         foreach (var (minWidth, minDpr, ratio) in Rules)
         {
             if (width >= minWidth && dpr >= minDpr)
             {
-                itemWidth = ratio * width;
+                itemWidth = ratio * available;
                 break;
             }
         }
-        itemWidth = Math.Max(1, itemWidth);
-        var cover = Math.Max(16, itemWidth - CarouselPadding * 2);
+        var cover = Math.Max(16, Math.Floor(itemWidth - ItemPaddingX * 2));
         // DP sets re-measure every card and resize the Strip row, which
         // resizes the backdrop and reallocates its D3D targets — so ignore
         // sub-pixel drift and never re-walk covers here (recycle already
         // fires OnContainerChanging for realized rows).
-        if (Math.Abs(itemWidth - CardItemWidth) < 0.5
-            && Math.Abs(cover - CardCoverSize) < 0.5)
+        if (Math.Abs(cover - CardCoverSize) < 0.5)
         {
             return;
         }
-        CardItemWidth = itemWidth;
         CardCoverSize = cover;
-        CarouselHeight = cover + LabelHeight;
+        CarouselHeight = cover + LabelHeight + (ItemPaddingY + ListVerticalPadding) * 2;
     }
 
     private int PixelSize()

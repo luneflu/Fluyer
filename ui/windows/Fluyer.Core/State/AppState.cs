@@ -155,6 +155,15 @@ public sealed class AppState : Support.ObservableObject, IFluyerEventSink
         Refresh();
     }
 
+    /// <summary>Play the whole library from the first track (legacy menu "Play All").</summary>
+    public void PlayAll()
+    {
+        if (Library.Tracks.Count > 0)
+        {
+            Engine?.PlayAllFromLibrary(0);
+        }
+    }
+
     /// <summary>Persist session state that changes too often to save live (volume).</summary>
     public void SaveSession() => Settings.Volume = Playback.Bar.Volume;
 

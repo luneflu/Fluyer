@@ -282,6 +282,12 @@ impl FluyerEngine {
         self.player.move_track(from, to);
     }
 
+    /// Stops playback and empties the queue; sync tells the UI the bar is empty.
+    pub fn queue_clear(&self) {
+        self.player.clear();
+        self.player.emit_sync(false);
+    }
+
     pub fn resolve_track_cover(
         &self,
         track: &MusicMetadata,

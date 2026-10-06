@@ -61,6 +61,7 @@ public interface IFluyerEngine : IDisposable
     void QueueGoto(ulong index);
     void QueueRemove(ulong index);
     void QueueMove(ulong from, ulong to);
+    void QueueClear();
 
     public byte[]? GetTrackThumbnail(ulong index, uint maxSize);
     public byte[]? GetAlbumThumbnail(ulong index, uint maxSize);
@@ -258,6 +259,7 @@ public sealed class FluyerEngine : IFluyerEngine
     public void QueueGoto(ulong index) => Invoke(() => FluyerNative.fluyer_queue_goto(_handle, index));
     public void QueueRemove(ulong index) => Invoke(() => FluyerNative.fluyer_queue_remove(_handle, index));
     public void QueueMove(ulong from, ulong to) => Invoke(() => FluyerNative.fluyer_queue_move(_handle, from, to));
+    public void QueueClear() => Invoke(() => FluyerNative.fluyer_queue_clear(_handle));
 
     // MARK: - Images
 

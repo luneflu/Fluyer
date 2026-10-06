@@ -145,4 +145,17 @@ public sealed class AppStateTests
         app.Settings.DiscordRpc = false;
         Assert.Equal("discord:False", engine.Calls.Last());
     }
+
+    [Fact]
+    public void PlayAll_StartsFromFirstTrack_OnlyWithTracks()
+    {
+        var (app, engine, _) = Create();
+        app.PlayAll();
+        Assert.DoesNotContain(engine.Calls, c => c.StartsWith("all:"));
+
+        engine.TrackList.Add(FakeEngine.Track(0));
+        app.Refresh();
+        app.PlayAll();
+        Assert.Contains("all:0", engine.Calls);
+    }
 }

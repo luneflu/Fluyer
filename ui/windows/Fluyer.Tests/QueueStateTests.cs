@@ -55,4 +55,15 @@ public sealed class QueueStateTests
         Assert.Equal(new[] { "remove:0", "goto:0" }, engine.Calls);
         Assert.Equal(new[] { "T1" }, state.Tracks.Select(t => t.Title));
     }
+
+    [Fact]
+    public void Clear_EmptiesQueue_NoOpWhenAlreadyEmpty()
+    {
+        var (state, engine) = Create(2);
+        state.IsOpen = true;
+        state.Clear();
+        Assert.Empty(state.Tracks);
+        state.Clear();
+        Assert.Equal(new[] { "clear" }, engine.Calls);
+    }
 }

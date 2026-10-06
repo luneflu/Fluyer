@@ -34,6 +34,9 @@ public sealed partial class MainWindow : Window
         State.Toast.PropertyChanged += OnToastChanged;
         State.Selection.PropertyChanged += OnSelectionChanged;
         MusicGrid.OpenSettingsRequested += ShowSettings;
+        PlayerBar.QueueRequested += ToggleQueue;
+        AddShortcut(Windows.System.VirtualKey.Q, Windows.System.VirtualKeyModifiers.Control, ToggleQueue);
+        AddShortcut(Windows.System.VirtualKey.M, Windows.System.VirtualKeyModifiers.Control, ToggleMenu);
 
         RefreshOverlays();
         RefreshScan();
@@ -76,6 +79,11 @@ public sealed partial class MainWindow : Window
     private void RefreshOverlays()
     {
         var showing = State.Playback.ShowPlayView;
+        if (showing)
+        {
+            MenuPane.IsPaneOpen = false;
+            QueuePane.IsPaneOpen = false;
+        }
         NowPlaying.Visibility = showing ? Visibility.Visible : Visibility.Collapsed;
         LibraryRoot.Visibility = showing ? Visibility.Collapsed : Visibility.Visible;
     }
@@ -132,5 +140,59 @@ public sealed partial class MainWindow : Window
         var empty = State.Settings.MusicFolders.Count == 0;
         NoFolders.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
         RescanButton.IsEnabled = !empty;
+    }
+
+    // MARK: - Sidebars (button / shortcut opened; SplitView overlay closes on outside click + Esc)
+
+    private void AddShortcut(Windows.System.VirtualKey key, Windows.System.VirtualKeyModifiers modifiers, Action action)
+    {
+        var accelerator = new Microsoft.UI.Xaml.Input.KeyboardAccelerator { Key = key, Modifiers = modifiers };
+        accelerator.Invoked += (_, args) =>
+        {
+            args.Handled = true;
+            action();
+        };
+        LibraryRoot.KeyboardAccelerators.Add(accelerator);
+    }
+
+    private void ToggleMenu()
+    {
+        QueuePane.IsPaneOpen = false;
+        MenuPane.IsPaneOpen = !MenuPane.IsPaneOpen;
+    }
+
+    private void ToggleQueue()
+    {
+        MenuPane.IsPaneOpen = false;
+        QueuePane.IsPaneOpen = !QueuePane.IsPaneOpen;
+    }
+
+    private void OnMenuToggle(Microsoft.UI.Xaml.Controls.TitleBar sender, object args) => ToggleMenu();
+
+    private void OnMenuOpening(Microsoft.UI.Xaml.Controls.SplitView sender, object args)
+        => PlayAllButton.IsEnabled = State.Library.Tracks.Count > 0;
+
+    private void OnQueuePaneOpening(Microsoft.UI.Xaml.Controls.SplitView sender, object args)
+        => State.Queue.IsOpen = true;
+
+    private void OnQueuePaneClosed(Microsoft.UI.Xaml.Controls.SplitView sender, object args)
+        => State.Queue.IsOpen = false;
+
+    private void OnMenuPlayAll(object sender, RoutedEventArgs e)
+    {
+        MenuPane.IsPaneOpen = false;
+        State.PlayAll();
+    }
+
+    private void OnMenuPlayScreen(object sender, RoutedEventArgs e)
+    {
+        MenuPane.IsPaneOpen = false;
+        State.Playback.ShowPlayView = true;
+    }
+
+    private void OnMenuSettings(object sender, RoutedEventArgs e)
+    {
+        MenuPane.IsPaneOpen = false;
+        ShowSettings();
     }
 }
