@@ -78,6 +78,30 @@ final class AlbumSelectionTests: XCTestCase {
         XCTAssertNil(selection.detail)
     }
 
+    func testAlbumQueryFiltersNameAndArtist() {
+        let (library, selection) = makeSelection()
+        library.albums = [
+            AlbumCardViewModel(index: 0, name: "Discovery", artist: "Daft Punk", year: "", trackCount: 1, trackCountLabel: ""),
+            AlbumCardViewModel(index: 1, name: "Melody AM", artist: "Röyksopp", year: "", trackCount: 1, trackCountLabel: "")
+        ]
+
+        XCTAssertEqual(selection.displayedAlbums.count, 2)
+        selection.query = "royk"
+        XCTAssertEqual(selection.displayedAlbums.map(\.index), [1])
+        selection.query = "DISCO"
+        XCTAssertEqual(selection.displayedAlbums.map(\.index), [0])
+    }
+
+    /// Picking an album in the album grid returns to its tracks.
+    func testSelectFromAlbumGridSwitchesToTracks() {
+        let (_, selection) = makeSelection(libraryTrackCount: 1)
+        selection.mode = .albums
+
+        selection.select(0)
+
+        XCTAssertEqual(selection.mode, .tracks)
+    }
+
     func testQueryFiltersTitleArtistAlbumInsensitively() {
         let (library, selection) = makeSelection(libraryTrackCount: 3)
         library.tracks[1].title = "Café del Mar"

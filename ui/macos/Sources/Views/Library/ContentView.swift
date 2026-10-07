@@ -39,6 +39,13 @@ struct ContentView: View {
             if !state.playback.showPlayView {
                 ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: 8) {
+                        Picker("View", selection: Bindable(state.selection).mode) {
+                            Label("Songs", systemImage: "music.note.list").tag(LibraryMode.tracks)
+                            Label("Albums", systemImage: "square.grid.2x2").tag(LibraryMode.albums)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelStyle(.iconOnly)
+                        .help("Songs (⌘1) / Albums (⌘2)")
                         ToolbarSearchField(
                             text: Bindable(state.selection).query,
                             prompt: "Search title, artist, album"
@@ -88,15 +95,21 @@ struct ContentView: View {
                 let sidebarWidth = AlbumCarouselView.sidebarWidth(forWidth: geo.size.width)
                 ZStack(alignment: .trailing) {
                     VStack(spacing: 0) {
-                        AlbumCarouselView(state: state)
+                        switch state.selection.mode {
+                        case .albums:
+                            AlbumGridView(state: state)
+                                .transition(.opacity)
+                        case .tracks:
+                            AlbumCarouselView(state: state)
 
-                        if state.selection.isActive {
-                            CollectionHeaderView(state: state)
-                                .transition(.opacity.combined(with: .move(edge: .top)))
+                            if state.selection.isActive {
+                                CollectionHeaderView(state: state)
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
+
+                            MusicGridView(state: state)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
-
-                        MusicGridView(state: state)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                     // Cards behind the open queue fade out (useAlbumList / useMusicList).
                     .environment(\.sidebarMinX, state.queue.isOpen ? geo.size.width - 12 - sidebarWidth : .infinity)
@@ -130,6 +143,7 @@ struct ContentView: View {
             PlayerBarView(state: state)
         }
         .animation(.easeInOut(duration: 0.2), value: state.selection.index)
+        .animation(.easeInOut(duration: 0.3), value: state.selection.mode)
         .animation(.easeInOut(duration: 0.5), value: state.queue.isOpen)
     }
 

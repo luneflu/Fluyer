@@ -35,6 +35,11 @@ struct FluyerApp: App {
                     .keyboardShortcut("p", modifiers: [.command, .shift])
             }
             CommandGroup(after: .sidebar) {
+                Button("Songs") { appState.selection.mode = .tracks }
+                    .keyboardShortcut("1")
+                Button("Albums") { appState.selection.mode = .albums }
+                    .keyboardShortcut("2")
+                Divider()
                 Button(appState.queue.isOpen ? "Hide Queue" : "Show Queue") { appState.queue.isOpen.toggle() }
                     .keyboardShortcut("l")
             }
