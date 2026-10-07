@@ -77,4 +77,25 @@ final class AlbumSelectionTests: XCTestCase {
         XCTAssertEqual(selection.index, 0)
         XCTAssertNil(selection.detail)
     }
+
+    func testQueryFiltersTitleArtistAlbumInsensitively() {
+        let (library, selection) = makeSelection(libraryTrackCount: 3)
+        library.tracks[1].title = "Café del Mar"
+        library.tracks[2].artist = "Röyksopp"
+
+        selection.query = "  cafe "
+        XCTAssertEqual(selection.displayedTracks.map(\.index), [1])
+
+        selection.query = "ROYK"
+        XCTAssertEqual(selection.displayedTracks.map(\.index), [2])
+
+        selection.query = "album"
+        XCTAssertEqual(selection.displayedTracks.count, 3)
+
+        selection.query = "zzz"
+        XCTAssertTrue(selection.displayedTracks.isEmpty)
+
+        selection.query = ""
+        XCTAssertEqual(selection.displayedTracks.count, 3)
+    }
 }

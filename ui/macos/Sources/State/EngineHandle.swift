@@ -19,7 +19,7 @@ final class EngineHandle {
         guard engine == nil else { return }
 
         let fileManager = FileManager.default
-        let dataDirectory = Self.directory(.applicationSupportDirectory)
+        let dataDirectory = Self.dataDirectory
         let cacheDirectory = Self.directory(.cachesDirectory)
         try? fileManager.createDirectory(at: dataDirectory, withIntermediateDirectories: true)
         try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
@@ -34,6 +34,8 @@ final class EngineHandle {
             NSLog("Fluyer core failed to start: \(error)")
         }
     }
+
+    static var dataDirectory: URL { directory(.applicationSupportDirectory) }
 
     private static func directory(_ search: FileManager.SearchPathDirectory) -> URL {
         FileManager.default

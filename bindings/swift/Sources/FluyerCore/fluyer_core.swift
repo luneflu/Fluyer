@@ -614,6 +614,11 @@ public protocol FluyerAppEngineProtocol : AnyObject {
     
     func getPosition()  -> UInt64
     
+    /**
+     * Queue in play order; `index` on each row is the queue position.
+     */
+    func getQueueView()  -> [TrackItemViewModel]
+    
     func getScanStatus()  -> ScanStatusViewModel
     
     func getTrackCount()  -> UInt64
@@ -659,11 +664,26 @@ public protocol FluyerAppEngineProtocol : AnyObject {
     
     func queueAlbum(index: UInt64) 
     
+    func queueClear() 
+    
+    func queueGoto(index: UInt64) 
+    
+    func queueMove(from: UInt64, to: UInt64) 
+    
+    func queueRemove(index: UInt64) 
+    
+    /**
+     * Drops every row under `directory` and rebuilds the library synchronously.
+     */
+    func removeFolder(directory: String) 
+    
     func requestSync() 
     
     func scanDirectories(directories: [String]) 
     
     func seek(positionMs: UInt64) 
+    
+    func setDiscordEnabled(enabled: Bool) 
     
     func setRepeatMode(mode: NativeRepeatMode) 
     
@@ -869,6 +889,16 @@ open func getPosition() -> UInt64 {
 })
 }
     
+    /**
+     * Queue in play order; `index` on each row is the queue position.
+     */
+open func getQueueView() -> [TrackItemViewModel] {
+    return try!  FfiConverterSequenceTypeTrackItemViewModel.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_get_queue_view(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
 open func getScanStatus() -> ScanStatusViewModel {
     return try!  FfiConverterTypeScanStatusViewModel.lift(try! rustCall() {
     uniffi_fluyer_core_fn_method_fluyerappengine_get_scan_status(self.uniffiClonePointer(),$0
@@ -1062,6 +1092,44 @@ open func queueAlbum(index: UInt64) {try! rustCall() {
 }
 }
     
+open func queueClear() {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_queue_clear(self.uniffiClonePointer(),$0
+    )
+}
+}
+    
+open func queueGoto(index: UInt64) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_queue_goto(self.uniffiClonePointer(),
+        FfiConverterUInt64.lower(index),$0
+    )
+}
+}
+    
+open func queueMove(from: UInt64, to: UInt64) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_queue_move(self.uniffiClonePointer(),
+        FfiConverterUInt64.lower(from),
+        FfiConverterUInt64.lower(to),$0
+    )
+}
+}
+    
+open func queueRemove(index: UInt64) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_queue_remove(self.uniffiClonePointer(),
+        FfiConverterUInt64.lower(index),$0
+    )
+}
+}
+    
+    /**
+     * Drops every row under `directory` and rebuilds the library synchronously.
+     */
+open func removeFolder(directory: String) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_remove_folder(self.uniffiClonePointer(),
+        FfiConverterString.lower(directory),$0
+    )
+}
+}
+    
 open func requestSync() {try! rustCall() {
     uniffi_fluyer_core_fn_method_fluyerappengine_request_sync(self.uniffiClonePointer(),$0
     )
@@ -1078,6 +1146,13 @@ open func scanDirectories(directories: [String]) {try! rustCall() {
 open func seek(positionMs: UInt64) {try! rustCall() {
     uniffi_fluyer_core_fn_method_fluyerappengine_seek(self.uniffiClonePointer(),
         FfiConverterUInt64.lower(positionMs),$0
+    )
+}
+}
+    
+open func setDiscordEnabled(enabled: Bool) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_set_discord_enabled(self.uniffiClonePointer(),
+        FfiConverterBool.lower(enabled),$0
     )
 }
 }
@@ -2762,6 +2837,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_position() != 45143) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_queue_view() != 61295) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_scan_status() != 20235) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -2822,6 +2900,21 @@ private var initializationResult: InitializationResult = {
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_queue_album() != 55067) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_queue_clear() != 53786) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_queue_goto() != 18631) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_queue_move() != 57275) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_queue_remove() != 11064) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_remove_folder() != 565) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_request_sync() != 59451) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -2829,6 +2922,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_seek() != 54539) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_set_discord_enabled() != 46701) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_set_repeat_mode() != 52718) {

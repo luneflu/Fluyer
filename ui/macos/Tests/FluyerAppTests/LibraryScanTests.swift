@@ -97,6 +97,27 @@ final class LibraryScanTests: XCTestCase {
         XCTAssertEqual(sandbox.engine.getTrackCount(), 1)
     }
 
+    /// Removing a library folder drops its tracks synchronously; the queue view
+    /// mirrors what was enqueued and clears on demand.
+    func testQueueAndRemoveFolderThroughTheCore() async throws {
+        let sandbox = try Sandbox()
+        defer { sandbox.cleanUp() }
+
+        sandbox.engine.scanDirectories(directories: [sandbox.music.path])
+        try await waitForTracks(sandbox.engine, expected: 1)
+
+        sandbox.engine.queueAlbum(index: 0)
+        let queue = sandbox.engine.getQueueView()
+        XCTAssertEqual(queue.count, 1)
+        XCTAssertEqual(queue.first?.index, 0, "row index is the queue position")
+
+        sandbox.engine.queueClear()
+        XCTAssertTrue(sandbox.engine.getQueueView().isEmpty)
+
+        sandbox.engine.removeFolder(directory: sandbox.music.path)
+        XCTAssertEqual(sandbox.engine.getTrackCount(), 0)
+    }
+
     /// The scan runs on a background runtime, so results are not available on return.
     private func waitForTracks(
         _ engine: FluyerAppEngine,

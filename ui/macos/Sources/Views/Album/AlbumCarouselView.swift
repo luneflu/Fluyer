@@ -28,7 +28,9 @@ private let kResponsiveRules: [ResponsiveRule] = [
     ResponsiveRule(minWidth: 640,  minDpr: 0.0,  widthRatio: 0.33334)   // sm → 3 items
 ]
 
-private let kCarouselPadding: CGFloat = 6
+private let kCardGap: CGFloat = 12
+/// Same 16pt side gutter as `MusicGridView`.
+private let kCarouselEdge: CGFloat = 16
 private let kCardLabelHeight: CGFloat = 52
 
 /// Horizontal strip of album covers; tapping one drills the grid into that album.
@@ -43,13 +45,19 @@ struct AlbumCarouselView: View {
             GeometryReader { geo in
                 let metrics = Metrics(width: geo.size.width, dpr: dpr)
                 ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(spacing: 0) {
+                    LazyHStack(spacing: kCardGap) {
                         ForEach(state.library.albums, id: \.index) { album in
                             AlbumCarouselCard(state: state, album: album, metrics: metrics)
+                                .hiddenBySidebar()
                         }
                     }
-                    .padding(.horizontal, 8)
+                    .scrollTargetLayout()
                 }
+                // Edge padding sits outside the scroll view so its bounds clip the
+                // next card: n covers + (n−1) gaps fill the visible width exactly,
+                // and `contentMargins` would let the (n+1)th peek into the margin.
+                .scrollTargetBehavior(.viewAligned)
+                .padding(.horizontal, kCarouselEdge)
                 .onAppear { carouselHeight = metrics.height }
                 .onChange(of: metrics.height) { _, newHeight in carouselHeight = newHeight }
             }
@@ -57,32 +65,45 @@ struct AlbumCarouselView: View {
         }
     }
 
-    private var dpr: Double {
+    private var dpr: Double { Self.screenScale }
+
+    private static var screenScale: Double {
         Double(NSScreen.main?.backingScaleFactor ?? 2.0)
+    }
+
+    /// Sidebar width for a window `width`: two album slots minus the 12pt outer
+    /// padding on each side (`Sidebar.svelte`: `sidebarStore.width - 24`, where
+    /// `sidebarStore.width = itemWidth * 2` in `useAlbumList`).
+    static func sidebarWidth(forWidth width: CGFloat) -> CGFloat {
+        max(1, Metrics.itemWidth(width: width, dpr: screenScale) * 2 - 24)
     }
 
     /// Resolved card geometry for the current window size.
     ///
-    /// ponytail: one value carries width, cover size and height through the tree so
-    /// the card does not re-run the rule lookup per album.
+    /// The rule's ratio splits `width - 2·edge + gap` into whole slots, so n covers,
+    /// n−1 gaps and both edges fill the width exactly (Windows `ItemWidth` does the
+    /// same). Scrolling snaps to cards, and the scroll range is a whole number of
+    /// slots, so the last position lines up as cleanly as the first.
     struct Metrics: Equatable {
+        /// Cover plus one gap.
         let itemWidth: CGFloat
         let coverSize: CGFloat
         let height: CGFloat
 
         init(width: CGFloat, dpr: Double) {
             let itemWidth = Self.itemWidth(width: width, dpr: dpr)
-            let coverSize = max(16, itemWidth - kCarouselPadding * 2)
+            let coverSize = max(16, itemWidth - kCardGap)
             self.itemWidth = itemWidth
             self.coverSize = coverSize
             self.height = coverSize + kCardLabelHeight
         }
 
-        private static func itemWidth(width: CGFloat, dpr: Double) -> CGFloat {
+        static func itemWidth(width: CGFloat, dpr: Double) -> CGFloat {
+            let available = max(1, width - kCarouselEdge * 2 + kCardGap)
             for rule in kResponsiveRules where width >= rule.minWidth && dpr >= rule.minDpr {
-                return max(1, rule.widthRatio * width)
+                return rule.widthRatio * available
             }
-            return max(1, 0.5 * width)
+            return 0.5 * available
         }
     }
 }
@@ -109,7 +130,7 @@ private struct AlbumCarouselCard: View {
             cover
             labels
         }
-        .frame(width: metrics.itemWidth)
+        .frame(width: metrics.coverSize)
         .contentShape(Rectangle())
         .onTapGesture {
             state.selection.select(Int(album.index))

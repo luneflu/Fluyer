@@ -25,10 +25,31 @@ final class AlbumSelection {
 
     var isActive: Bool { index != nil }
 
-    /// The rows the grid should render: the album's tracks when one is selected,
-    /// otherwise the whole library.
-    var displayedTracks: [TrackItemViewModel] {
+    /// Search text; matches title, artist or album (case- and diacritic-insensitive).
+    var query = ""
+
+    /// Unfiltered rows: the album's tracks when one is selected, else the library.
+    private var source: [TrackItemViewModel] {
         detail?.tracks ?? library.tracks
+    }
+
+    /// The rows the grid renders: `source` narrowed by `query`.
+    var displayedTracks: [TrackItemViewModel] {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        return q.isEmpty ? source : source.filter { Self.matches($0, q) }
+    }
+
+    static func matches(_ track: TrackItemViewModel, _ query: String) -> Bool {
+        [track.title, track.artist, track.album].contains {
+            $0.range(of: query, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+        }
+    }
+
+    /// Play a displayed track; resolves its row in the unfiltered list so the queue
+    /// stays whole under an active search.
+    func playTrack(_ track: TrackItemViewModel) {
+        guard let row = source.firstIndex(where: { $0.path == track.path }) else { return }
+        playTrack(atRow: row)
     }
 
     func select(_ index: Int) {

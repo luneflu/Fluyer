@@ -103,6 +103,17 @@ final class PlaybackState {
         syncClockToTransport()
     }
 
+    /// Idempotent play/pause for system media controls, which name the target state.
+    func play() {
+        guard !bar.isPlaying else { return }
+        togglePlay()
+    }
+
+    func pause() {
+        guard bar.isPlaying else { return }
+        togglePlay()
+    }
+
     func next() { engine?.next() }
 
     func previous() { engine?.previous() }

@@ -2,7 +2,9 @@ import SwiftUI
 import MetalKit
 import FluyerCore
 
-/// Animated, blurred artwork backdrop behind the whole window.
+/// Animated, blurred artwork backdrop behind the whole window. With the
+/// "Animated background" setting off, the Metal view is torn down and a static
+/// blurred cover is shown instead.
 struct AnimatedBackgroundView: View {
     @Bindable var state: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -17,11 +19,24 @@ struct AnimatedBackgroundView: View {
     }
 
     var body: some View {
-        MetalBackdropRepresentable(
-            image: artwork,
-            reduceMotion: reduceMotion,
-            active: scenePhase == .active
-        )
+        Group {
+            if state.settings.animatedBackground {
+                MetalBackdropRepresentable(
+                    image: artwork,
+                    reduceMotion: reduceMotion,
+                    active: scenePhase == .active
+                )
+            } else if let artwork {
+                Image(nsImage: artwork)
+                    .resizable()
+                    .scaledToFill()
+                    .blur(radius: 60, opaque: true)
+                    .overlay(Color.black.opacity(0.35))
+                    .clipped()
+            } else {
+                Color.clear
+            }
+        }
         .background(Color.black)
         .allowsHitTesting(false)
         .accessibilityHidden(true)

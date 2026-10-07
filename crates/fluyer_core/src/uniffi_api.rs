@@ -227,6 +227,36 @@ impl FluyerAppEngine {
         self.inner.scan_and_update(&directories);
     }
 
+    /// Drops every row under `directory` and rebuilds the library synchronously.
+    pub fn remove_folder(&self, directory: String) {
+        self.inner.remove_folder(&directory);
+    }
+
+    pub fn set_discord_enabled(&self, enabled: bool) {
+        crate::services::DiscordRpc::set_enabled(enabled);
+    }
+
+    /// Queue in play order; `index` on each row is the queue position.
+    pub fn get_queue_view(&self) -> Vec<TrackItemViewModel> {
+        self.inner.get_queue_view()
+    }
+
+    pub fn queue_goto(&self, index: u64) {
+        self.inner.queue_goto(index as usize);
+    }
+
+    pub fn queue_remove(&self, index: u64) {
+        self.inner.queue_remove(index as usize);
+    }
+
+    pub fn queue_move(&self, from: u64, to: u64) {
+        self.inner.queue_move(from as usize, to as usize);
+    }
+
+    pub fn queue_clear(&self) {
+        self.inner.queue_clear();
+    }
+
     pub fn get_track_count(&self) -> u64 {
         self.inner.library.read().unwrap().count() as u64
     }

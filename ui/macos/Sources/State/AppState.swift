@@ -11,6 +11,8 @@ import Observation
 /// - `library`   — scanned tracks and albums, scan progress
 /// - `selection` — which album, if any, the grid is showing
 /// - `toast`     — transient messages from the core
+/// - `queue`     — play-queue snapshot for the queue sidebar
+/// - `settings`  — persisted user settings (folders, toggles, volume)
 ///
 /// This type owns the engine, translates `FluyerEvent`s into updates on those
 /// objects, and performs the cross-cutting full-library refresh that spans them.
@@ -21,10 +23,13 @@ final class AppState: FluyerEventListener {
     let library: LibraryState
     let selection: AlbumSelection
     let toast: ToastState
+    let queue: QueueState
+    let settings: SettingsState
 
     private(set) var engine: FluyerAppEngine?
 
-    init() {
+    /// - Parameter settings: defaults to `settings.json` next to the core's data.
+    init(settings: SettingsState? = nil) {
         let library = LibraryState()
         let playback = PlaybackState()
         let selection = AlbumSelection(library: library)
@@ -32,17 +37,32 @@ final class AppState: FluyerEventListener {
         self.playback = playback
         self.selection = selection
         self.toast = ToastState()
+        self.queue = QueueState()
+        self.settings = settings ?? SettingsState(
+            url: EngineHandle.dataDirectory.appendingPathComponent(SettingsState.fileName))
 
         // Every stored property is initialized, so `self` can be handed to the core
         // as its event listener without risking a callback into a half-built state.
         let handle = EngineHandle()
         handle.attach(listener: self)
-        engine = handle.engine
-        playback.engine = handle.engine
-        library.engine = handle.engine
-        selection.engine = handle.engine
+        attach(handle.engine)
+    }
+
+    /// Bind the engine to every state object, then restore persisted settings and
+    /// re-scan saved folders so files changed while closed show up (unchanged files
+    /// are skipped by mtime).
+    func attach(_ engine: FluyerAppEngine?) {
+        self.engine = engine
+        playback.engine = engine
+        library.engine = engine
+        selection.engine = engine
+        queue.engine = engine
 
         refresh()
+        guard let engine else { return }
+        engine.setDiscordEnabled(enabled: settings.discordRpc)
+        playback.setVolume(settings.volume)
+        scanSavedFolders()
     }
 
     /// Re-read everything the window shows from the core.
@@ -51,13 +71,47 @@ final class AppState: FluyerEventListener {
         playback.reloadPlayView()
         library.reload()
         selection.reload()
+        queue.reload()
     }
 
-    /// Ask the core to scan the folders the user picks.
+    /// Ask for folders, remember them and scan them.
     func promptAddFolder() {
-        let paths = FolderPicker.musicFolders(message: "Choose music folders to add to Fluyer")
+        scanFolders(FolderPicker.musicFolders(message: "Choose music folders to add to Fluyer"))
+    }
+
+    func scanFolders(_ paths: [String]) {
         guard !paths.isEmpty else { return }
-        engine?.scanDirectories(directories: paths)
+        settings.addFolders(paths)
+        engine?.scanDirectories(directories: paths.map(SettingsState.normalize))
+    }
+
+    /// Re-scan every saved folder.
+    func scanSavedFolders() {
+        guard !settings.musicFolders.isEmpty else { return }
+        engine?.scanDirectories(directories: settings.musicFolders)
+    }
+
+    /// Forget a folder and drop its tracks from the library.
+    func removeFolder(_ path: String) {
+        guard let stored = settings.removeFolder(path) else { return }
+        engine?.removeFolder(directory: stored)
+        refresh()
+    }
+
+    func setDiscordEnabled(_ enabled: Bool) {
+        settings.discordRpc = enabled
+        engine?.setDiscordEnabled(enabled: enabled)
+    }
+
+    /// Play the whole library from the first track (legacy menu "Play All").
+    func playAll() {
+        guard !library.tracks.isEmpty else { return }
+        engine?.playAllFromLibrary(startIndex: 0)
+    }
+
+    /// Persist session state that changes too often to save live (volume).
+    func saveSession() {
+        settings.volume = playback.bar.volume
     }
 
     /// The core calls this from whichever thread the audio pipeline runs on, so hop
@@ -72,6 +126,7 @@ final class AppState: FluyerEventListener {
         switch event {
         case .playerBarUpdated:
             playback.reloadBar()
+            queue.reload()
 
         case .playViewUpdated(let viewModel):
             // ponytail: declared by UniFFI but never emitted — `EventSink` in
@@ -82,6 +137,7 @@ final class AppState: FluyerEventListener {
         case .trackChanged:
             playback.applyTrackChange()
             library.reloadActiveFlags()
+            queue.reload()
 
         case .libraryUpdated:
             refresh()

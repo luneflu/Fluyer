@@ -19,8 +19,9 @@ struct MusicGridView: View {
             } else {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 8) {
-                        ForEach(Array(tracks.enumerated()), id: \.element.index) { row in
-                            TrackCard(state: state, track: row.element, rowIndex: row.offset)
+                        ForEach(tracks, id: \.path) { track in
+                            TrackCard(state: state, track: track)
+                                .hiddenBySidebar()
                         }
                     }
                     .padding(.horizontal, 16)
@@ -57,8 +58,6 @@ struct MusicGridView: View {
 private struct TrackCard: View {
     @Bindable var state: AppState
     let track: TrackItemViewModel
-    /// Row within the *displayed* list, which is what `playTrack(atRow:)` indexes.
-    let rowIndex: Int
 
     @State private var thumbnail: NSImage?
 
@@ -109,7 +108,7 @@ private struct TrackCard: View {
         .padding(.vertical, 6)
         .contentShape(Rectangle())
         .onTapGesture {
-            state.selection.playTrack(atRow: rowIndex)
+            state.selection.playTrack(track)
         }
         // ponytail: .task cancels automatically when the row scrolls out of the
         // lazy stack, so fast scrolling never queues unbounded decode work.
