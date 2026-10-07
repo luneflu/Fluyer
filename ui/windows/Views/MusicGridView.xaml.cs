@@ -42,6 +42,33 @@ public sealed partial class MusicGridView : UserControl
 
     private const int Pixels = 88;
 
+    /// <summary>Gap between cards; matches item Margin and the ListView's -16 right margin.</summary>
+    private const double Gap = 16;
+
+    // Window-X band left visible by open sidebars (SidebarOcclusion).
+    private double _bandLo = double.NegativeInfinity;
+    private double _bandHi = double.PositiveInfinity;
+
+    /// <summary>Fades columns outside window-X [lo, hi] (under an open sidebar).</summary>
+    public void SetVisibleBand(double lo, double hi)
+    {
+        _bandLo = lo;
+        _bandHi = hi;
+        SidebarOcclusion.ApplyAll(Rows, IsCovered);
+    }
+
+    // Whole columns hide together, like useMusicList.isHiddenBySidebar.
+    private bool IsCovered(int index)
+    {
+        if (double.IsNegativeInfinity(_bandLo) && double.IsPositiveInfinity(_bandHi))
+        {
+            return false;
+        }
+        var (cols, itemWidth) = ComputeMetrics(ActualWidth);
+        var left = SidebarOcclusion.WindowX(Rows) + index % cols * itemWidth;
+        return SidebarOcclusion.IsCovered(left, left + itemWidth - Gap, _bandLo, _bandHi);
+    }
+
     public MusicGridView()
     {
         InitializeComponent();
@@ -64,11 +91,11 @@ public sealed partial class MusicGridView : UserControl
     static MusicGridView()
     {
         var (c1, w1) = ComputeMetrics(500);
-        System.Diagnostics.Debug.Assert(c1 == 1 && w1 == 476);
+        System.Diagnostics.Debug.Assert(c1 == 1 && w1 == 516);
         var (c2, w2) = ComputeMetrics(700);
-        System.Diagnostics.Debug.Assert(c2 == 2 && w2 == 338);
+        System.Diagnostics.Debug.Assert(c2 == 2 && w2 == 358);
         var (c3, w3) = ComputeMetrics(1050);
-        System.Diagnostics.Debug.Assert(c3 == 3 && w3 == 342);
+        System.Diagnostics.Debug.Assert(c3 == 3 && w3 == 355);
     }
 #endif
 
@@ -78,12 +105,11 @@ public sealed partial class MusicGridView : UserControl
         {
             return (1, 280);
         }
-        // ItemWidth is the whole slot (hover backplate insets itself inside it),
-        // so only the ListView padding (12 per side) comes off the top.
-        const double listPadding = 24;
+        // ItemWidth is the whole slot: card + trailing gap. The ListView is
+        // Gap wider than the control, so the last column's gap falls outside.
         const double minColWidth = 280;
-        var available = Math.Max(1, width - listPadding);
-        var cols = Math.Max(1, (int)(available / minColWidth));
+        var available = Math.Max(1, width + Gap);
+        var cols = Math.Max(1, (int)(available / (minColWidth + Gap)));
         // ponytail: floor itemWidth to prevent sub-pixel rounding from wrapping last column prematurely.
         var itemWidth = Math.Max(1, Math.Floor(available / cols));
         return (cols, itemWidth);
@@ -175,6 +201,7 @@ public sealed partial class MusicGridView : UserControl
         if (args.Item is TrackItemViewModel track && args.ItemContainer is ListViewItem container)
         {
             PrepareContainer(container, track);
+            SidebarOcclusion.Apply(container, IsCovered(args.ItemIndex));
         }
     }
 

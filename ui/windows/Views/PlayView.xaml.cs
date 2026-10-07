@@ -99,6 +99,9 @@ public sealed partial class PlayView : UserControl
         Lyrics.Visibility = has ? Visibility.Visible : Visibility.Collapsed;
         LyricsColumn.Width = has ? new GridLength(1.375, GridUnitType.Star) : new GridLength(0);
         LeftColumn.Width = new GridLength(1, GridUnitType.Star);
+        // Swift: trailing-aligned against lyrics with a 40pt gutter, centered without.
+        LeftStack.HorizontalAlignment = has ? HorizontalAlignment.Right : HorizontalAlignment.Center;
+        LeftStack.Margin = has ? new Thickness(0, 0, 40, 0) : new Thickness(0);
 
         var columnWidth = ActualWidth > 0 ? ActualWidth * (has ? 0.40 : 0.50) : 400;
         var side = Math.Min(Math.Max(columnWidth - 40, 200), 360);

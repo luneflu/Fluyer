@@ -38,7 +38,7 @@ Non-goals: tray, global hotkeys (absent legacy too — no plugin/command); mobil
 ### Slice 2 — Queue UI + FFI (DONE)
 - Core: `MusicPlayer::queue_snapshot`/`move_track` (+ `remove_track` now emits sync); `FluyerEngine::get_queue_view`/`queue_goto`/`queue_remove`/`queue_move`; FFI `fluyer_queue_*`.
 - `QueueState` (reads only while the queue sidebar is open): click = goto, up/down/remove buttons, Clear queue (`fluyer_queue_clear`). Shuffle reuses existing transport button.
-- Sidebars (port of `Sidebar.svelte`, button-triggered instead of edge hover): right = queue (`QueuePaneView`, player-bar queue button / Ctrl+Q), left = menu (title-bar ☰ / Ctrl+M: Play All, Play Screen, Settings). Both `SplitView` overlay: outside click / Esc closes, opening one closes the other, play view closes both.
+- Sidebars (port of `Sidebar.svelte`, button-triggered instead of edge hover): right = queue (`QueuePaneView`, player-bar queue button / Ctrl+Q), left = menu (title-bar ☰ / Ctrl+M: Play All, Play Screen, Settings). Both `SplitView` overlay: outside click / Esc closes, opening one closes the other, play view closes both. Carousel cards / grid columns under an open pane fade out (500ms) and stop hit-testing (`SidebarOcclusion`, port of `useAlbumList`/`useMusicList` `shouldHide*`).
 - Tests: `QueueStateTests` (open-gated load, move clamp, out-of-range no-ops, clear), `AppStateTests.PlayAll_*`; native smoke calls queue exports.
 - Skipped: drag-reorder, add when up/down feels slow on long queues; edge-hover trigger (rejected: accidental opens, not keyboard/touch reachable).
 

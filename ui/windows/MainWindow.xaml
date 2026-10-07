@@ -16,6 +16,11 @@
         <Grid
             x:Name="LibraryRoot"
             KeyboardAcceleratorPlacementMode="Hidden">
+            <Grid.Resources>
+                <!-- One horizontal gutter for every library component; sidebar
+                     cards use the same 16 from the window edge. -->
+                <Thickness x:Key="PageGutter">16,0</Thickness>
+            </Grid.Resources>
             <Grid.RowDefinitions>
                 <RowDefinition Height="48" />
                 <RowDefinition Height="Auto" />
@@ -27,11 +32,13 @@
             <TitleBar
                 x:Name="AppTitleBar"
                 IsPaneToggleButtonVisible="True"
-                PaneToggleRequested="OnMenuToggle"
-                Title="Fluyer">
-                <TitleBar.IconSource>
-                    <ImageIconSource ImageSource="Assets/AppIcon.ico" />
-                </TitleBar.IconSource>
+                PaneToggleRequested="OnMenuToggle">
+                <TitleBar.Resources>
+                    <Style x:Key="TitleBarPaneToggleButtonStyle" TargetType="Button" BasedOn="{StaticResource TitleBarPaneToggleButtonStyle}">
+                        <Setter Property="Margin" Value="2" />
+                        <Setter Property="CornerRadius" Value="0" />
+                    </Style>
+                </TitleBar.Resources>
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <AutoSuggestBox
                         x:Name="SearchBox"
@@ -66,74 +73,37 @@
                 </StackPanel>
             </TitleBar>
 
+            <!-- Pane widths follow the carousel: two album slots, like Sidebar.svelte. -->
             <SplitView
                 x:Name="MenuPane"
                 Grid.Row="1"
                 Grid.RowSpan="3"
                 DisplayMode="Overlay"
-                OpenPaneLength="260"
-                PaneBackground="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
-                PaneOpening="OnMenuOpening"
-                PanePlacement="Left">
+                PaneBackground="Transparent"
+                PanePlacement="Left"
+                SizeChanged="OnPaneHostSizeChanged">
                 <SplitView.Pane>
-                    <!-- Left sidebar. Port of Menu.svelte. -->
-                    <StackPanel Padding="12" Spacing="4">
-                        <TextBlock
-                            Margin="12,0,0,8"
-                            FontSize="20"
-                            FontWeight="SemiBold"
-                            Text="Menu" />
-                        <Button
-                            x:Name="PlayAllButton"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Left"
-                            Click="OnMenuPlayAll"
-                            Style="{StaticResource IconButtonStyle}">
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <FontIcon FontSize="14" Glyph="&#xE768;" />
-                                <TextBlock Text="Play All" />
-                            </StackPanel>
-                        </Button>
-                        <Button
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Left"
-                            Click="OnMenuPlayScreen"
-                            Style="{StaticResource IconButtonStyle}">
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <FontIcon FontSize="14" Glyph="&#xE740;" />
-                                <TextBlock Text="Play Screen" />
-                            </StackPanel>
-                        </Button>
-                        <Button
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Left"
-                            Click="OnMenuSettings"
-                            Style="{StaticResource IconButtonStyle}">
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <FontIcon FontSize="14" Glyph="&#xE713;" />
-                                <TextBlock Text="Settings" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
+                    <views:MenuPaneView
+                        x:Name="MenuPaneContent"
+                        State="{x:Bind State, Mode=OneWay}" />
                 </SplitView.Pane>
                 <SplitView
                     x:Name="QueuePane"
                     DisplayMode="Overlay"
-                    OpenPaneLength="340"
-                    PaneBackground="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+                    PaneBackground="Transparent"
                     PaneClosed="OnQueuePaneClosed"
                     PaneOpening="OnQueuePaneOpening"
                     PanePlacement="Right">
                     <SplitView.Pane>
                         <views:QueuePaneView State="{x:Bind State, Mode=OneWay}" />
                     </SplitView.Pane>
-                    <Grid>
+                    <Grid Margin="{StaticResource PageGutter}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <views:AlbumCarouselView State="{x:Bind State, Mode=OneWay}" />
+                        <views:AlbumCarouselView x:Name="Carousel" State="{x:Bind State, Mode=OneWay}" />
 
                         <views:CollectionHeaderView
                             x:Name="CollectionHeader"
@@ -152,6 +122,7 @@
             <views:PlayerBarView
                 x:Name="PlayerBar"
                 Grid.Row="4"
+                Margin="{StaticResource PageGutter}"
                 State="{x:Bind State, Mode=OneWay}" />
         </Grid>
 

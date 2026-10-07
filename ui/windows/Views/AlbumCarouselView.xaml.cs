@@ -52,13 +52,18 @@ public sealed partial class AlbumCarouselView : UserControl
         (1024, 0, 0.2), (768, 0, 0.25), (640, 0, 0.33334),
     ];
 
-    // Must match AlbumCarouselView.xaml: list padding 12 per side, item
-    // padding 12 horizontal / 10 vertical (hover backplate is inset ~4/2).
-    private const double ListPadding = 12;
-    private const double ItemPaddingX = 12;
-    private const double ItemPaddingY = 10;
-    private const double ListVerticalPadding = 4;
     private const double LabelHeight = 52;
+    private const double Spacing = 5;
+    public const double Gap = 16;
+    // Padding must match ListViewItem.Padding in XAML (8,6,8,6):
+    // Insets hover backplate (~4,2) so content has 4px cushion all around.
+    public const double ItemPaddingX = 16; // 8 left + 8 right
+    public const double ItemPaddingY = 12; // 6 top + 6 bottom
+
+    // Window-X band left visible by open sidebars (SidebarOcclusion).
+    private double _bandLo = double.NegativeInfinity;
+    private double _bandHi = double.PositiveInfinity;
+    private ScrollViewer? _scroller;
 
     public AlbumCarouselView()
     {
@@ -66,8 +71,39 @@ public sealed partial class AlbumCarouselView : UserControl
         ScrollViewer.SetHorizontalScrollBarVisibility(Strip, ScrollBarVisibility.Hidden);
         Strip.ContainerContentChanging += OnContainerChanging;
         SizeChanged += (_, e) => UpdateMetrics(e.NewSize.Width);
-        Loaded += (_, _) => UpdateMetrics(ActualWidth);
+        Loaded += (_, _) =>
+        {
+            UpdateMetrics(ActualWidth);
+            _scroller = CoverImages.FindChild<ScrollViewer>(Strip);
+            if (_scroller is not null)
+            {
+                _scroller.ViewChanged += (_, _) => RefreshOcclusion();
+            }
+        };
     }
+
+    /// <summary>Fades cards outside window-X [lo, hi] (under an open sidebar).</summary>
+    public void SetVisibleBand(double lo, double hi)
+    {
+        _bandLo = lo;
+        _bandHi = hi;
+        RefreshOcclusion();
+    }
+
+    // Positions are computed, not measured: recycled containers aren't arranged yet
+    // in ContainerContentChanging. Slot = cover + item padding + gap.
+    private bool IsCovered(int index)
+    {
+        if (double.IsNegativeInfinity(_bandLo) && double.IsPositiveInfinity(_bandHi))
+        {
+            return false;
+        }
+        var slot = CardCoverSize + ItemPaddingX + Gap;
+        var left = SidebarOcclusion.WindowX(Strip) + index * slot - (_scroller?.HorizontalOffset ?? 0);
+        return SidebarOcclusion.IsCovered(left, left + slot - Gap, _bandLo, _bandHi);
+    }
+
+    private void RefreshOcclusion() => SidebarOcclusion.ApplyAll(Strip, IsCovered);
 
     private static void OnStateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -118,26 +154,33 @@ public sealed partial class AlbumCarouselView : UserControl
         }
     }
 
+    /// <summary>
+    /// Slot width (cover + one gap) for a carousel of <paramref name="width"/>.
+    /// Sidebars are two slots wide, like Svelte <c>sidebarStore.width = itemWidth * 2</c>.
+    /// </summary>
+    public static double ItemWidth(double width)
+    {
+        var dpr = Dpr();
+        // Ratios split width + one trailing gap into whole slots, so n covers
+        // and n-1 gaps fill the width exactly.
+        var available = Math.Max(1, width + Gap);
+        foreach (var (minWidth, minDpr, ratio) in Rules)
+        {
+            if (width >= minWidth && dpr >= minDpr)
+            {
+                return ratio * available;
+            }
+        }
+        return 0.5 * available;
+    }
+
     private void UpdateMetrics(double width)
     {
         if (width <= 0)
         {
             return;
         }
-        var dpr = Dpr();
-        // Ratios split the area inside the list padding into whole slots;
-        // each slot is hover padding + cover.
-        var available = Math.Max(1, width - ListPadding * 2);
-        var itemWidth = 0.5 * available;
-        foreach (var (minWidth, minDpr, ratio) in Rules)
-        {
-            if (width >= minWidth && dpr >= minDpr)
-            {
-                itemWidth = ratio * available;
-                break;
-            }
-        }
-        var cover = Math.Max(16, Math.Floor(itemWidth - ItemPaddingX * 2));
+        var cover = Math.Max(16, Math.Floor(ItemWidth(width) - Gap - ItemPaddingX));
         // DP sets re-measure every card and resize the Strip row, which
         // resizes the backdrop and reallocates its D3D targets — so ignore
         // sub-pixel drift and never re-walk covers here (recycle already
@@ -147,7 +190,7 @@ public sealed partial class AlbumCarouselView : UserControl
             return;
         }
         CardCoverSize = cover;
-        CarouselHeight = cover + LabelHeight + (ItemPaddingY + ListVerticalPadding) * 2;
+        CarouselHeight = cover + LabelHeight + Spacing + ItemPaddingY;
     }
 
     private int PixelSize()
@@ -189,6 +232,7 @@ public sealed partial class AlbumCarouselView : UserControl
         if (args.Item is AlbumCardViewModel album && args.ItemContainer is ListViewItem container)
         {
             PrepareContainer(container, album);
+            SidebarOcclusion.Apply(container, IsCovered(args.ItemIndex));
         }
     }
 

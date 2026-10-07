@@ -23,6 +23,10 @@ public sealed partial class MainWindow : Window
 
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
+        if (AppWindowTitleBar.IsCustomizationSupported() && AppWindow.TitleBar is not null)
+        {
+            AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
+        }
         AppWindow.SetIcon("Assets/AppIcon.ico");
         AppWindow.Resize(new SizeInt32(1050, 720));
 
@@ -34,9 +38,14 @@ public sealed partial class MainWindow : Window
         State.Toast.PropertyChanged += OnToastChanged;
         State.Selection.PropertyChanged += OnSelectionChanged;
         MusicGrid.OpenSettingsRequested += ShowSettings;
+        MenuPaneContent.SettingsRequested += ShowSettings;
+        MenuPaneContent.CloseRequested += () => MenuPane.IsPaneOpen = false;
         PlayerBar.QueueRequested += ToggleQueue;
         AddShortcut(Windows.System.VirtualKey.Q, Windows.System.VirtualKeyModifiers.Control, ToggleQueue);
         AddShortcut(Windows.System.VirtualKey.M, Windows.System.VirtualKeyModifiers.Control, ToggleMenu);
+        // Fires after the value changes on every path (button, shortcut, light dismiss, Esc).
+        MenuPane.RegisterPropertyChangedCallback(Microsoft.UI.Xaml.Controls.SplitView.IsPaneOpenProperty, (_, _) => RefreshOcclusion());
+        QueuePane.RegisterPropertyChangedCallback(Microsoft.UI.Xaml.Controls.SplitView.IsPaneOpenProperty, (_, _) => RefreshOcclusion());
 
         RefreshOverlays();
         RefreshScan();
@@ -169,8 +178,16 @@ public sealed partial class MainWindow : Window
 
     private void OnMenuToggle(Microsoft.UI.Xaml.Controls.TitleBar sender, object args) => ToggleMenu();
 
-    private void OnMenuOpening(Microsoft.UI.Xaml.Controls.SplitView sender, object args)
-        => PlayAllButton.IsEnabled = State.Library.Tracks.Count > 0;
+    // Sidebars are two carousel covers + the gap between (Sidebar.svelte: itemWidth * 2).
+    // Carousel sits inside PageGutter (16 per side), so measure the same width.
+    private void OnPaneHostSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var length = Math.Floor(Views.AlbumCarouselView.ItemWidth(e.NewSize.Width - 32) * 2
+            - Views.AlbumCarouselView.Gap);
+        MenuPane.OpenPaneLength = length;
+        QueuePane.OpenPaneLength = length;
+        RefreshOcclusion();
+    }
 
     private void OnQueuePaneOpening(Microsoft.UI.Xaml.Controls.SplitView sender, object args)
         => State.Queue.IsOpen = true;
@@ -178,21 +195,12 @@ public sealed partial class MainWindow : Window
     private void OnQueuePaneClosed(Microsoft.UI.Xaml.Controls.SplitView sender, object args)
         => State.Queue.IsOpen = false;
 
-    private void OnMenuPlayAll(object sender, RoutedEventArgs e)
+    // Sidebar.svelte hides the items behind an open pane (useAlbumList/useMusicList).
+    private void RefreshOcclusion()
     {
-        MenuPane.IsPaneOpen = false;
-        State.PlayAll();
-    }
-
-    private void OnMenuPlayScreen(object sender, RoutedEventArgs e)
-    {
-        MenuPane.IsPaneOpen = false;
-        State.Playback.ShowPlayView = true;
-    }
-
-    private void OnMenuSettings(object sender, RoutedEventArgs e)
-    {
-        MenuPane.IsPaneOpen = false;
-        ShowSettings();
+        var lo = MenuPane.IsPaneOpen ? MenuPane.OpenPaneLength : double.NegativeInfinity;
+        var hi = QueuePane.IsPaneOpen ? MenuPane.ActualWidth - QueuePane.OpenPaneLength : double.PositiveInfinity;
+        Carousel.SetVisibleBand(lo, hi);
+        MusicGrid.SetVisibleBand(lo, hi);
     }
 }

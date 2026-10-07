@@ -10,11 +10,10 @@
         <controls:SliderTrack
             x:Name="SeekBar"
             Height="6"
-            Margin="16,0"
             Fraction="{x:Bind State.Playback.PlayerBar.ProgressPct, Mode=OneWay}" />
 
         <Border
-            Margin="16,0,16,10"
+            Margin="0,0,0,10"
             Padding="18,0"
             Background="#14FFFFFF"
             BorderBrush="#2EFFFFFF"

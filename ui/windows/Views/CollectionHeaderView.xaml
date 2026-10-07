@@ -6,7 +6,7 @@
          (ui/macos/Sources/Views/Album/CollectionHeaderView.swift). -->
     <Border
         Height="46"
-        Margin="16,4,16,0"
+        Margin="0,4,0,0"
         Padding="16,0"
         Background="#14FFFFFF"
         BorderBrush="#1FFFFFFF"

@@ -10,14 +10,9 @@
     <UserControl.Resources>
         <CornerRadius x:Key="ListViewItemCornerRadius">8</CornerRadius>
     </UserControl.Resources>
-    <!-- Fluent ListViewItemPresenter insets its hover backplate ~4px horizontally
-         and ~2px vertically. List padding 12 + backplate inset 4 = 16 gutter,
-         matching player bar / header / grid. Item padding 12,10 leaves an 8px
-         hover inset around the card. -->
     <ListView
         x:Name="Strip"
         Height="{Binding CarouselHeight, ElementName=CarouselRoot}"
-        Padding="12,4"
         IsItemClickEnabled="True"
         ItemClick="OnItemClick"
         ItemsSource="{x:Bind State.Library.Albums, Mode=OneWay}"
@@ -39,8 +34,10 @@
             <Style TargetType="ListViewItem">
                 <Setter Property="MinWidth" Value="0" />
                 <Setter Property="MinHeight" Value="0" />
-                <Setter Property="Margin" Value="0" />
-                <Setter Property="Padding" Value="12,10" />
+                <Setter Property="Padding" Value="8,6,8,6" />
+                <!-- Gap after each card; keep in sync with AlbumCarouselView.Gap.
+                     Trailing gap only shows at scroll end. -->
+                <Setter Property="Margin" Value="0,0,16,0" />
                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                 <Setter Property="VerticalAlignment" Value="Top" />
                 <Setter Property="VerticalContentAlignment" Value="Top" />
