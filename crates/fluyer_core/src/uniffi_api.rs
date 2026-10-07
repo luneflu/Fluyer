@@ -308,6 +308,11 @@ impl FluyerAppEngine {
         self.inner.play_all_from_library(start_index as usize);
     }
 
+    pub fn play_library_tracks(&self, indices: Vec<u64>, start_index: u64) {
+        let indices: Vec<usize> = indices.into_iter().map(|i| i as usize).collect();
+        self.inner.play_library_tracks(&indices, start_index as usize);
+    }
+
     pub fn play_album(&self, index: u64) {
         self.inner.play_album(index as usize);
     }

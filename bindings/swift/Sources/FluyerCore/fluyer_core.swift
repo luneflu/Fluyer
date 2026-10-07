@@ -658,6 +658,8 @@ public protocol FluyerAppEngineProtocol : AnyObject {
     
     func playAllFromLibrary(startIndex: UInt64) 
     
+    func playLibraryTracks(indices: [UInt64], startIndex: UInt64) 
+    
     func playSingleFromLibrary(index: UInt64) 
     
     func previous() 
@@ -1067,6 +1069,14 @@ open func playAlbumTrack(albumIndex: UInt64, trackIndex: UInt64) {try! rustCall(
     
 open func playAllFromLibrary(startIndex: UInt64) {try! rustCall() {
     uniffi_fluyer_core_fn_method_fluyerappengine_play_all_from_library(self.uniffiClonePointer(),
+        FfiConverterUInt64.lower(startIndex),$0
+    )
+}
+}
+    
+open func playLibraryTracks(indices: [UInt64], startIndex: UInt64) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_play_library_tracks(self.uniffiClonePointer(),
+        FfiConverterSequenceUInt64.lower(indices),
         FfiConverterUInt64.lower(startIndex),$0
     )
 }
@@ -2608,6 +2618,31 @@ fileprivate struct FfiConverterOptionCallbackInterfaceFluyerEventListener: FfiCo
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceUInt64: FfiConverterRustBuffer {
+    typealias SwiftType = [UInt64]
+
+    public static func write(_ value: [UInt64], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterUInt64.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [UInt64] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [UInt64]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterUInt64.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceString: FfiConverterRustBuffer {
     typealias SwiftType = [String]
 
@@ -2889,6 +2924,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_play_all_from_library() != 64362) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_play_library_tracks() != 19197) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_play_single_from_library() != 55280) {

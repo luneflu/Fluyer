@@ -212,6 +212,21 @@ impl FluyerEngine {
         self.player.goto_track(start_index);
     }
 
+    /// Play library tracks in the caller's order (UI sort), starting at `start_index`
+    /// of `indices`. Unknown indices are skipped.
+    pub fn play_library_tracks(&self, indices: &[usize], start_index: usize) {
+        let music: Vec<MusicMetadata> = {
+            let library = self.library.read().unwrap();
+            indices.iter().filter_map(|&i| library.get_by_index(i)).collect()
+        };
+        if music.is_empty() {
+            return;
+        }
+        self.player.clear();
+        self.player.add_track_no_auto_play(music);
+        self.player.goto_track(start_index);
+    }
+
     pub fn play_album(&self, index: usize) {
         if let Some(album) = self.library.read().unwrap().album_get_by_index(index) {
             if album.is_empty() {

@@ -46,6 +46,7 @@ struct ContentView: View {
                         .pickerStyle(.segmented)
                         .labelStyle(.iconOnly)
                         .help("Songs (⌘1) / Albums (⌘2)")
+                        SortMenu(selection: state.selection)
                         ToolbarSearchField(
                             text: Bindable(state.selection).query,
                             prompt: "Search title, artist, album"
@@ -199,5 +200,37 @@ struct ContentView: View {
                 .font(.system(size: 11))
                 .foregroundColor(.white.opacity(0.7))
         }
+    }
+}
+
+/// Toolbar sort control (legacy filter-bar sort toggle). Keys follow the current
+/// mode; the direction is shared.
+private struct SortMenu: View {
+    @Bindable var selection: AlbumSelection
+
+    var body: some View {
+        Menu {
+            if selection.mode == .albums {
+                Picker("Sort By", selection: $selection.albumSort) {
+                    ForEach(AlbumSort.allCases) { Text($0.rawValue).tag($0) }
+                }
+            } else {
+                Picker("Sort By", selection: $selection.trackSort) {
+                    ForEach(TrackSort.allCases) { Text($0.rawValue).tag($0) }
+                }
+            }
+            Divider()
+            Picker("Order", selection: $selection.sortAscending) {
+                Text("Ascending").tag(true)
+                Text("Descending").tag(false)
+            }
+        } label: {
+            Label("Sort", systemImage: "arrow.up.arrow.down")
+        }
+        .pickerStyle(.inline)
+        .labelStyle(.iconOnly)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Sort")
     }
 }

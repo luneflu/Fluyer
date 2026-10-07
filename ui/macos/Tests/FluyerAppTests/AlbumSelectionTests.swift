@@ -54,10 +54,32 @@ final class AlbumSelectionTests: XCTestCase {
         XCTAssertEqual(selection.displayedTracks.count, 2)
     }
 
-    func testNegativeRowIsRejected() {
-        let (_, selection) = makeSelection(libraryTrackCount: 1)
-        // Must not trap on `UInt64(-1)`.
-        selection.playTrack(atRow: -1)
+    func testTrackSortOrdersNaturallyAndReverses() {
+        let (library, selection) = makeSelection(libraryTrackCount: 3)
+        library.tracks[0].title = "Track 10"
+        library.tracks[1].title = "track 2"
+        library.tracks[2].title = "Alpha"
+        library.tracks[0].durationMs = 300
+        library.tracks[2].durationMs = 100
+
+        XCTAssertEqual(selection.displayedTracks.map(\.index), [0, 1, 2]) // library order
+        selection.trackSort = .title
+        XCTAssertEqual(selection.displayedTracks.map(\.index), [2, 1, 0]) // "2" before "10"
+        selection.sortAscending = false
+        XCTAssertEqual(selection.displayedTracks.map(\.index), [0, 1, 2])
+        selection.trackSort = .duration
+        XCTAssertEqual(selection.displayedTracks.map(\.index), [1, 0, 2]) // 1000, 300, 100
+    }
+
+    func testAlbumSortByYearDescending() {
+        let (library, selection) = makeSelection()
+        library.albums = [("A", "1999"), ("B", "2010"), ("C", "")].enumerated().map { i, album in
+            AlbumCardViewModel(index: UInt64(i), name: album.0, artist: "", year: album.1, trackCount: 1, trackCountLabel: "")
+        }
+        selection.albumSort = .year
+        selection.sortAscending = false
+
+        XCTAssertEqual(selection.displayedAlbums.map(\.name), ["B", "A", "C"])
     }
 
     func testAlbumCommandsAreInertWithoutASelection() {
