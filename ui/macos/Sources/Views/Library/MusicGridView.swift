@@ -27,6 +27,8 @@ struct MusicGridView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                 }
+                // Scroll bar would sit on the right-edge queue trigger (`scrollbar-hidden`).
+                .scrollIndicators(.hidden)
             }
         }
     }
@@ -45,6 +47,8 @@ struct MusicGridView: View {
                     state.promptAddFolder()
                 }
                 .buttonStyle(.borderedProminent)
+                // White tint fill: dark label stays readable.
+                .foregroundStyle(.black)
                 .padding(.top, 4)
             }
             Spacer()
@@ -84,12 +88,12 @@ private struct TrackCard: View {
                     if isCurrent {
                         Image(systemName: state.playback.bar.isPlaying ? "speaker.wave.2.fill" : "speaker.fill")
                             .font(.system(size: 10))
-                            .foregroundColor(.accentColor)
+                            .foregroundStyle(.tint)
                     }
 
                     Text(track.title)
                         .font(.system(size: 13, weight: isCurrent ? .semibold : .regular))
-                        .foregroundColor(isCurrent ? .accentColor : .white)
+                        .foregroundStyle(isCurrent ? AnyShapeStyle(.tint) : AnyShapeStyle(.white))
                         .lineLimit(1)
                 }
 

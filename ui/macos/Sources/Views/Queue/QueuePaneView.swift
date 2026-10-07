@@ -106,12 +106,12 @@ private struct QueueRow: View {
                     if track.isCurrent {
                         Image(systemName: state.playback.bar.isPlaying ? "speaker.wave.2.fill" : "speaker.fill")
                             .font(.system(size: 10))
-                            .foregroundColor(.accentColor)
+                            .foregroundStyle(.tint)
                             .accessibilityLabel("Now playing")
                     }
                     Text(track.title)
                         .font(.system(size: 13, weight: track.isCurrent ? .semibold : .regular))
-                        .foregroundColor(track.isCurrent ? .accentColor : .white)
+                        .foregroundStyle(track.isCurrent ? AnyShapeStyle(.tint) : AnyShapeStyle(.white))
                         .lineLimit(1)
                 }
                 Text("\(track.artist) • \(track.album)")

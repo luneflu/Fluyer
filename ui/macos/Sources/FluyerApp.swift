@@ -9,6 +9,8 @@ struct FluyerApp: App {
         WindowGroup {
             ContentView(state: appState)
                 .preferredColorScheme(.dark)
+                // App-wide accent: now-playing marks, toggles, prominent buttons.
+                .tint(.white)
                 .onAppear { appDelegate.attach(appState) }
         }
         .windowStyle(.titleBar)
@@ -34,13 +36,14 @@ struct FluyerApp: App {
             }
             CommandGroup(after: .sidebar) {
                 Button(appState.queue.isOpen ? "Hide Queue" : "Show Queue") { appState.queue.isOpen.toggle() }
-                    .keyboardShortcut("q", modifiers: [.command, .option])
+                    .keyboardShortcut("l")
             }
         }
 
         Settings {
             SettingsView(state: appState)
                 .preferredColorScheme(.dark)
+                .tint(.white)
         }
     }
 }

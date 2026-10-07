@@ -5,6 +5,8 @@ import FluyerCore
 /// the queue sidebar, the now-playing overlay and the toast.
 struct ContentView: View {
     @Bindable var state: AppState
+    @State private var lastHover: CGPoint?
+    @State private var edgeOpenTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
@@ -47,7 +49,8 @@ struct ContentView: View {
                         }
                         .toggleStyle(.button)
                         .labelStyle(.iconOnly)
-                        .help("Queue (⌥⌘Q)")
+                        .help("Queue (⌘L, or rest the pointer on the right edge)")
+                        .accessibilityLabel(state.queue.isOpen ? "Hide Queue" : "Show Queue")
                     }
                     .fixedSize()
                 }
@@ -60,6 +63,19 @@ struct ContentView: View {
         .navigationTitle("")
         .onChange(of: state.playback.showPlayView) { _, showing in
             if showing { state.queue.isOpen = false }
+        }
+        // Esc closes the queue even when hover opened it and nothing has focus
+        // (`onExitCommand`/`onKeyPress` need focus). `.hidden()` would disable the
+        // shortcut, so the button is zero-size and transparent instead. While the
+        // queue is open, the first Esc closes it; the next clears the search.
+        .background {
+            if state.queue.isOpen {
+                Button("Close Queue") { state.queue.isOpen = false }
+                    .keyboardShortcut(.cancelAction)
+                    .frame(width: 0, height: 0)
+                    .opacity(0)
+                    .accessibilityHidden(true)
+            }
         }
         .frame(minWidth: 920, minHeight: 680)
     }
@@ -96,12 +112,52 @@ struct ContentView: View {
                     }
                 }
                 .coordinateSpace(.named(SidebarOcclusion.coordinateSpace))
+                // Sidebar.svelte edge trigger: rest on the right edge to open, move
+                // away to close. The toolbar toggle and ⌘L stay for keyboard users.
+                .onContinuousHover(coordinateSpace: .named(SidebarOcclusion.coordinateSpace)) { phase in
+                    let trigger = EdgeTrigger(size: geo.size, panelMinX: geo.size.width - 12 - sidebarWidth - 12)
+                    switch phase {
+                    case .active(let point):
+                        handleEdge(trigger.action(at: point, last: lastHover, isOpen: state.queue.isOpen))
+                        lastHover = point
+                    case .ended:
+                        handleEdge(trigger.action(at: nil, last: lastHover, isOpen: state.queue.isOpen))
+                        lastHover = nil
+                    }
+                }
             }
 
             PlayerBarView(state: state)
         }
         .animation(.easeInOut(duration: 0.2), value: state.selection.index)
         .animation(.easeInOut(duration: 0.5), value: state.queue.isOpen)
+    }
+
+    private func handleEdge(_ action: EdgeTrigger.Action) {
+        switch action {
+        case .none:
+            break
+        case .close:
+            cancelEdgeOpen()
+            state.queue.isOpen = false
+        case .cancelOpen:
+            cancelEdgeOpen()
+        case .armOpen:
+            // Skip while a mouse button is held: dragging the seek or volume bar
+            // toward the right must not open the queue.
+            guard edgeOpenTask == nil, NSEvent.pressedMouseButtons == 0 else { return }
+            edgeOpenTask = Task {
+                try? await Task.sleep(for: EdgeTrigger.openDelay)
+                defer { edgeOpenTask = nil }
+                guard !Task.isCancelled, !state.playback.showPlayView else { return }
+                state.queue.isOpen = true
+            }
+        }
+    }
+
+    private func cancelEdgeOpen() {
+        edgeOpenTask?.cancel()
+        edgeOpenTask = nil
     }
 
     private func toast(_ message: String) -> some View {
