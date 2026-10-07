@@ -37,7 +37,7 @@ struct AnimatedBackgroundView: View {
                 Color.clear
             }
         }
-        .background(Color.black)
+        .background(state.settings.animatedBackground ? Color(red: 0.2, green: 0.2, blue: 0.21) : .black)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
         .task(id: artworkKey) {
@@ -83,7 +83,7 @@ private final class MetalBackdropView: MTKView {
         super.init(frame: .zero, device: MTLCreateSystemDefaultDevice())
         colorPixelFormat = .bgra8Unorm
         preferredFramesPerSecond = 30
-        clearColor = MTLClearColorMake(0.07, 0.07, 0.09, 1)
+        clearColor = MTLClearColorMake(0.2, 0.2, 0.21, 1) // placeholder gray, pre-first-frame only
         do {
             guard let device else { throw BackdropError.unavailable }
             renderer = try ArtworkBackdropRenderer(device: device)

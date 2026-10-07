@@ -69,14 +69,8 @@ final class ArtworkBackdropRenderer: NSObject, MTKViewDelegate {
         }
         self.queue = queue
         loader = MTKTextureLoader(device: device)
-        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm,
-                                                                 width: 1, height: 1, mipmapped: false)
-        descriptor.usage = .shaderRead
-        guard let fallback = device.makeTexture(descriptor: descriptor) else { throw BackdropError.allocation }
-        var pixel: [UInt8] = [28, 28, 36, 255]
-        fallback.replace(region: MTLRegionMake2D(0, 0, 1, 1), mipmapLevel: 0,
-                         withBytes: &pixel, bytesPerRow: 4)
-        self.fallback = fallback
+        // First frame (and nil artwork) renders the placeholder, never a flat color.
+        fallback = try Self.makePlaceholderTexture(device: device)
         current = fallback
 
         let mesh = Self.makeMesh()
@@ -117,6 +111,36 @@ final class ArtworkBackdropRenderer: NSObject, MTKViewDelegate {
         rotationPipeline = try pipeline("rotation_vertex", "rotation_fragment", mesh: false)
         pinchPipeline = try pipeline("pinch_vertex", "pinch_fragment", mesh: true)
         super.init()
+    }
+
+    /// Gray card + note, mimicking Music's DefaultArtwork (edge ~rgb(51,51,54)); blurs into soft gray.
+    /// Drawn into a plain RGBA8 bitmap and uploaded raw: MTKTextureLoader rejects drawing-handler images.
+    private static func makePlaceholderTexture(device: MTLDevice) throws -> MTLTexture {
+        let side = 300
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let ctx = CGContext(data: nil, width: side, height: side, bitsPerComponent: 8, bytesPerRow: side * 4,
+                                  space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue),
+              let data = ctx.data else { throw BackdropError.allocation }
+        ctx.setFillColor(CGColor(srgbRed: 51 / 255, green: 51 / 255, blue: 54 / 255, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: 0, width: side, height: side))
+        let config = NSImage.SymbolConfiguration(pointSize: 120, weight: .regular)
+            .applying(.init(paletteColors: [NSColor(srgbRed: 100 / 255, green: 100 / 255, blue: 104 / 255, alpha: 1)]))
+        if let note = NSImage(systemSymbolName: "music.note", accessibilityDescription: nil)?
+            .withSymbolConfiguration(config) {
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = NSGraphicsContext(cgContext: ctx, flipped: false)
+            let s = note.size
+            note.draw(in: NSRect(x: (CGFloat(side) - s.width) / 2, y: (CGFloat(side) - s.height) / 2,
+                                 width: s.width, height: s.height))
+            NSGraphicsContext.restoreGraphicsState()
+        }
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm,
+                                                                 width: side, height: side, mipmapped: false)
+        descriptor.usage = .shaderRead
+        guard let texture = device.makeTexture(descriptor: descriptor) else { throw BackdropError.allocation }
+        texture.replace(region: MTLRegionMake2D(0, 0, side, side), mipmapLevel: 0,
+                        withBytes: data, bytesPerRow: side * 4)
+        return texture
     }
 
     func setImage(_ newImage: NSImage?) {
