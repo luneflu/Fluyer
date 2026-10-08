@@ -427,6 +427,13 @@ impl FluyerAppEngine {
             height: h,
         })
     }
+
+    /// Unblurred palette-block square that replaces the cover as backdrop input.
+    /// Random per call: the UI calls it once per track.
+    pub async fn load_block_artwork(&self) -> view_models::AnimatedBackgroundFrame {
+        let (rgba, width, height) = self.inner.generate_block_artwork_for_current();
+        view_models::AnimatedBackgroundFrame { rgba, width, height }
+    }
 }
 
 #[uniffi::export]

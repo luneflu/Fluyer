@@ -29,6 +29,9 @@ struct SettingsView: View {
 
             Section("Appearance") {
                 Toggle("Animated background", isOn: Bindable(state.settings).animatedBackground)
+                Picker("Background source", selection: Bindable(state.settings).backdropSource) {
+                    ForEach(BackdropSource.allCases, id: \.self) { Text($0.label).tag($0) }
+                }
             }
 
             Section("Integrations") {

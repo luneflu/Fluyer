@@ -18,12 +18,14 @@ final class SettingsStateTests: XCTestCase {
         let s = SettingsState(url: url)
         s.addFolders(["/Music/", "/Other"])
         s.animatedBackground = false
+        s.backdropSource = .blocks
         s.discordRpc = false
         s.volume = 0.4
 
         let reloaded = SettingsState(url: url)
         XCTAssertEqual(reloaded.musicFolders, ["/Music", "/Other"])
         XCTAssertFalse(reloaded.animatedBackground)
+        XCTAssertEqual(reloaded.backdropSource, .blocks)
         XCTAssertFalse(reloaded.discordRpc)
         XCTAssertEqual(reloaded.volume, 0.4, accuracy: 0.0001)
     }
@@ -65,5 +67,15 @@ final class SettingsStateTests: XCTestCase {
         let s = SettingsState(url: url)
         XCTAssertEqual(s.volume, 1.0)
         XCTAssertTrue(s.discordRpc)
+        XCTAssertEqual(s.backdropSource, .artwork)
+    }
+
+    func testUnknownBackdropSourceFallsBackWithoutResettingOthers() throws {
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try Data(#"{"backdropSource": "shader", "discordRpc": false}"#.utf8).write(to: url)
+
+        let s = SettingsState(url: url)
+        XCTAssertEqual(s.backdropSource, .artwork)
+        XCTAssertFalse(s.discordRpc)
     }
 }

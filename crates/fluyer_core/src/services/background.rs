@@ -7,6 +7,16 @@ use std::io::Cursor;
 pub const DEFAULT_SCALE: f32 = 0.05;
 pub const CANVAS_BLOCK_SIZE: u32 = 200;
 pub const CANVAS_BLUR_RADIUS: u32 = 300;
+pub const BLOCK_ARTWORK_SIZE: u32 = 500;
+pub const BLOCK_ARTWORK_BLOCK: u32 = 75;
+/// Hardcoded greys for no track / no cover; around Music's placeholder rgb(51,51,54).
+pub const GREY_PALETTE: [[u8; 3]; 5] = [
+    [30, 30, 34],
+    [42, 42, 46],
+    [51, 51, 54],
+    [64, 64, 68],
+    [80, 80, 84],
+];
 
 // ponytail: quantize channel to match color.js group()
 #[inline]
@@ -157,7 +167,10 @@ pub fn extract_prominent_colors(
     sorted
         .into_iter()
         .take(amount)
-        .map(|(rgb, _)| balance_color(rgb, is_default_cover))
+        // ponytail: balancing disabled while tuning against the Metal shader's own
+        // saturation/scrim; re-enable or retune once the look is settled.
+        // .map(|(rgb, _)| balance_color(rgb, is_default_cover))
+        .map(|(rgb, _)| rgb)
         .collect()
 }
 
@@ -189,6 +202,27 @@ pub fn extract_prominent_from_bytes(
         }
         Err(_) => vec![balance_color([30, 30, 40], is_default_cover)],
     }
+}
+
+/// Sharp (unblurred) square of random palette blocks, used as fake "artwork" for
+/// the GPU backdrops; each platform's renderer does the blurring. Edge blocks are
+/// cropped when `size` isn't a multiple of `block`.
+pub fn generate_block_artwork(colors: &[[u8; 3]], size: u32, block: u32) -> RgbaImage {
+    let palette: &[[u8; 3]] = if colors.is_empty() { &GREY_PALETTE } else { colors };
+    let block = block.max(1);
+    let mut rng = rand::rng();
+    let mut img = RgbaImage::new(size, size);
+    for by in (0..size).step_by(block as usize) {
+        for bx in (0..size).step_by(block as usize) {
+            let [r, g, b] = *palette.choose(&mut rng).unwrap();
+            for y in by..(by + block).min(size) {
+                for x in bx..(bx + block).min(size) {
+                    img.put_pixel(x, y, Rgba([r, g, b, 255]));
+                }
+            }
+        }
+    }
+    img
 }
 
 pub fn generate_blurred_background(colors: &[[u8; 3]], width: u32, height: u32) -> RgbaImage {
@@ -277,6 +311,19 @@ mod tests {
         }
         let colors = extract_prominent_colors(&pixels, 2, 1, 20, false);
         assert_eq!(colors.len(), 2);
+    }
+
+    #[test]
+    fn test_generate_block_artwork() {
+        let colors = [[10, 20, 30], [200, 100, 50]];
+        let img = generate_block_artwork(&colors, 500, 75);
+        assert_eq!((img.width(), img.height()), (500, 500));
+        // Every pixel comes from the palette; each block is one flat colour.
+        assert!(img.pixels().all(|p| colors.contains(&[p[0], p[1], p[2]])));
+        assert_eq!(img.get_pixel(0, 0), img.get_pixel(74, 74));
+        // Empty palette falls back to greys.
+        let grey = generate_block_artwork(&[], 10, 5);
+        assert!(grey.pixels().all(|p| GREY_PALETTE.contains(&[p[0], p[1], p[2]])));
     }
 
     #[test]

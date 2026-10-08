@@ -2,9 +2,9 @@ import SwiftUI
 import MetalKit
 import FluyerCore
 
-/// Animated, blurred artwork backdrop behind the whole window. With the
-/// "Animated background" setting off, the Metal view is torn down and a static
-/// blurred cover is shown instead.
+/// Animated, blurred backdrop behind the whole window. Input is the cover or a
+/// Rust-generated square of random palette blocks, per `settings.backdropSource`.
+/// No track (or no cover) always uses Rust's grey blocks.
 struct AnimatedBackgroundView: View {
     @Bindable var state: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -15,7 +15,7 @@ struct AnimatedBackgroundView: View {
         let palette = state.playback.playView.palette
             .map { "\($0.r),\($0.g),\($0.b)" }
             .joined(separator: ";")
-        return "\(state.playback.playView.track?.path ?? "none")|\(palette)"
+        return "\(state.settings.backdropSource)|\(state.playback.playView.track?.path ?? "none")|\(palette)"
     }
 
     var body: some View {
@@ -42,19 +42,38 @@ struct AnimatedBackgroundView: View {
         .accessibilityHidden(true)
         .task(id: artworkKey) {
             let key = artworkKey
-            guard state.playback.playView.track != nil, let engine = state.engine else {
+            guard let engine = state.engine else {
                 artwork = nil
                 return
             }
-            let data = await engine.loadCurrentThumbnail(maxSize: Self.backdropPixels)
+            var image: NSImage?
+            if state.settings.backdropSource == .artwork, state.playback.playView.track != nil {
+                image = await engine.loadCurrentThumbnail(maxSize: Self.backdropPixels).flatMap { NSImage(data: $0) }
+            }
+            // Blocks mode, no track, or coverless track: Rust gives palette/grey blocks.
+            if image == nil {
+                image = Self.image(from: await engine.loadBlockArtwork())
+            }
             guard !Task.isCancelled, key == artworkKey else { return }
-            artwork = data.flatMap { NSImage(data: $0) }
+            artwork = image
         }
     }
 
     /// ponytail: the backdrop is full-screen and blurred to mush, so 1200px is ample
     /// and keeps the decode off the critical path.
     private static let backdropPixels: UInt32 = 1200
+
+    private static func image(from frame: AnimatedBackgroundFrame) -> NSImage? {
+        let w = Int(frame.width), h = Int(frame.height)
+        guard w > 0, h > 0, frame.rgba.count == w * h * 4,
+              let provider = CGDataProvider(data: Data(frame.rgba) as CFData),
+              let cg = CGImage(width: w, height: h, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: w * 4,
+                               space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                               bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipLast.rawValue),
+                               provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent)
+        else { return nil }
+        return NSImage(cgImage: cg, size: NSSize(width: w, height: h))
+    }
 }
 
 private struct MetalBackdropRepresentable: NSViewRepresentable {

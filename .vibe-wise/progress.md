@@ -21,3 +21,22 @@ Implemented: `generate_block_artwork` + `GREY_PALETTE` (background.rs), `generat
 Verified: background tests pass (6), Swift bindings regenerated, `swift build` OK. Visual check not done yet.
 Note: `cargo test` needs `DYLD_LIBRARY_PATH=libs/macos` (libbass rpath missing).
 Next candidate: Windows port (C ABI export + texture swap in ArtworkBackdropRenderer.cs).
+
+## Backdrop color tuning
+Status: Build checkpoint open (where color tuning should live).
+Explained: stacked pipeline: Rust balance, then shader saturation x1.3 and x2, dark scrim, clamp.
+Learner action: commented out `balance_color` in `extract_prominent_colors` as a temporary step. Shader stages untouched.
+Pending decision: which layer owns the look; keep or drop shader stages for block input; target look.
+
+## Backdrop source setting (artwork vs blocks)
+Status: Implemented (macOS).
+Requirement (learner): User-selectable option in Settings: direct artwork or custom palette blocks as backdrop input. Motivation: block look "not the best" yet.
+Learner decisions:
+- Setting lives in the macOS UI layer (SettingsView + persisted like the other toggles), not in Rust.
+- A choice (enum/picker), not a Bool.
+- No track playing: use the hardcoded grey blocks in both modes.
+- Animation-off path is broken; out of scope for now.
+- Default: direct artwork. Scope: macOS only.
+Accepted additions (via Implement confirmation): `BackdropSource` enum in SettingsState.swift; source in the task key so switching reloads; coverless track in artwork mode falls back to grey blocks; unknown saved value decodes to `.artwork`; default `.artwork`.
+Implemented: SettingsState.swift (enum + persistence), SettingsView.swift (Picker under Appearance), AnimatedBackgroundView.swift (branch on source).
+Verified: `swift build` OK; SettingsStateTests 7/7 pass (round-trip, default, unknown value). Visual check not done yet.

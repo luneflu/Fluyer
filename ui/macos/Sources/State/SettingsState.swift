@@ -1,6 +1,18 @@
 import Foundation
 import Observation
 
+/// What the animated backdrop renders: the real cover, or Rust's palette-block square.
+enum BackdropSource: String, Codable, CaseIterable {
+    case artwork, blocks
+
+    var label: String {
+        switch self {
+        case .artwork: "Artwork"
+        case .blocks: "Color blocks"
+        }
+    }
+}
+
 /// User settings persisted as JSON in Application Support. `url == nil` keeps
 /// everything in memory (tests, headless).
 @MainActor
@@ -11,6 +23,7 @@ final class SettingsState {
     private struct Snapshot: Codable {
         var musicFolders: [String] = []
         var animatedBackground = true
+        var backdropSource = BackdropSource.artwork
         var discordRpc = true
         var volume: Float = 1.0
 
@@ -21,6 +34,8 @@ final class SettingsState {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             musicFolders = try c.decodeIfPresent([String].self, forKey: .musicFolders) ?? []
             animatedBackground = try c.decodeIfPresent(Bool.self, forKey: .animatedBackground) ?? true
+            // Unknown raw value (newer build wrote it) degrades to default, not a reset of all settings.
+            backdropSource = (try? c.decodeIfPresent(BackdropSource.self, forKey: .backdropSource)) ?? .artwork
             discordRpc = try c.decodeIfPresent(Bool.self, forKey: .discordRpc) ?? true
             volume = try c.decodeIfPresent(Float.self, forKey: .volume) ?? 1.0
         }
@@ -31,6 +46,7 @@ final class SettingsState {
 
     private(set) var musicFolders: [String] = []
     var animatedBackground = true { didSet { if animatedBackground != oldValue { save() } } }
+    var backdropSource = BackdropSource.artwork { didSet { if backdropSource != oldValue { save() } } }
     var discordRpc = true { didSet { if discordRpc != oldValue { save() } } }
     /// Last session volume; written at shutdown, not per slider tick. Callers pass
     /// `PlaybackState`'s already-clamped volume.
@@ -78,6 +94,7 @@ final class SettingsState {
             var seen = Set<String>()
             musicFolders = snap.musicFolders.map(Self.normalize).filter { !$0.isEmpty && seen.insert($0).inserted }
             animatedBackground = snap.animatedBackground
+            backdropSource = snap.backdropSource
             discordRpc = snap.discordRpc
             volume = snap.volume.clamped(to: 0...1)
         } catch {
@@ -94,6 +111,7 @@ final class SettingsState {
         var snap = Snapshot()
         snap.musicFolders = musicFolders
         snap.animatedBackground = animatedBackground
+        snap.backdropSource = backdropSource
         snap.discordRpc = discordRpc
         snap.volume = volume
         do {

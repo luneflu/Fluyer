@@ -414,6 +414,22 @@ impl FluyerEngine {
         (blurred.into_raw(), w, h)
     }
 
+    /// Sharp block-colour square fed to the GPU backdrops instead of the real cover,
+    /// so every palette colour gets equal share. Greys when nothing is playing.
+    pub fn generate_block_artwork_for_current(&self) -> (Vec<u8>, u32, u32) {
+        let colors = match self.player.get_current_track() {
+            Some(ref t) => self.cover_palette(t),
+            None => services::background::GREY_PALETTE.to_vec(),
+        };
+        let img = services::background::generate_block_artwork(
+            &colors,
+            services::background::BLOCK_ARTWORK_SIZE,
+            services::background::BLOCK_ARTWORK_BLOCK,
+        );
+        let (w, h) = (img.width(), img.height());
+        (img.into_raw(), w, h)
+    }
+
     pub fn resolve_lyrics(&self, track: &MusicMetadata) -> Option<String> {
         if let Some(lyrics) = metadata::probe::extract_lyrics_file(&track.path) {
             return Some(lyrics);
@@ -611,7 +627,7 @@ impl FluyerEngine {
 
         let colors = match self.resolve_track_cover(track, None) {
             Some(ref bytes) => services::background::extract_prominent_from_bytes(bytes, 10, false),
-            None => vec![services::background::balance_color([30, 30, 40], true)],
+            None => services::background::GREY_PALETTE.to_vec(),
         };
 
         *self.palette_cache.write().unwrap() = Some((track.path.clone(), Arc::new(colors.clone())));

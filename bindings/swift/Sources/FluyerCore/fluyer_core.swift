@@ -642,6 +642,12 @@ public protocol FluyerAppEngineProtocol : AnyObject {
      */
     func loadAnimatedBackground(width: UInt32, height: UInt32) async  -> AnimatedBackgroundFrame?
     
+    /**
+     * Unblurred palette-block square that replaces the cover as backdrop input.
+     * Random per call: the UI calls it once per track.
+     */
+    func loadBlockArtwork() async  -> AnimatedBackgroundFrame
+    
     func loadCurrentThumbnail(maxSize: UInt32) async  -> Data?
     
     func loadTrackThumbnail(index: UInt64, maxSize: UInt32) async  -> Data?
@@ -993,6 +999,28 @@ open func loadAnimatedBackground(width: UInt32, height: UInt32)async  -> Animate
             completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
             freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
             liftFunc: FfiConverterOptionTypeAnimatedBackgroundFrame.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+    /**
+     * Unblurred palette-block square that replaces the cover as backdrop input.
+     * Random per call: the UI calls it once per track.
+     */
+open func loadBlockArtwork()async  -> AnimatedBackgroundFrame {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_load_block_artwork(
+                    self.uniffiClonePointer()
+                    
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeAnimatedBackgroundFrame.lift,
             errorHandler: nil
             
         )
@@ -2900,6 +2928,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_load_animated_background() != 14573) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_load_block_artwork() != 18301) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_load_current_thumbnail() != 58446) {
