@@ -2125,9 +2125,9 @@ public enum FluyerError {
 
     
     
-    case InitFailed(message: String
+    case InitFailed(reason: String
     )
-    case OperationFailed(message: String
+    case OperationFailed(reason: String
     )
 }
 
@@ -2146,10 +2146,10 @@ public struct FfiConverterTypeFluyerError: FfiConverterRustBuffer {
 
         
         case 1: return .InitFailed(
-            message: try FfiConverterString.read(from: &buf)
+            reason: try FfiConverterString.read(from: &buf)
             )
         case 2: return .OperationFailed(
-            message: try FfiConverterString.read(from: &buf)
+            reason: try FfiConverterString.read(from: &buf)
             )
 
          default: throw UniffiInternalError.unexpectedEnumCase
@@ -2163,14 +2163,14 @@ public struct FfiConverterTypeFluyerError: FfiConverterRustBuffer {
 
         
         
-        case let .InitFailed(message):
+        case let .InitFailed(reason):
             writeInt(&buf, Int32(1))
-            FfiConverterString.write(message, into: &buf)
+            FfiConverterString.write(reason, into: &buf)
             
         
-        case let .OperationFailed(message):
+        case let .OperationFailed(reason):
             writeInt(&buf, Int32(2))
-            FfiConverterString.write(message, into: &buf)
+            FfiConverterString.write(reason, into: &buf)
             
         }
     }

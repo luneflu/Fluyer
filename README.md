@@ -1,6 +1,6 @@
 # Fluyer
 
-Desktop music player. Rust core (`fluyer_core`) holds all logic — library scanning,
+Music player for desktop and Android. Rust core (`fluyer_core`) holds all logic — library scanning,
 metadata, playback, and view models — and exposes it over C ABI + UniFFI. UIs are thin
 native shells that only render view models and forward events.
 
@@ -15,7 +15,10 @@ native shells that only render view models and forward events.
 | `ui/windows/` | Windows WinUI 3 app (`Fluyer`) + `Fluyer.Core` (P/Invoke/state) + `Fluyer.Tests` (xUnit) |
 | `libs/macos/` | Prebuilt `libbass.dylib`, `libbassmix.dylib` |
 | `libs/windows/` | Prebuilt `bass.dll`, `bassmix.dll`, plugins (`.dll` + `.lib`) |
-| `scripts/` | `generate_swift_bindings.sh`, `bundle_macos_app.sh`, `bundle_windows_app.ps1` |
+| `ui/android/` | Android Jetpack Compose app (Gradle, `org.alvindimas05.fluyer`) |
+| `bindings/kotlin/` | **Generated** UniFFI Kotlin bindings (`uniffi.fluyer_core`) |
+| `libs/android/arm64-v8a/` | Prebuilt `libbass*.so` (core, mix, flac, opus, ape, wv, aac, alac) |
+| `scripts/` | `generate_swift_bindings.sh`, `bundle_macos_app.sh`, `bundle_windows_app.ps1`, `build_android.sh` |
 | `dist/` | Build output: `Fluyer.app`, `Fluyer.dmg` |
 
 Runtime state (created on first launch):
@@ -107,6 +110,46 @@ This does the whole chain: builds the core for the chosen profile, regenerates b
 builds the Swift executable, copies `libfluyer_core` + BASS into `Contents/Frameworks`,
 adds an rpath, generates `Info.plist`, and ad-hoc signs. Release builds are what to
 measure — debug Swift carries far larger unoptimized images.
+
+## Android (Jetpack Compose)
+
+Kotlin talks to the core through UniFFI-generated bindings (`bindings/kotlin/`, JNA at
+runtime), the same API surface the Swift shell uses. `ui/android/.../state/` is a 1:1
+port of `ui/macos/Sources/State/` onto Compose snapshot state; `AppState` and the engine
+live in `FluyerApplication` so the Activity and `PlaybackService` (foreground
+`mediaPlayback` service: MediaSession, notification controls, audio focus, unplug-to-pause)
+share one player. The Metal backdrop is ported to OpenGL ES 3 in `ui/android/.../backdrop/`
+(same three spinning instances, warp mesh, timing and 0.5s crossfade; blur is a
+quarter-res separable gaussian on the macOS sigma), with a static image fallback.
+
+Folders are picked through the system folder picker and mapped to filesystem paths; the
+core reads files directly, which `READ_MEDIA_AUDIO` allows for audio. Discord Rich
+Presence is disabled on Android.
+
+Runtime state: database + `settings.json` in the app's `filesDir`, cover + lyrics cache
+in `cacheDir` (both wiped on uninstall).
+
+### Prerequisites
+
+- Rust with `aarch64-linux-android` (`rustup target add aarch64-linux-android`)
+- Android SDK (platform 35) + NDK (`ANDROID_HOME`; `ANDROID_NDK_HOME` or newest
+  `$ANDROID_HOME/ndk/*`), JDK 17+
+- `libs/android/arm64-v8a/libbass*.so` must be present (gitignored; from the BASS Android
+  packages, including `libbass_aac.so` and `libbassalac.so`)
+
+### Build
+
+```bash
+./scripts/build_android.sh            # core -> jniLibs + Kotlin bindings (--release for release)
+cd ui/android
+./gradlew testDebugUnitTest           # JVM tests: state ports + backdrop mesh
+./gradlew installDebug                # build + install on the connected device/emulator
+adb logcat -s Fluyer                  # core logs (flog!/log::) go to logcat on Android
+```
+
+Rerun `build_android.sh` after any core change; Gradle only packages what it staged.
+arm64-v8a only for now (all current phones and the arm64 emulator image); add ABIs in
+both the script and `abiFilters`.
 
 ## Windows (WinUI 3)
 
@@ -240,8 +283,13 @@ find ui/macos/.build -type d -name ModuleCache -exec rm -rf {} +
 `cargo test` invocation needs it.
 
 **Blank or stale UI after changing a `#[uniffi::export]` signature** — rerun
-`./scripts/generate_swift_bindings.sh`; the checked-in bindings under `bindings/swift/`
-are generated output and will not match until you do.
+`./scripts/generate_swift_bindings.sh` (and `./scripts/build_android.sh` for Android); the
+checked-in bindings under `bindings/swift/` and `bindings/kotlin/` are generated output and
+will not match until you do.
+
+**Kotlin bindings fail with `'message' hides member of supertype 'Throwable'`** — a
+`uniffi::Error` variant has a field named `message`. Kotlin maps errors to exceptions, so
+name it something else (`FluyerError` uses `reason`).
 
 **`future version of Rust` / `block v0.1.6` warning** — third-party dependency
 forward-compat notice, not an error. Builds are unaffected.

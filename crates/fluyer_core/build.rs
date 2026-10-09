@@ -10,23 +10,25 @@ fn main() {
         .unwrap()
         .to_path_buf();
 
-    #[cfg(target_os = "macos")]
-    println!(
-        "cargo:rustc-link-search=native={}",
-        root_dir.join("libs/macos").display()
-    );
-
-    #[cfg(target_os = "windows")]
-    println!(
-        "cargo:rustc-link-search=native={}",
-        root_dir.join("libs/windows").display()
-    );
-
-    #[cfg(target_os = "linux")]
-    println!(
-        "cargo:rustc-link-search=native={}",
-        root_dir.join("libs/linux").display()
-    );
+    // Build scripts run on the host, so `#[cfg(target_os)]` would pick the host's
+    // libs when cross-compiling (Android from macOS). Read the target instead.
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
+    let lib_dir = match target_os.as_str() {
+        "android" => {
+            let abi = match env::var("CARGO_CFG_TARGET_ARCH")
+                .unwrap_or_default()
+                .as_str()
+            {
+                "aarch64" => "arm64-v8a",
+                "arm" => "armeabi-v7a",
+                "x86_64" => "x86_64",
+                _ => "x86",
+            };
+            root_dir.join("libs/android").join(abi)
+        }
+        other => root_dir.join("libs").join(other),
+    };
+    println!("cargo:rustc-link-search=native={}", lib_dir.display());
 
     let config = cbindgen::Config::from_file("cbindgen.toml").unwrap_or_default();
     let out_dir = PathBuf::from(&crate_dir).join("include");

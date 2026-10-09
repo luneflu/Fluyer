@@ -241,7 +241,12 @@ impl MusicPlayer {
                 i += 1;
             }
 
-            if BASS_Init(-1, 192000, 0, ptr::null_mut(), ptr::null_mut()) == 0 {
+            // Android mixes to the device rate anyway; 192 kHz just costs CPU there.
+            #[cfg(target_os = "android")]
+            let freq = 44100;
+            #[cfg(not(target_os = "android"))]
+            let freq = 192000;
+            if BASS_Init(-1, freq, 0, ptr::null_mut(), ptr::null_mut()) == 0 {
                 log::error!("Failed to initialize BASS, error: {}", BASS_ErrorGetCode());
             } else {
                 let mut info = std::mem::zeroed::<BASS_INFO>();
@@ -256,17 +261,14 @@ impl MusicPlayer {
             }
 
             #[cfg(target_os = "macos")]
-            let extension = "dylib";
+            let (prefix, extension) = ("", "dylib");
             #[cfg(target_os = "windows")]
-            let extension = "dll";
-            #[cfg(target_os = "linux")]
-            let extension = "so";
+            let (prefix, extension) = ("", "dll");
+            #[cfg(any(target_os = "linux", target_os = "android"))]
+            let (prefix, extension) = ("lib", "so");
 
             for plugin in BASS_PLUGINS {
-                #[cfg(not(target_os = "linux"))]
-                let c_path = CString::new(format!("{}.{}", plugin, extension)).unwrap();
-                #[cfg(target_os = "linux")]
-                let c_path = CString::new(format!("lib{}.{}", plugin, extension)).unwrap();
+                let c_path = CString::new(format!("{}{}.{}", prefix, plugin, extension)).unwrap();
 
                 let handle = BASS_PluginLoad(c_path.as_ptr(), 0);
                 if handle == 0 {

@@ -1,6 +1,12 @@
 #![allow(dead_code)]
 
-pub const BASS_PLUGINS: [&str; 4] = ["bassflac", "bassopus", "bassape", "basswv"];
+#[cfg(not(target_os = "android"))]
+pub const BASS_PLUGINS: &[&str] = &["bassflac", "bassopus", "bassape", "basswv"];
+// Android BASS has no native AAC/ALAC decoder; the add-ons fill that in.
+#[cfg(target_os = "android")]
+pub const BASS_PLUGINS: &[&str] = &[
+    "bassflac", "bassopus", "bassape", "basswv", "bass_aac", "bassalac",
+];
 
 pub const BASS_UNICODE: u32 = 0x80000000;
 pub const BASS_SAMPLE_FLOAT: u32 = 0x100;

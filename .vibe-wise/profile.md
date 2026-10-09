@@ -1,6 +1,6 @@
 # Learner Profile
 
-Learning mode: active
+Learning mode: paused
 Onboarding: complete
 
 ## Project

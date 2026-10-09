@@ -77,6 +77,7 @@ impl FluyerEngine {
         cache_dir: &Path,
         event_sink: Option<Arc<dyn EventSink>>,
     ) -> Result<Self, String> {
+        logger::init();
         let _ = std::fs::create_dir_all(data_dir);
         let _ = std::fs::create_dir_all(cache_dir);
 

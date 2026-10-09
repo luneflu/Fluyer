@@ -37,6 +37,8 @@ impl DiscordRpc {
     }
 
     pub fn set_enabled(enabled: bool) {
+        // No Discord desktop client (IPC socket) on Android.
+        let enabled = enabled && !cfg!(target_os = "android");
         ENABLED.store(enabled, Ordering::SeqCst);
         if enabled {
             let _ = Self::instance();

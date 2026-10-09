@@ -9,17 +9,19 @@ use crate::FluyerEngine;
 use std::path::Path;
 use std::sync::Arc;
 
+// Field is `reason`, not `message`: Kotlin bindings map errors to exceptions and a
+// `message` field collides with `Throwable.message` (UniFFI 0.28).
 #[derive(Debug, uniffi::Error)]
 pub enum FluyerError {
-    InitFailed { message: String },
-    OperationFailed { message: String },
+    InitFailed { reason: String },
+    OperationFailed { reason: String },
 }
 
 impl std::fmt::Display for FluyerError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            FluyerError::InitFailed { message } => write!(f, "Initialization failed: {}", message),
-            FluyerError::OperationFailed { message } => write!(f, "Operation failed: {}", message),
+            FluyerError::InitFailed { reason } => write!(f, "Initialization failed: {}", reason),
+            FluyerError::OperationFailed { reason } => write!(f, "Operation failed: {}", reason),
         }
     }
 }
@@ -158,7 +160,7 @@ impl FluyerAppEngine {
         });
 
         let engine = FluyerEngine::new(Path::new(&data_dir), Path::new(&cache_dir), sink)
-            .map_err(|e| FluyerError::InitFailed { message: e })?;
+            .map_err(|e| FluyerError::InitFailed { reason: e })?;
 
         Ok(Arc::new(Self {
             inner: Arc::new(engine),
