@@ -54,6 +54,7 @@ public sealed partial class MainWindow : Window
         RefreshOverlays();
         RefreshScan();
         RefreshMenu();
+        RefreshMode();
     }
 
     private void OnPlaybackChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -78,12 +79,26 @@ public sealed partial class MainWindow : Window
 
     private void OnSelectionChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(LibraryFilterState.Index) or nameof(LibraryFilterState.IsActive))
+        if (e.PropertyName is nameof(LibraryFilterState.Index) or nameof(LibraryFilterState.IsActive)
+            or nameof(LibraryFilterState.Mode))
         {
-            AlbumHeader.Visibility = State.Selection.IsActive
-                ? Visibility.Visible : Visibility.Collapsed;
+            RefreshMode();
         }
     }
+
+    /// <summary>Albums mode: full-height album grid. Songs mode: carousel, album header, song grid.</summary>
+    private void RefreshMode()
+    {
+        var albums = State.Selection.Mode == LibraryMode.Albums;
+        AlbumGrid.Visibility = albums ? Visibility.Visible : Visibility.Collapsed;
+        MusicGrid.Visibility = albums ? Visibility.Collapsed : Visibility.Visible;
+        AlbumHeader.Visibility = !albums && State.Selection.IsActive ? Visibility.Visible : Visibility.Collapsed;
+        SongsMode.IsChecked = !albums;
+        AlbumsMode.IsChecked = albums;
+    }
+
+    private void OnShowSongs(object sender, RoutedEventArgs e) => State.Selection.Mode = LibraryMode.Tracks;
+    private void OnShowAlbums(object sender, RoutedEventArgs e) => State.Selection.Mode = LibraryMode.Albums;
 
     private void RefreshOverlays()
     {

@@ -54,7 +54,8 @@ internal sealed class FakeEngine : IFluyerEngine
     public void SetDiscordEnabled(bool enabled) => Calls.Add($"discord:{enabled}");
     public void PlayAllFromLibrary(ulong startIndex) => Calls.Add($"all:{startIndex}");
     public void PlayAlbum(ulong index) => Calls.Add($"album:{index}");
-    public void PlayAlbumTrack(ulong albumIndex, ulong trackIndex) => Calls.Add($"albumtrack:{albumIndex}:{trackIndex}");
+    public void PlayLibraryTracks(IReadOnlyList<ulong> indices, ulong startIndex)
+        => Calls.Add($"tracks:{string.Join(",", indices)}@{startIndex}");
     public void QueueAlbum(ulong index) => Calls.Add($"queue:{index}");
     public void ShuffleAlbum(ulong index) => Calls.Add($"shufflealbum:{index}");
     public IReadOnlyList<TrackItemViewModel> GetQueue() => QueueList.ToList();

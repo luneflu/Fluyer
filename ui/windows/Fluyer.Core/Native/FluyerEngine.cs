@@ -49,7 +49,7 @@ public interface IFluyerEngine : IDisposable
     void SetDiscordEnabled(bool enabled);
     void PlayAllFromLibrary(ulong startIndex);
     void PlayAlbum(ulong index);
-    void PlayAlbumTrack(ulong albumIndex, ulong trackIndex);
+    void PlayLibraryTracks(IReadOnlyList<ulong> indices, ulong startIndex);
     void QueueAlbum(ulong index);
     void ShuffleAlbum(ulong index);
     IReadOnlyList<TrackItemViewModel> GetQueue();
@@ -221,8 +221,10 @@ public sealed class FluyerEngine : IFluyerEngine
     public void PlayAlbum(ulong index)
         => Invoke(() => FluyerNative.fluyer_album_play(_handle, index));
 
-    public void PlayAlbumTrack(ulong albumIndex, ulong trackIndex)
-        => Invoke(() => FluyerNative.fluyer_album_play_track(_handle, albumIndex, trackIndex));
+    /// <summary>Play library tracks in the given (UI sort) order, starting at <paramref name="startIndex"/> of <paramref name="indices"/>.</summary>
+    public void PlayLibraryTracks(IReadOnlyList<ulong> indices, ulong startIndex)
+        => Invoke(() => FluyerNative.fluyer_library_play_tracks(
+            _handle, indices.Select(i => (nuint)i).ToArray(), (nuint)indices.Count, (nuint)startIndex));
 
     public void QueueAlbum(ulong index)
         => Invoke(() => FluyerNative.fluyer_album_queue(_handle, index));

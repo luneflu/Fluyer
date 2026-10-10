@@ -130,6 +130,11 @@ public sealed class AppState : Support.ObservableObject, IFluyerEventSink
     {
         Playback.ApplyTrackChange();
         Library.ReloadActiveFlags();
+        // Sorted or searched grids hold a snapshot; the default order is live already.
+        if (Selection.DisplayedTracks is not System.Collections.ObjectModel.ObservableCollection<TrackItemViewModel>)
+        {
+            Selection.RefreshDisplayed();
+        }
         Queue.Reload();
     }
 

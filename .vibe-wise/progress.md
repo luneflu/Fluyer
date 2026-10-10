@@ -90,3 +90,11 @@ Learner decisions:
 - "Make it the exact same as macOS" (no further placement/content decisions).
 AI choices: MenuBar in TitleBar.LeftHeader; ☰ + MenuView + Ctrl+M removed; Settings gear moved into File menu; queue shortcut Ctrl+Q -> Ctrl+L (macOS Cmd+L); no Ctrl+, (XAML key parse crash); no Songs/Albums (no Windows mode yet). No custom MenuBar styling applied yet.
 Verified: build OK, app launches, screenshot shows File/Playback/View. Tests 112 pass; ThumbnailFetchCoordinatorTests.InvalidatePrefix_AbortsQueuedFetch_NextFetchReloads flaky (1 of 3 runs failed), file untouched by this work.
+
+## Windows library filter (sort / Songs-Albums mode)
+Status: Implemented (W5). Learner request: "implement the filter like sorting etc like at the macos" (direct, no design checkpoint).
+AI choices: full port of macOS LibraryFilterState; AlbumGridView + SortMenu (Button + MenuFlyout with radio items, rebuilt on open); Songs/Albums as two ToggleButtons (no segmented control in WinUI 2.3.9); new C export fluyer_library_play_tracks with nuint array (x86-safe); deleted album_play_track (no callers left); hand-written natural compare.
+Learner decision: toolbar right-aligned next to the window controls (moved to TitleBar.RightHeader).
+Verified: cargo test OK, dotnet test 116 pass (6 new sort/search/play-order tests), app screenshots: Songs mode, Albums mode (4 cols). Sort flyout opened via UI Automation but popup not capturable; sort choices not visually checked.
+Follow-up (learner): toggle had accent-blue checked state, search box had native accent focus. Fix: new Shared/Theme/Colors.xaml merged in App.xaml overrides ToggleButton*Checked* (white wash) and TextControl*Focused (thin white border, no accent underline). Verified toggle by screenshot; search focus style not visually confirmed (automation focus left window inactive).
+Follow-up (learner): remove search focus border entirely; album toggle icon clipped. Fix: TextControl*Focused now point to the resting brushes/thickness (focused = resting look). Toggle clipping cause explained: default ButtonPadding 11px/side left 14px in a 36px button for a 14px glyph; new ToolbarModeButtonPadding 0,5,0,6 in Layout.xaml. Verified toggle icon by zoomed screenshot; search focus not visually confirmed.

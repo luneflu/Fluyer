@@ -10,6 +10,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <ResourceDictionary Source="ms-appx:///Shared/Theme/Layout.xaml" />
+                <ResourceDictionary Source="ms-appx:///Shared/Theme/Colors.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <Style x:Key="IconButtonStyle" TargetType="Button">
                 <Setter Property="Background" Value="Transparent" />

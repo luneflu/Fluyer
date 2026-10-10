@@ -1,0 +1,26 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+        App-wide color overrides. WinUI controls read these theme resource keys, so
+        redefining a key here restyles every control that uses it.
+        Windows twin of macOS `.tint(.white)` (FluyerApp.swift) and the white search
+        focus ring (ToolbarSearchField.swift): no system accent blue anywhere.
+    -->
+
+    <!-- Toggle buttons (Songs / Albums switch): white wash instead of accent blue. -->
+    <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#40FFFFFF" />
+    <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#26FFFFFF" />
+    <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="White" />
+    <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="White" />
+    <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="#CCFFFFFF" />
+    <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPointerOver" Color="#40FFFFFF" />
+    <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPressed" Color="#26FFFFFF" />
+
+    <!-- Text fields (search box): focused looks like resting, no border or accent underline. -->
+    <StaticResource x:Key="TextControlBackgroundFocused" ResourceKey="ControlFillColorDefaultBrush" />
+    <StaticResource x:Key="TextControlBorderBrushFocused" ResourceKey="TextControlElevationBorderBrush" />
+    <Thickness x:Key="TextControlBorderThemeThicknessFocused">1</Thickness>
+</ResourceDictionary>

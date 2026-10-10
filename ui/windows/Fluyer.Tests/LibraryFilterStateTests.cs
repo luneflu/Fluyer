@@ -61,26 +61,103 @@ public sealed class LibraryFilterStateTests
         Assert.Null(sel.Detail);
     }
 
-    [Fact]
-    public void PlayTrackAtRow_NegativeRow_Guarded()
+    private static LibraryFilterState WithTracks(params TrackItemViewModel[] tracks)
     {
-        var (sel, _, engine) = Create();
-        sel.PlayTrackAtRow(-1);
-        Assert.Empty(engine.Calls);
+        var engine = new FakeEngine();
+        engine.TrackList.AddRange(tracks);
+        var library = new LibraryState { Engine = engine };
+        library.Reload();
+        return new LibraryFilterState(library) { Engine = engine };
     }
 
     [Fact]
-    public void PlayTrackAtRow_RoutesBySelection()
+    public void TrackSort_OrdersNaturallyAndReverses()
     {
-        var (sel, _, engine) = Create();
-        sel.PlayTrackAtRow(1);
-        Assert.Contains("all:1", engine.Calls);
+        var sel = WithTracks(
+            FakeEngine.Track(0) with { Title = "Track 10", DurationMs = 300 },
+            FakeEngine.Track(1) with { Title = "track 2", DurationMs = 1000 },
+            FakeEngine.Track(2) with { Title = "Alpha", DurationMs = 100 });
 
-        engine.AlbumDetail = _ => new AlbumDetailViewModel(
-            FakeEngine.Card(0), 0, "0:00", "s", []);
+        Assert.Equal([0UL, 1, 2], sel.DisplayedTracks.Select(t => t.Index)); // library order
+        sel.TrackSort = TrackSort.Title;
+        Assert.Equal([2UL, 1, 0], sel.DisplayedTracks.Select(t => t.Index)); // "2" before "10"
+        sel.SortAscending = false;
+        Assert.Equal([0UL, 1, 2], sel.DisplayedTracks.Select(t => t.Index));
+        sel.TrackSort = TrackSort.Duration;
+        Assert.Equal([1UL, 0, 2], sel.DisplayedTracks.Select(t => t.Index)); // 1000, 300, 100
+    }
+
+    [Fact]
+    public void AlbumSort_ByYearDescending()
+    {
+        var engine = new FakeEngine();
+        engine.AlbumList.AddRange([
+            FakeEngine.Card(0) with { Name = "A", Year = "1999" },
+            FakeEngine.Card(1) with { Name = "B", Year = "2010" },
+            FakeEngine.Card(2) with { Name = "C", Year = "" }]);
+        var library = new LibraryState { Engine = engine };
+        library.Reload();
+        var sel = new LibraryFilterState(library) { AlbumSort = AlbumSort.Year, SortAscending = false };
+
+        Assert.Equal(["B", "A", "C"], sel.DisplayedAlbums.Select(a => a.Name));
+    }
+
+    [Fact]
+    public void AlbumQuery_FiltersNameAndArtist_DiacriticInsensitive()
+    {
+        var engine = new FakeEngine();
+        engine.AlbumList.AddRange([
+            FakeEngine.Card(0) with { Name = "Discovery", Artist = "Daft Punk" },
+            FakeEngine.Card(1) with { Name = "Melody AM", Artist = "Röyksopp" }]);
+        var library = new LibraryState { Engine = engine };
+        library.Reload();
+        var sel = new LibraryFilterState(library);
+
+        Assert.Equal(2, sel.DisplayedAlbums.Count);
+        sel.Query = "royk";
+        Assert.Equal([1UL], sel.DisplayedAlbums.Select(a => a.Index));
+        sel.Query = "DISCO";
+        Assert.Equal([0UL], sel.DisplayedAlbums.Select(a => a.Index));
+    }
+
+    [Fact]
+    public void Select_FromAlbumGrid_SwitchesToTracks()
+    {
+        var (sel, _, _) = Create();
+        sel.Mode = LibraryMode.Albums;
         sel.Select(0);
-        sel.PlayTrackAtRow(2);
-        Assert.Contains("albumtrack:0:2", engine.Calls);
+        Assert.Equal(LibraryMode.Tracks, sel.Mode);
+    }
+
+    [Fact]
+    public void PlayTrack_QueuesSortedUnfilteredList_StartingAtTrack()
+    {
+        var sel = WithTracks(
+            FakeEngine.Track(0) with { Title = "B" },
+            FakeEngine.Track(1) with { Title = "C" },
+            FakeEngine.Track(2) with { Title = "A" });
+        var engine = (FakeEngine)sel.Engine!;
+        sel.TrackSort = TrackSort.Title;
+        sel.Query = "C";
+
+        sel.PlayTrack(sel.DisplayedTracks[0]);
+
+        Assert.Equal(["tracks:2,0,1@2"], engine.Calls);
+    }
+
+    [Fact]
+    public void PlaySelected_PlaysAlbumInGridOrder_ByLibraryIndex()
+    {
+        // Album rows carry album-local indices; play resolves them by path.
+        var sel = WithTracks(FakeEngine.Track(0), FakeEngine.Track(1), FakeEngine.Track(2));
+        var engine = (FakeEngine)sel.Engine!;
+        engine.AlbumDetail = _ => new AlbumDetailViewModel(FakeEngine.Card(0), 0, "0:00", "s",
+            [FakeEngine.Track(2) with { Index = 0 }, FakeEngine.Track(1) with { Index = 1 }]);
+        sel.Select(0);
+
+        sel.PlaySelected();
+
+        Assert.Equal(["tracks:2,1@0"], engine.Calls);
     }
 
     [Fact]
@@ -100,7 +177,7 @@ public sealed class LibraryFilterStateTests
         sel.Query = "t1";
         Assert.Single(sel.DisplayedTracks);
         sel.PlayTrack(sel.DisplayedTracks[0]);
-        Assert.Contains("all:1", engine.Calls);
+        Assert.Contains("tracks:0,1@1", engine.Calls);
 
         sel.Query = "al"; // album field
         Assert.Equal(2, sel.DisplayedTracks.Count);

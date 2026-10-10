@@ -201,6 +201,8 @@ ui/windows/
   Screens/
     Home/
       Albums/     AlbumCarouselView, AlbumHeaderView        (was CollectionHeaderView)
+                  AlbumGridView (Albums mode)
+      Toolbar/    SortMenu
       MusicGrid/  MusicGridView
       Queue/      QueueView                                 (was QueuePaneView)
       PlayerBar/  PlayerBarView
@@ -213,6 +215,7 @@ ui/windows/
     State/        CoverState (new)
     Support/      ThumbnailStore, CoverImages, FolderPicker, MediaTransportCoordinator
     Theme/        Layout.xaml (+ Layout.cs for code-behind)
+                  Colors.xaml (theme-resource overrides: no accent blue)
   Fluyer.Core/
     Native/       FluyerEngine, FluyerNative, Models   (C ABI)
     Screens/Home/ LibraryFilterState                    (was AlbumSelection)
@@ -240,6 +243,15 @@ Steps:
   use Ctrl for Cmd: Ctrl+O, Ctrl+Left/Right, Ctrl+Shift+P, Ctrl+L (queue, was Ctrl+Q).
   Settings moved from the title-bar gear to File > Settings... (no Ctrl+, yet: XAML can't
   parse that key). No Songs/Albums items: Windows has no library mode toggle yet.
+- W5 (DONE, learner: "filter like sorting etc like at the macos"): `LibraryFilterState` ported in
+  full: `LibraryMode` (Songs/Albums), `TrackSort`, `AlbumSort`, shared `SortAscending`,
+  `DisplayedAlbums`, diacritic-insensitive search, natural sort ("2" before "10";
+  hand-written, .NET 8 lacks `NumericOrdering`). New `Screens/Home/Albums/AlbumGridView`
+  (Albums mode, right-click Play / Add to Queue / Shuffle) and `Screens/Home/Toolbar/SortMenu`.
+  Title bar (RightHeader, next to the window buttons, macOS order): scan progress,
+  Songs/Albums toggle (Ctrl+1 / Ctrl+2, also in View menu), sort button, search.
+  Playing a sorted list: new C export `fluyer_library_play_tracks` (same as UniFFI
+  `library_play_tracks`); unused `fluyer_album_play_track` + engine `album_play_track` deleted.
 - W3 (DONE): every padding / spacing / size / corner radius in `Screens/`, `Components/`,
   `MainWindow.xaml`, `App.xaml` comes from `Shared/Theme/Layout.xaml`. Keys are
   `<Feature><Role>` (`QueuePadding`, `PlayerBarCornerRadius`). Code-behind layout math

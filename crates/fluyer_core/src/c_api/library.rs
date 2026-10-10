@@ -43,3 +43,17 @@ pub unsafe extern "C" fn fluyer_library_play_all(engine: *mut FluyerEngine, star
         e.library_play_all(start_index);
     }
 }
+
+/// Play library tracks in the caller's order (UI sort), starting at `start_index`
+/// of `indices`. Unknown indices are skipped.
+#[no_mangle]
+pub unsafe extern "C" fn fluyer_library_play_tracks(
+    engine: *mut FluyerEngine,
+    indices: *const usize,
+    count: usize,
+    start_index: usize,
+) {
+    if let (Some(e), false) = (engine.as_ref(), indices.is_null()) {
+        e.library_play_tracks(std::slice::from_raw_parts(indices, count), start_index);
+    }
+}

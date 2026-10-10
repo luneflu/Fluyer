@@ -168,10 +168,15 @@ public sealed partial class AlbumCarouselView : UserControl
         {
             RefreshSelectionEmphasis();
         }
+        if (e.PropertyName is nameof(LibraryFilterState.DisplayedAlbums) or nameof(LibraryFilterState.Mode))
+        {
+            RefreshVisibility();
+        }
     }
 
     private void RefreshVisibility()
-        => Visibility = Library is { } library && library.Albums.Count > 0
+        // Songs mode only (Albums mode shows AlbumGridView instead).
+        => Visibility = Filter is { Mode: LibraryMode.Tracks } filter && filter.DisplayedAlbums.Count > 0
             ? Visibility.Visible : Visibility.Collapsed;
 
     private static double Dpr()

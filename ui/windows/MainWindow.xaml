@@ -61,6 +61,17 @@
                             </MenuFlyoutItem>
                         </MenuBarItem>
                         <MenuBarItem Title="View">
+                            <MenuFlyoutItem Click="OnShowSongs" Text="Songs">
+                                <MenuFlyoutItem.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="Number1" Modifiers="Control" />
+                                </MenuFlyoutItem.KeyboardAccelerators>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Click="OnShowAlbums" Text="Albums">
+                                <MenuFlyoutItem.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="Number2" Modifiers="Control" />
+                                </MenuFlyoutItem.KeyboardAccelerators>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutSeparator />
                             <MenuFlyoutItem x:Name="QueueItem" Click="OnToggleQueue" Text="Show Queue">
                                 <MenuFlyoutItem.KeyboardAccelerators>
                                     <KeyboardAccelerator Key="L" Modifiers="Control" />
@@ -69,31 +80,65 @@
                         </MenuBarItem>
                     </MenuBar>
                 </TitleBar.LeftHeader>
-                <StackPanel Orientation="Horizontal" Spacing="{StaticResource WindowToolbarSpacing}">
-                    <AutoSuggestBox
-                        x:Name="SearchBox"
-                        Width="{StaticResource WindowSearchFieldWidth}"
-                        VerticalAlignment="Center"
-                        AutomationProperties.Name="Search songs"
-                        PlaceholderText="Search title, artist, album"
-                        QueryIcon="Find"
-                        TextChanged="OnSearchChanged" />
+                <!-- Toolbar sits at the trailing edge, next to the window buttons, in the
+                     macOS order: scan progress, Songs/Albums, sort, search. -->
+                <TitleBar.RightHeader>
                     <StackPanel
-                        x:Name="ScanStatus"
+                        Margin="{StaticResource WindowToolbarMargin}"
                         Orientation="Horizontal"
-                        Spacing="{StaticResource WindowScanProgressSpacing}"
-                        Visibility="Collapsed">
-                        <ProgressBar
-                            Width="{StaticResource WindowScanProgressWidth}"
-                            IsIndeterminate="True"
-                            ShowPaused="False" />
-                        <TextBlock
-                            x:Name="ScanLabel"
+                        Spacing="{StaticResource WindowToolbarSpacing}">
+                        <StackPanel
+                            x:Name="ScanStatus"
+                            Orientation="Horizontal"
+                            Spacing="{StaticResource WindowScanProgressSpacing}"
+                            Visibility="Collapsed">
+                            <ProgressBar
+                                Width="{StaticResource WindowScanProgressWidth}"
+                                IsIndeterminate="True"
+                                ShowPaused="False" />
+                            <TextBlock
+                                x:Name="ScanLabel"
+                                VerticalAlignment="Center"
+                                FontSize="11"
+                                Opacity="0.7" />
+                        </StackPanel>
+                        <!-- Songs / Albums switch (macOS segmented "View" picker). -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ToggleButton
+                                x:Name="SongsMode"
+                                Width="{StaticResource ToolbarModeButtonWidth}"
+                                Padding="{StaticResource ToolbarModeButtonPadding}"
+                                AutomationProperties.Name="Songs"
+                                Click="OnShowSongs"
+                                CornerRadius="4,0,0,4"
+                                ToolTipService.ToolTip="Songs (Ctrl+1)">
+                                <FontIcon FontSize="14" Glyph="&#xE8FD;" />
+                            </ToggleButton>
+                            <ToggleButton
+                                x:Name="AlbumsMode"
+                                Width="{StaticResource ToolbarModeButtonWidth}"
+                                Padding="{StaticResource ToolbarModeButtonPadding}"
+                                AutomationProperties.Name="Albums"
+                                Click="OnShowAlbums"
+                                CornerRadius="0,4,4,0"
+                                ToolTipService.ToolTip="Albums (Ctrl+2)">
+                                <FontIcon FontSize="14" Glyph="&#xF0E2;" />
+                            </ToggleButton>
+                        </StackPanel>
+                        <screens:SortMenu
                             VerticalAlignment="Center"
-                            FontSize="11"
-                            Opacity="0.7" />
+                            Filter="{x:Bind State.Selection}"
+                            Style="{StaticResource IconButtonStyle}" />
+                        <AutoSuggestBox
+                            x:Name="SearchBox"
+                            Width="{StaticResource WindowSearchFieldWidth}"
+                            VerticalAlignment="Center"
+                            AutomationProperties.Name="Search songs"
+                            PlaceholderText="Search title, artist, album"
+                            QueryIcon="Find"
+                            TextChanged="OnSearchChanged" />
                     </StackPanel>
-                </StackPanel>
+                </TitleBar.RightHeader>
             </TitleBar>
 
             <!-- Queue pane width follows the carousel: two album slots, like Sidebar.svelte. -->
@@ -116,6 +161,14 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
+                    <screens:AlbumGridView
+                        x:Name="AlbumGrid"
+                        Grid.RowSpan="3"
+                        Covers="{x:Bind Covers}"
+                        Filter="{x:Bind State.Selection}"
+                        Library="{x:Bind State.Library}"
+                        Visibility="Collapsed" />
+
                     <screens:AlbumCarouselView
                         x:Name="Carousel"
                         Covers="{x:Bind Covers}"

@@ -18,6 +18,8 @@
     <!-- One horizontal gutter for every library component; sidebars use the same 16 from the window edge. -->
     <Thickness x:Key="WindowPageGutter">16,0</Thickness>
     <x:Double x:Key="WindowToolbarSpacing">6</x:Double>
+    <!-- Gap between the toolbar and the window buttons. -->
+    <Thickness x:Key="WindowToolbarMargin">0,0,8,0</Thickness>
     <x:Double x:Key="WindowSearchFieldWidth">240</x:Double>
     <x:Double x:Key="WindowScanProgressSpacing">6</x:Double>
     <x:Double x:Key="WindowScanProgressWidth">120</x:Double>
@@ -34,6 +36,16 @@
     <x:Double x:Key="AlbumsCoverToLabels">5</x:Double>
     <x:Double x:Key="AlbumsNameToArtist">2</x:Double>
     <x:Double x:Key="AlbumsLabelHeight">52</x:Double>
+    <!-- Albums mode grid (AlbumGridView); side gutter comes from WindowPageGutter. -->
+    <Thickness x:Key="AlbumsGridPadding">0,8</Thickness>
+    <!-- Right = -(AlbumsGridItemMargin.Right): cancels the last column's gap. -->
+    <Thickness x:Key="AlbumsGridMargin">0,0,-16,0</Thickness>
+    <Thickness x:Key="AlbumsGridItemMargin">0,0,16,16</Thickness>
+
+    <!-- Toolbar sort button + Songs/Albums switch (SortMenu, MainWindow title bar) -->
+    <x:Double x:Key="ToolbarModeButtonWidth">36</x:Double>
+    <!-- Default button padding (11 per side) leaves too little room for the icon. -->
+    <Thickness x:Key="ToolbarModeButtonPadding">0,5,0,6</Thickness>
 
     <!-- Album title strip (AlbumHeaderView) -->
     <x:Double x:Key="AlbumHeaderHeight">46</x:Double>

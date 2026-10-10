@@ -158,7 +158,7 @@ internal static class FluyerNative
     public static extern void fluyer_album_play(IntPtr engine, ulong index);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void fluyer_album_play_track(IntPtr engine, ulong albumIndex, ulong trackIndex);
+    public static extern void fluyer_library_play_tracks(IntPtr engine, nuint[] indices, nuint count, nuint startIndex);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     public static extern void fluyer_album_queue(IntPtr engine, ulong index);

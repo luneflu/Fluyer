@@ -15,7 +15,7 @@
         Height="{Binding CarouselHeight, ElementName=CarouselRoot}"
         IsItemClickEnabled="True"
         ItemClick="OnItemClick"
-        ItemsSource="{x:Bind Library.Albums, Mode=OneWay}"
+        ItemsSource="{x:Bind Filter.DisplayedAlbums, Mode=OneWay}"
         ScrollViewer.HorizontalScrollBarVisibility="Hidden"
         ScrollViewer.HorizontalScrollMode="Enabled"
         ScrollViewer.VerticalScrollBarVisibility="Disabled"
