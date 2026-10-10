@@ -28,16 +28,47 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <TitleBar
-                x:Name="AppTitleBar"
-                IsPaneToggleButtonVisible="True"
-                PaneToggleRequested="OnMenuToggle">
-                <TitleBar.Resources>
-                    <Style x:Key="TitleBarPaneToggleButtonStyle" TargetType="Button" BasedOn="{StaticResource TitleBarPaneToggleButtonStyle}">
-                        <Setter Property="Margin" Value="{StaticResource WindowPaneButtonMargin}" />
-                        <Setter Property="CornerRadius" Value="{StaticResource WindowPaneButtonCornerRadius}" />
-                    </Style>
-                </TitleBar.Resources>
+            <TitleBar x:Name="AppTitleBar">
+                <!-- Same commands as the macOS menu bar (ui/macos/Sources/App/FluyerApp.swift .commands). -->
+                <TitleBar.LeftHeader>
+                    <MenuBar>
+                        <MenuBarItem Title="File">
+                            <MenuFlyoutItem Click="OnOpenFolder" Text="Open Music Folder...">
+                                <MenuFlyoutItem.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="O" Modifiers="Control" />
+                                </MenuFlyoutItem.KeyboardAccelerators>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Click="OnOpenSettings" Text="Settings..." />
+                        </MenuBarItem>
+                        <MenuBarItem Title="Playback">
+                            <MenuFlyoutItem x:Name="PlayAllItem" Click="OnPlayAll" Text="Play All" />
+                            <MenuFlyoutItem x:Name="PlayPauseItem" Click="OnTogglePlay" Text="Play" />
+                            <MenuFlyoutItem Click="OnNext" Text="Next">
+                                <MenuFlyoutItem.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="Right" Modifiers="Control" />
+                                </MenuFlyoutItem.KeyboardAccelerators>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Click="OnPrevious" Text="Previous">
+                                <MenuFlyoutItem.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="Left" Modifiers="Control" />
+                                </MenuFlyoutItem.KeyboardAccelerators>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutSeparator />
+                            <MenuFlyoutItem Click="OnShowPlayScreen" Text="Show Play Screen">
+                                <MenuFlyoutItem.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="P" Modifiers="Control,Shift" />
+                                </MenuFlyoutItem.KeyboardAccelerators>
+                            </MenuFlyoutItem>
+                        </MenuBarItem>
+                        <MenuBarItem Title="View">
+                            <MenuFlyoutItem x:Name="QueueItem" Click="OnToggleQueue" Text="Show Queue">
+                                <MenuFlyoutItem.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="L" Modifiers="Control" />
+                                </MenuFlyoutItem.KeyboardAccelerators>
+                            </MenuFlyoutItem>
+                        </MenuBarItem>
+                    </MenuBar>
+                </TitleBar.LeftHeader>
                 <StackPanel Orientation="Horizontal" Spacing="{StaticResource WindowToolbarSpacing}">
                     <AutoSuggestBox
                         x:Name="SearchBox"
@@ -62,67 +93,48 @@
                             FontSize="11"
                             Opacity="0.7" />
                     </StackPanel>
-                    <Button
-                        AutomationProperties.Name="Settings"
-                        Click="OnOpenSettings"
-                        Style="{StaticResource IconButtonStyle}"
-                        ToolTipService.ToolTip="Settings">
-                        <FontIcon FontSize="14" Glyph="&#xE713;" />
-                    </Button>
                 </StackPanel>
             </TitleBar>
 
-            <!-- Pane widths follow the carousel: two album slots, like Sidebar.svelte. -->
+            <!-- Queue pane width follows the carousel: two album slots, like Sidebar.svelte. -->
             <SplitView
-                x:Name="MenuPane"
+                x:Name="QueuePane"
                 Grid.Row="1"
                 Grid.RowSpan="3"
+                SizeChanged="OnPaneHostSizeChanged"
                 DisplayMode="Overlay"
                 PaneBackground="Transparent"
-                PanePlacement="Left"
-                SizeChanged="OnPaneHostSizeChanged">
+                PaneClosed="OnQueuePaneClosed"
+                PaneOpening="OnQueuePaneOpening"
+                PanePlacement="Right">
                 <SplitView.Pane>
-                    <screens:MenuView
-                        x:Name="MenuPaneContent"
-                        Library="{x:Bind State.Library}"
-                        Playback="{x:Bind State.Playback}" />
+                    <screens:QueueView Queue="{x:Bind State.Queue}" />
                 </SplitView.Pane>
-                <SplitView
-                    x:Name="QueuePane"
-                    DisplayMode="Overlay"
-                    PaneBackground="Transparent"
-                    PaneClosed="OnQueuePaneClosed"
-                    PaneOpening="OnQueuePaneOpening"
-                    PanePlacement="Right">
-                    <SplitView.Pane>
-                        <screens:QueueView Queue="{x:Bind State.Queue}" />
-                    </SplitView.Pane>
-                    <Grid Margin="{StaticResource WindowPageGutter}">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <screens:AlbumCarouselView
-                            x:Name="Carousel"
-                            Covers="{x:Bind Covers}"
-                            Filter="{x:Bind State.Selection}"
-                            Library="{x:Bind State.Library}" />
+                <Grid Margin="{StaticResource WindowPageGutter}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <screens:AlbumCarouselView
+                        x:Name="Carousel"
+                        Covers="{x:Bind Covers}"
+                        Filter="{x:Bind State.Selection}"
+                        Library="{x:Bind State.Library}" />
 
-                        <screens:AlbumHeaderView
-                            x:Name="AlbumHeader"
-                            Grid.Row="1"
-                            Filter="{x:Bind State.Selection}"
-                            Visibility="Collapsed" />
+                    <screens:AlbumHeaderView
+                        x:Name="AlbumHeader"
+                        Grid.Row="1"
+                        Filter="{x:Bind State.Selection}"
+                        Visibility="Collapsed" />
 
-                        <screens:MusicGridView
-                            x:Name="MusicGrid"
-                            Grid.Row="2"
-                            Covers="{x:Bind Covers}"
-                            Filter="{x:Bind State.Selection}"
-                            Library="{x:Bind State.Library}" />
-                    </Grid>
-                </SplitView>
+                    <screens:MusicGridView
+                        x:Name="MusicGrid"
+                        Grid.Row="2"
+                        Covers="{x:Bind Covers}"
+                        Filter="{x:Bind State.Selection}"
+                        Library="{x:Bind State.Library}" />
+                </Grid>
             </SplitView>
 
             <screens:PlayerBarView

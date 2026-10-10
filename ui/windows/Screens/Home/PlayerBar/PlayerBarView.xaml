@@ -89,7 +89,7 @@
                         AutomationProperties.Name="Queue"
                         Click="OnQueue"
                         Style="{StaticResource IconButtonStyle}"
-                        ToolTipService.ToolTip="Queue (Ctrl+Q)">
+                        ToolTipService.ToolTip="Queue (Ctrl+L)">
                         <FontIcon FontSize="13" Glyph="&#xE90B;" />
                     </Button>
                     <Button

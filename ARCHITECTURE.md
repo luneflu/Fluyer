@@ -196,12 +196,13 @@ folder tree, so a feature's state and view sit at the same path in each project:
 ```
 ui/windows/
   App.xaml(.cs), MainWindow.xaml(.cs)      MainWindow = Home window shell (macOS HomeView)
+                                           + MenuBar in the title bar = macOS menu bar
+                                           (File / Playback / View, same items + shortcuts)
   Screens/
     Home/
       Albums/     AlbumCarouselView, AlbumHeaderView        (was CollectionHeaderView)
       MusicGrid/  MusicGridView
       Queue/      QueueView                                 (was QueuePaneView)
-      Menu/       MenuView  (Windows-only left sidebar)     (was MenuPaneView)
       PlayerBar/  PlayerBarView
     Play/         PlayView
     Settings/     SettingsView   (split out of MainWindow's dialog)
@@ -234,6 +235,11 @@ Steps:
   narrow state objects (`QueueView.Queue`, `MusicGridView.Library/Filter/Covers`, ...);
   only `MainWindow` and `SettingsView` take `AppState`. Menu "Play All" raises an event
   the window forwards to `AppState.PlayAll`.
+- W4 (DONE, learner: "exact same as macOS"): left menu sidebar (MenuView, Ctrl+M) removed;
+  WinUI `MenuBar` in `TitleBar.LeftHeader` mirrors `FluyerApp.swift` `.commands`. Shortcuts
+  use Ctrl for Cmd: Ctrl+O, Ctrl+Left/Right, Ctrl+Shift+P, Ctrl+L (queue, was Ctrl+Q).
+  Settings moved from the title-bar gear to File > Settings... (no Ctrl+, yet: XAML can't
+  parse that key). No Songs/Albums items: Windows has no library mode toggle yet.
 - W3 (DONE): every padding / spacing / size / corner radius in `Screens/`, `Components/`,
   `MainWindow.xaml`, `App.xaml` comes from `Shared/Theme/Layout.xaml`. Keys are
   `<Feature><Role>` (`QueuePadding`, `PlayerBarCornerRadius`). Code-behind layout math
@@ -271,4 +277,4 @@ library (window capture). Not checked: queue/menu sidebars, play screen, setting
 | Windows: any padding / spacing / size | `ui/windows/Shared/Theme/Layout.xaml`, keys prefixed with the feature |
 | Windows: queue panel look / behavior | `ui/windows/Screens/Home/Queue/QueueView.xaml` / `Fluyer.Core/Screens/Home/Queue/QueueState.cs` |
 | Windows: cover loading | `ui/windows/Shared/State/CoverState.cs` |
-| Windows: window shell, toolbar, sidebars | `ui/windows/MainWindow.xaml` |
+| Windows: window shell, menu bar, queue sidebar | `ui/windows/MainWindow.xaml` |

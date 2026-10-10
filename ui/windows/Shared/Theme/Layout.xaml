@@ -17,8 +17,6 @@
     <GridLength x:Key="WindowTitleBarHeight">48</GridLength>
     <!-- One horizontal gutter for every library component; sidebars use the same 16 from the window edge. -->
     <Thickness x:Key="WindowPageGutter">16,0</Thickness>
-    <Thickness x:Key="WindowPaneButtonMargin">2</Thickness>
-    <CornerRadius x:Key="WindowPaneButtonCornerRadius">0</CornerRadius>
     <x:Double x:Key="WindowToolbarSpacing">6</x:Double>
     <x:Double x:Key="WindowSearchFieldWidth">240</x:Double>
     <x:Double x:Key="WindowScanProgressSpacing">6</x:Double>
@@ -60,15 +58,6 @@
     <x:Double x:Key="TrackRowCoverToText">10</x:Double>
     <x:Double x:Key="TrackRowTitleToSubtitle">2</x:Double>
     <x:Double x:Key="TrackRowIconToTitle">6</x:Double>
-
-    <!-- Left sidebar (MenuView) -->
-    <Thickness x:Key="MenuOuterMargin">16,4,0,16</Thickness>
-    <Thickness x:Key="MenuPadding">12</Thickness>
-    <CornerRadius x:Key="MenuCornerRadius">0</CornerRadius>
-    <x:Double x:Key="MenuRowSpacing">4</x:Double>
-    <Thickness x:Key="MenuTitleMargin">8,12,0,8</Thickness>
-    <Thickness x:Key="MenuItemMargin">8,0,0,8</Thickness>
-    <x:Double x:Key="MenuIconToLabel">12</x:Double>
 
     <!-- Right sidebar, "Queue" (QueueView) -->
     <Thickness x:Key="QueueOuterMargin">0,4,16,16</Thickness>
@@ -114,7 +103,7 @@
     <x:Double x:Key="PlayControlsInfoSpacing">10</x:Double>
     <GridLength x:Key="PlayControlsTimeLabelWidth">48</GridLength>
     <x:Double x:Key="PlayControlsSeekHeight">8</x:Double>
-    <Thickness x:Key="PlayControlsTransportMargin">0,4,0,0</Thickness>
+    <Thickness x:Key="PlayControlsTransportMargin">0,20,0,0</Thickness>
     <x:Double x:Key="PlayControlsTransportSpacing">8</x:Double>
     <Thickness x:Key="PlayControlsVolumeMargin">0,8,0,0</Thickness>
     <x:Double x:Key="PlayControlsVolumeSpacing">12</x:Double>

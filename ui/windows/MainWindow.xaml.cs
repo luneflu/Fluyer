@@ -42,18 +42,18 @@ public sealed partial class MainWindow : Window
         Settings.State = state;
         Settings.AddFolderRequested += () => _ = PickAndScanAsync();
         MusicGrid.OpenSettingsRequested += ShowSettings;
-        MenuPaneContent.SettingsRequested += ShowSettings;
-        MenuPaneContent.PlayAllRequested += State.PlayAll;
-        MenuPaneContent.CloseRequested += () => MenuPane.IsPaneOpen = false;
         PlayerBar.QueueRequested += ToggleQueue;
-        AddShortcut(Windows.System.VirtualKey.Q, Windows.System.VirtualKeyModifiers.Control, ToggleQueue);
-        AddShortcut(Windows.System.VirtualKey.M, Windows.System.VirtualKeyModifiers.Control, ToggleMenu);
         // Fires after the value changes on every path (button, shortcut, light dismiss, Esc).
-        MenuPane.RegisterPropertyChangedCallback(Microsoft.UI.Xaml.Controls.SplitView.IsPaneOpenProperty, (_, _) => RefreshOcclusion());
-        QueuePane.RegisterPropertyChangedCallback(Microsoft.UI.Xaml.Controls.SplitView.IsPaneOpenProperty, (_, _) => RefreshOcclusion());
+        QueuePane.RegisterPropertyChangedCallback(Microsoft.UI.Xaml.Controls.SplitView.IsPaneOpenProperty, (_, _) =>
+        {
+            RefreshOcclusion();
+            RefreshMenu();
+        });
 
+        State.Library.Tracks.CollectionChanged += (_, _) => RefreshMenu();
         RefreshOverlays();
         RefreshScan();
+        RefreshMenu();
     }
 
     private void OnPlaybackChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -61,6 +61,10 @@ public sealed partial class MainWindow : Window
         if (e.PropertyName == nameof(PlaybackState.ShowPlayView))
         {
             RefreshOverlays();
+        }
+        if (e.PropertyName is nameof(PlaybackState.Bar))
+        {
+            RefreshMenu();
         }
     }
 
@@ -86,7 +90,6 @@ public sealed partial class MainWindow : Window
         var showing = State.Playback.ShowPlayView;
         if (showing)
         {
-            MenuPane.IsPaneOpen = false;
             QueuePane.IsPaneOpen = false;
         }
         NowPlaying.Visibility = showing ? Visibility.Visible : Visibility.Collapsed;
@@ -111,7 +114,23 @@ public sealed partial class MainWindow : Window
         Settings.Refresh();
     }
 
+    // MARK: - Menu bar (same commands as the macOS menu bar)
+
+    private void RefreshMenu()
+    {
+        PlayAllItem.IsEnabled = State.Library.Tracks.Count > 0;
+        PlayPauseItem.Text = State.Playback.Bar.IsPlaying ? "Pause" : "Play";
+        QueueItem.Text = QueuePane.IsPaneOpen ? "Hide Queue" : "Show Queue";
+    }
+
+    private void OnOpenFolder(object sender, RoutedEventArgs e) => _ = PickAndScanAsync();
     private void OnOpenSettings(object sender, RoutedEventArgs e) => ShowSettings();
+    private void OnPlayAll(object sender, RoutedEventArgs e) => State.PlayAll();
+    private void OnTogglePlay(object sender, RoutedEventArgs e) => State.Playback.TogglePlay();
+    private void OnNext(object sender, RoutedEventArgs e) => State.Playback.Next();
+    private void OnPrevious(object sender, RoutedEventArgs e) => State.Playback.Previous();
+    private void OnShowPlayScreen(object sender, RoutedEventArgs e) => State.Playback.ShowPlayView = true;
+    private void OnToggleQueue(object sender, RoutedEventArgs e) => ToggleQueue();
 
     private void ShowSettings()
     {
@@ -120,34 +139,14 @@ public sealed partial class MainWindow : Window
         _ = SettingsDialog.ShowAsync();
     }
 
-    // MARK: - Sidebars (button / shortcut opened; SplitView overlay closes on outside click + Esc)
-
-    private void AddShortcut(Windows.System.VirtualKey key, Windows.System.VirtualKeyModifiers modifiers, Action action)
-    {
-        var accelerator = new Microsoft.UI.Xaml.Input.KeyboardAccelerator { Key = key, Modifiers = modifiers };
-        accelerator.Invoked += (_, args) =>
-        {
-            args.Handled = true;
-            action();
-        };
-        LibraryRoot.KeyboardAccelerators.Add(accelerator);
-    }
-
-    private void ToggleMenu()
-    {
-        QueuePane.IsPaneOpen = false;
-        MenuPane.IsPaneOpen = !MenuPane.IsPaneOpen;
-    }
+    // MARK: - Queue sidebar (button / Ctrl+L; SplitView overlay closes on outside click + Esc)
 
     private void ToggleQueue()
     {
-        MenuPane.IsPaneOpen = false;
         QueuePane.IsPaneOpen = !QueuePane.IsPaneOpen;
     }
 
-    private void OnMenuToggle(Microsoft.UI.Xaml.Controls.TitleBar sender, object args) => ToggleMenu();
-
-    // Sidebars are two carousel covers + the gap between (Sidebar.svelte: itemWidth * 2).
+    // The queue pane is two carousel covers + the gap between (Sidebar.svelte: itemWidth * 2).
     // Carousel sits inside WindowPageGutter, so measure the same width.
     private void OnPaneHostSizeChanged(object sender, SizeChangedEventArgs e)
     {
@@ -155,7 +154,6 @@ public sealed partial class MainWindow : Window
         var carouselWidth = e.NewSize.Width - gutter.Left - gutter.Right;
         var length = Math.Floor(Screens.AlbumCarouselView.ItemWidth(carouselWidth) * 2
             - Screens.AlbumCarouselView.Gap);
-        MenuPane.OpenPaneLength = length;
         QueuePane.OpenPaneLength = length;
         RefreshOcclusion();
     }
@@ -169,8 +167,8 @@ public sealed partial class MainWindow : Window
     // Sidebar.svelte hides the items behind an open pane (useAlbumList/useMusicList).
     private void RefreshOcclusion()
     {
-        var lo = MenuPane.IsPaneOpen ? MenuPane.OpenPaneLength : double.NegativeInfinity;
-        var hi = QueuePane.IsPaneOpen ? MenuPane.ActualWidth - QueuePane.OpenPaneLength : double.PositiveInfinity;
+        var lo = double.NegativeInfinity;
+        var hi = QueuePane.IsPaneOpen ? QueuePane.ActualWidth - QueuePane.OpenPaneLength : double.PositiveInfinity;
         Carousel.SetVisibleBand(lo, hi);
         MusicGrid.SetVisibleBand(lo, hi);
     }

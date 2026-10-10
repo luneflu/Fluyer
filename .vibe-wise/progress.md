@@ -81,3 +81,12 @@ Implemented S1 (Implement this step): files moved to App/, Screens/{Home,Play,Se
 Implemented S2 (learner said "continue"): CoverState (Shared/State) wraps engine + ThumbnailStore; views/rows/backdrop/NowPlayingCoordinator use it; every view takes only the state objects it reads (QueueView(queue:playback:library:covers:width:), etc.); AppState only in HomeView/SettingsView/FluyerApp. Test CoverStateTests (no engine returns nil).
 Implemented S3: Shared/Theme/Layout.swift, enums per feature (Window, TrackRow, MusicGrid, Albums, AlbumHeader, Queue, PlayerBar, Play, PlayControls, Lyrics, Toast, Settings); all padding/spacing/frame/cornerRadius numbers in Screens/ and Components/ replaced; fonts, shadows, opacities, timings left inline. AlbumMetrics now reads Layout.Albums; queue sidebar inset uses Layout.Queue.outerInset.
 Verified: swift build, swift test 67 pass. Visual check NOT done (raw binary launch showed no window). Windows not built.
+
+## Windows menu bar (replaces left menu sidebar)
+Status: Implemented (W4).
+Explained: macOS menu bar vs Windows per-window commands; WinUI MenuBar styling via theme resource overrides (MenuBar*, MenuFlyoutPresenter*); options table (keep sidebar / MenuBar / drop).
+Learner decisions:
+- Use WinUI MenuBar; asked whether it supports custom styling.
+- "Make it the exact same as macOS" (no further placement/content decisions).
+AI choices: MenuBar in TitleBar.LeftHeader; ☰ + MenuView + Ctrl+M removed; Settings gear moved into File menu; queue shortcut Ctrl+Q -> Ctrl+L (macOS Cmd+L); no Ctrl+, (XAML key parse crash); no Songs/Albums (no Windows mode yet). No custom MenuBar styling applied yet.
+Verified: build OK, app launches, screenshot shows File/Playback/View. Tests 112 pass; ThumbnailFetchCoordinatorTests.InvalidatePrefix_AbortsQueuedFetch_NextFetchReloads flaky (1 of 3 runs failed), file untouched by this work.
