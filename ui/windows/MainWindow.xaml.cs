@@ -3,6 +3,7 @@ using Fluyer.Shared;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Windows.Graphics;
 
 namespace Fluyer;
@@ -42,7 +43,6 @@ public sealed partial class MainWindow : Window
         Settings.State = state;
         Settings.AddFolderRequested += () => _ = PickAndScanAsync();
         MusicGrid.OpenSettingsRequested += ShowSettings;
-        PlayerBar.QueueRequested += ToggleQueue;
         // Fires after the value changes on every path (button, shortcut, light dismiss, Esc).
         QueuePane.RegisterPropertyChangedCallback(Microsoft.UI.Xaml.Controls.SplitView.IsPaneOpenProperty, (_, _) =>
         {
@@ -136,6 +136,8 @@ public sealed partial class MainWindow : Window
         PlayAllItem.IsEnabled = State.Library.Tracks.Count > 0;
         PlayPauseItem.Text = State.Playback.Bar.IsPlaying ? "Pause" : "Play";
         QueueItem.Text = QueuePane.IsPaneOpen ? "Hide Queue" : "Show Queue";
+        QueueToggle.IsChecked = QueuePane.IsPaneOpen;
+        AutomationProperties.SetName(QueueToggle, QueueItem.Text);
     }
 
     private void OnOpenFolder(object sender, RoutedEventArgs e) => _ = PickAndScanAsync();

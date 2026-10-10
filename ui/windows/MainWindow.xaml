@@ -137,6 +137,15 @@
                             PlaceholderText="Search title, artist, album"
                             QueryIcon="Find"
                             TextChanged="OnSearchChanged" />
+                        <ToggleButton
+                            x:Name="QueueToggle"
+                            VerticalAlignment="Center"
+                            AutomationProperties.Name="Show Queue"
+                            Click="OnToggleQueue"
+                            Style="{StaticResource IconToggleButtonStyle}"
+                            ToolTipService.ToolTip="Queue (Ctrl+L)">
+                            <FontIcon FontSize="14" Glyph="&#xE8FD;" />
+                        </ToggleButton>
                     </StackPanel>
                 </TitleBar.RightHeader>
             </TitleBar>
@@ -153,7 +162,7 @@
                 PaneOpening="OnQueuePaneOpening"
                 PanePlacement="Right">
                 <SplitView.Pane>
-                    <screens:QueueView Queue="{x:Bind State.Queue}" />
+                    <screens:QueueView Queue="{x:Bind State.Queue}" Library="{x:Bind State.Library}" Covers="{x:Bind Covers}" />
                 </SplitView.Pane>
                 <Grid Margin="{StaticResource WindowPageGutter}">
                     <Grid.RowDefinitions>

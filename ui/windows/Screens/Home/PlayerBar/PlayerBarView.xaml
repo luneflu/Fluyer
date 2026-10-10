@@ -85,14 +85,6 @@
                     Orientation="Horizontal"
                     Spacing="{StaticResource PlayerBarSecondarySpacing}">
                     <Button
-                        x:Name="QueueButton"
-                        AutomationProperties.Name="Queue"
-                        Click="OnQueue"
-                        Style="{StaticResource IconButtonStyle}"
-                        ToolTipService.ToolTip="Queue (Ctrl+L)">
-                        <FontIcon FontSize="13" Glyph="&#xE90B;" />
-                    </Button>
-                    <Button
                         Click="OnCycleRepeat"
                         Style="{StaticResource IconButtonStyle}"
                         ToolTipService.ToolTip="Repeat">

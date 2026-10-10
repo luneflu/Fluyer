@@ -89,9 +89,4 @@ public sealed partial class PlayerBarView : UserControl
             Playback.ShowPlayView = true;
         }
     }
-
-    /// <summary>Raised by the queue button; the window toggles the right sidebar.</summary>
-    public event Action? QueueRequested;
-
-    private void OnQueue(object sender, RoutedEventArgs e) => QueueRequested?.Invoke();
 }

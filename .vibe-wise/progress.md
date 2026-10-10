@@ -98,3 +98,10 @@ Learner decision: toolbar right-aligned next to the window controls (moved to Ti
 Verified: cargo test OK, dotnet test 116 pass (6 new sort/search/play-order tests), app screenshots: Songs mode, Albums mode (4 cols). Sort flyout opened via UI Automation but popup not capturable; sort choices not visually checked.
 Follow-up (learner): toggle had accent-blue checked state, search box had native accent focus. Fix: new Shared/Theme/Colors.xaml merged in App.xaml overrides ToggleButton*Checked* (white wash) and TextControl*Focused (thin white border, no accent underline). Verified toggle by screenshot; search focus style not visually confirmed (automation focus left window inactive).
 Follow-up (learner): remove search focus border entirely; album toggle icon clipped. Fix: TextControl*Focused now point to the resting brushes/thickness (focused = resting look). Toggle clipping cause explained: default ButtonPadding 11px/side left 14px in a 36px button for a 14px glyph; new ToolbarModeButtonPadding 0,5,0,6 in Layout.xaml. Verified toggle icon by zoomed screenshot; search focus not visually confirmed.
+
+## Windows queue styling (match macOS)
+Status: Implemented. Learner request: "update the queue to have the same styling as macos one" (direct, ported from QueueView.swift/QueueRow.swift).
+- QueueView: "Now Playing" header 22pt + 28px clear button, glass card (acrylic + #1AD4D4D4 wash, 1px #1FFFFFFF border, radius 4), margins 0,6,12,12 (Layout.Queue values).
+- Rows reuse TrackRow look (44px cover radius 4, title 13 + speaker icon on current, "artist • album" 11, mono duration); cover cache key shared with song grid (library index resolved by path, needs new Library + Covers DPs).
+- Hover: cover becomes jump button (back/forward glyph vs current row), duration swaps to remove. Up/down buttons moved to right-click menu (Play / Move Up / Move Down / Remove), as on macOS.
+- Not ported: drag-to-reorder (macOS List onMove). Hover state not visually verified.

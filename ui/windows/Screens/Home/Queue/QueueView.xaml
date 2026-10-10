@@ -4,91 +4,151 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:native="using:Fluyer.Core.Native"
     xmlns:screens="using:Fluyer.Screens">
-    <!-- Right sidebar: play queue. Port of MusicQueueList.svelte; card styling
-         matches AlbumHeaderView. -->
+    <!-- Right sidebar: play queue. Port of QueueView + QueueRow
+         (ui/macos/Sources/Screens/Home/Queue/): glass card, "Now Playing" header with
+         clear, song-grid-sized rows whose hover turns the cover into a jump button
+         and swaps the duration for remove. Rows drag to reorder. -->
+    <UserControl.Resources>
+        <!-- Plain rows like the macOS List: no hover / pressed fill. -->
+        <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="Transparent" />
+        <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="Transparent" />
+    </UserControl.Resources>
     <Border
         Margin="{StaticResource QueueOuterMargin}"
-        Padding="{StaticResource QueuePadding}"
         Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+        BorderBrush="#1FFFFFFF"
+        BorderThickness="1"
         CornerRadius="{StaticResource QueueCornerRadius}">
-        <Grid RowSpacing="{StaticResource QueueHeaderToList}">
+        <!-- bg-gray-300/10 wash over the acrylic, as on macOS. -->
+        <Grid Padding="{StaticResource QueuePadding}" Background="#1AD4D4D4">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <Grid ColumnSpacing="{StaticResource QueueHeaderSpacing}">
+            <Grid Padding="{StaticResource QueueHeaderPadding}" ColumnSpacing="{StaticResource QueueHeaderSpacing}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock
-                    Margin="{StaticResource QueueTitleMargin}"
-                    FontSize="20"
+                    VerticalAlignment="Center"
+                    FontSize="22"
                     FontWeight="SemiBold"
-                    Text="Queue" />
+                    MaxLines="1"
+                    Text="Now Playing"
+                    TextTrimming="CharacterEllipsis" />
                 <Button
                     x:Name="ClearButton"
                     Grid.Column="1"
-                    AutomationProperties.Name="Clear queue"
+                    Width="{StaticResource QueueClearButtonSide}"
+                    Height="{StaticResource QueueClearButtonSide}"
+                    Padding="0"
+                    AutomationProperties.Name="Clear Queue"
                     Click="OnClear"
                     Style="{StaticResource IconButtonStyle}"
-                    ToolTipService.ToolTip="Clear queue">
+                    ToolTipService.ToolTip="Clear Queue">
                     <FontIcon FontSize="16" Glyph="&#xE74D;" />
                 </Button>
             </Grid>
             <ListView
+                x:Name="Rows"
                 Grid.Row="1"
                 IsItemClickEnabled="True"
                 ItemClick="OnItemClick"
-                ItemsSource="{x:Bind Queue.Tracks, Mode=OneWay}"
+                AllowDrop="True"
+                CanDragItems="True"
+                CanReorderItems="True"
+                DragItemsCompleted="OnDragCompleted"
+                ScrollViewer.VerticalScrollBarVisibility="Hidden"
                 SelectionMode="None">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Margin" Value="0" />
+                        <Setter Property="MinHeight" Value="0" />
+                    </Style>
+                </ListView.ItemContainerStyle>
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="native:TrackItemViewModel">
-                        <Grid Padding="{StaticResource QueueRowPadding}" ColumnSpacing="{StaticResource QueueRowTextToButtons}">
+                        <Grid
+                            Padding="{StaticResource QueueRowPadding}"
+                            Background="Transparent"
+                            ColumnSpacing="{StaticResource TrackRowCoverToText}"
+                            PointerEntered="OnRowPointerEntered"
+                            PointerExited="OnRowPointerExited"
+                            PointerCanceled="OnRowPointerExited">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel VerticalAlignment="Center" Spacing="{StaticResource QueueRowTitleToArtist}">
+                            <Grid
+                                Width="{StaticResource TrackRowCoverSide}"
+                                Height="{StaticResource TrackRowCoverSide}"
+                                CornerRadius="{StaticResource TrackRowCoverCornerRadius}">
+                                <Rectangle Fill="#14FFFFFF" />
+                                <Image x:Name="Thumb" Opacity="0" Stretch="UniformToFill" />
+                                <!-- Hover: jump here. Backward glyph for rows before the current one. -->
+                                <Button
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"
+                                    Padding="0"
+                                    AutomationProperties.Name="Play"
+                                    Background="#66000000"
+                                    BorderThickness="0"
+                                    Click="OnPlay"
+                                    CornerRadius="0"
+                                    Tag="{x:Bind Index}"
+                                    ToolTipService.ToolTip="Play"
+                                    Visibility="Collapsed">
+                                    <FontIcon FontSize="14" Foreground="White" Glyph="&#xE893;" />
+                                </Button>
+                            </Grid>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="{StaticResource TrackRowTitleToSubtitle}">
+                                <StackPanel Orientation="Horizontal" Spacing="{StaticResource TrackRowIconToTitle}">
+                                    <FontIcon
+                                        AutomationProperties.Name="Now playing"
+                                        FontSize="10"
+                                        Glyph="&#xE995;"
+                                        Visibility="{x:Bind IsCurrent}" />
+                                    <TextBlock
+                                        FontSize="13"
+                                        FontWeight="{x:Bind screens:QueueView.RowWeight(IsCurrent)}"
+                                        MaxLines="1"
+                                        Text="{x:Bind Title}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
                                 <TextBlock
-                                    FontSize="16"
-                                    FontWeight="{x:Bind screens:QueueView.RowWeight(IsCurrent)}"
-                                    MaxLines="1"
-                                    Text="{x:Bind Title}"
-                                    TextTrimming="CharacterEllipsis" />
-                                <TextBlock
-                                    FontSize="13"
+                                    FontSize="11"
                                     MaxLines="1"
                                     Opacity="0.6"
-                                    Text="{x:Bind Artist}"
+                                    Text="{x:Bind screens:MusicGridView.ArtistAlbumLine(Artist, Album)}"
                                     TextTrimming="CharacterEllipsis" />
                             </StackPanel>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <!-- Duration; on hover a non-playing row swaps it for remove. -->
+                            <Grid Grid.Column="2">
+                                <TextBlock
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    FontFamily="Consolas"
+                                    FontSize="11"
+                                    Opacity="0.4"
+                                    Text="{x:Bind DurationFormatted}" />
                                 <Button
-                                    AutomationProperties.Name="Move up"
-                                    Click="OnUp"
-                                    Style="{StaticResource IconButtonStyle}"
-                                    Tag="{x:Bind Index}"
-                                    ToolTipService.ToolTip="Move up">
-                                    <FontIcon FontSize="11" Glyph="&#xE70E;" />
-                                </Button>
-                                <Button
-                                    AutomationProperties.Name="Move down"
-                                    Click="OnDown"
-                                    Style="{StaticResource IconButtonStyle}"
-                                    Tag="{x:Bind Index}"
-                                    ToolTipService.ToolTip="Move down">
-                                    <FontIcon FontSize="11" Glyph="&#xE70D;" />
-                                </Button>
-                                <Button
-                                    AutomationProperties.Name="Remove from queue"
+                                    Width="{StaticResource QueueRemoveButtonSide}"
+                                    Height="{StaticResource QueueRemoveButtonSide}"
+                                    Padding="0"
+                                    HorizontalAlignment="Right"
+                                    AutomationProperties.Name="Remove"
                                     Click="OnRemove"
                                     Style="{StaticResource IconButtonStyle}"
                                     Tag="{x:Bind Index}"
-                                    ToolTipService.ToolTip="Remove">
-                                    <FontIcon FontSize="11" Glyph="&#xE711;" />
+                                    ToolTipService.ToolTip="Remove"
+                                    Visibility="Collapsed">
+                                    <FontIcon FontSize="12" Glyph="&#xE711;" />
                                 </Button>
-                            </StackPanel>
+                            </Grid>
                         </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
@@ -98,6 +158,7 @@
                 Grid.Row="1"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
+                FontSize="13"
                 Opacity="0.5"
                 Text="Queue is empty" />
         </Grid>

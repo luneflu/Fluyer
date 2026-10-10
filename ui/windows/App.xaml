@@ -20,6 +20,14 @@
                 <Setter Property="Padding" Value="{StaticResource IconButtonPadding}" />
                 <Setter Property="CornerRadius" Value="{StaticResource IconButtonCornerRadius}" />
             </Style>
+            <!-- Icon-only toggle (title-bar queue button): flat until checked; checked colors come from Colors.xaml. -->
+            <Style x:Key="IconToggleButtonStyle" TargetType="ToggleButton">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="{StaticResource IconButtonPadding}" />
+                <Setter Property="CornerRadius" Value="{StaticResource IconButtonCornerRadius}" />
+            </Style>
             <!-- Other app resources here -->
         </ResourceDictionary>
     </Application.Resources>
