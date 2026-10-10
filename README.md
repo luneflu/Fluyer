@@ -45,7 +45,7 @@ cargo build -p fluyer_core --release # release -> target/release/libfluyer_core.
 ### 2. Regenerate Swift bindings
 
 Only needed after changing the `#[uniffi::export]` API surface in
-`crates/fluyer_core/src/uniffi_api.rs`. It rebuilds the dylib, runs `uniffi-bindgen`,
+`crates/fluyer_core/src/uniffi_api/`. It rebuilds the dylib, runs `uniffi-bindgen`,
 and rewrites `bindings/swift/`.
 
 ```bash
@@ -154,7 +154,7 @@ both the script and `abiFilters`.
 ## Windows (WinUI 3)
 
 UniFFI 0.28 has no C# backend, so the Windows shell talks to the core over the C ABI
-(`crates/fluyer_core/src/ffi.rs`) via P/Invoke in `ui/windows/Fluyer.Core/Native/`.
+(`crates/fluyer_core/src/c_api/`) via P/Invoke in `ui/windows/Fluyer.Core/Native/`.
 View models cross as JSON and are deserialized into matching records. The state layer
 (`AppState` + `Playback`/`Library`/`Selection`/`Toast`/`Clock`) is a 1:1 port of
 `ui/macos/Sources/State/` onto `INotifyPropertyChanged`; views are XAML ports of

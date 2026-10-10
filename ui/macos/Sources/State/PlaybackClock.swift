@@ -79,13 +79,13 @@ final class PlaybackClock {
 
     private func tick() {
         guard let engine else { return }
-        let position = engine.getPosition()
+        let position = engine.playerGetPosition()
         positionMs = position
         guard durationMs > 0 else { return }
         progressPct = Float(position) / Float(durationMs)
         timeLabel = TimeFormat.pair(position, durationMs)
         if followsLyrics {
-            currentLyricIndex = Int(engine.getActiveLyricIndex(positionMs: position))
+            currentLyricIndex = Int(engine.lyricsGetActiveIndex(positionMs: position))
         }
     }
 }

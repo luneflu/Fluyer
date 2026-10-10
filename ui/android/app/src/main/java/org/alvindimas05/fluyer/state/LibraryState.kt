@@ -27,9 +27,9 @@ class LibraryState {
         val e = engine ?: return
         val (status, t, a) = withContext(Dispatchers.Default) {
             Triple(
-                e.getScanStatus(),
-                (0 until e.getTrackCount().toInt()).mapNotNull { e.getTrackView(it.toULong()) },
-                (0 until e.getAlbumCount().toInt()).mapNotNull { e.getAlbumCard(it.toULong()) },
+                e.libraryGetScanStatus(),
+                (0 until e.libraryGetTrackCount().toInt()).mapNotNull { e.libraryGetTrack(it.toULong()) },
+                (0 until e.albumGetCount().toInt()).mapNotNull { e.albumGetCard(it.toULong()) },
             )
         }
         scanStatus = status

@@ -53,14 +53,14 @@ final class LibraryScanTests: XCTestCase {
         let sandbox = try Sandbox()
         defer { sandbox.cleanUp() }
 
-        XCTAssertEqual(sandbox.engine.getTrackCount(), 0)
+        XCTAssertEqual(sandbox.engine.libraryGetTrackCount(), 0)
 
-        sandbox.engine.scanDirectories(directories: [sandbox.music.path])
+        sandbox.engine.libraryScan(directories: [sandbox.music.path])
 
         try await waitForTracks(sandbox.engine, expected: 1)
-        XCTAssertEqual(sandbox.engine.getAlbumCount(), 1)
+        XCTAssertEqual(sandbox.engine.albumGetCount(), 1)
 
-        let track = try XCTUnwrap(sandbox.engine.getTrackView(index: 0))
+        let track = try XCTUnwrap(sandbox.engine.libraryGetTrack(index: 0))
         XCTAssertTrue(track.path.hasSuffix("sample.flac"))
         XCTAssertGreaterThan(track.durationMs, 0, "metadata extraction should have run")
     }
@@ -70,15 +70,15 @@ final class LibraryScanTests: XCTestCase {
         let sandbox = try Sandbox()
         defer { sandbox.cleanUp() }
 
-        sandbox.engine.scanDirectories(directories: [sandbox.music.path])
+        sandbox.engine.libraryScan(directories: [sandbox.music.path])
         try await waitForTracks(sandbox.engine, expected: 1)
 
-        sandbox.engine.scanDirectories(directories: [sandbox.music.path])
+        sandbox.engine.libraryScan(directories: [sandbox.music.path])
         // Unchanged mtime means the file is skipped entirely; give the second pass a
         // moment so a late-inserted duplicate would show up here.
         try await Task.sleep(nanoseconds: 1_000_000_000)
 
-        XCTAssertEqual(sandbox.engine.getTrackCount(), 1)
+        XCTAssertEqual(sandbox.engine.libraryGetTrackCount(), 1)
     }
 
     /// A folder with no supported audio is not an error, and must not wipe the library.
@@ -86,15 +86,15 @@ final class LibraryScanTests: XCTestCase {
         let sandbox = try Sandbox()
         defer { sandbox.cleanUp() }
 
-        sandbox.engine.scanDirectories(directories: [sandbox.music.path])
+        sandbox.engine.libraryScan(directories: [sandbox.music.path])
         try await waitForTracks(sandbox.engine, expected: 1)
 
         let empty = sandbox.root.appendingPathComponent("Empty")
         try FileManager.default.createDirectory(at: empty, withIntermediateDirectories: true)
-        sandbox.engine.scanDirectories(directories: [empty.path])
+        sandbox.engine.libraryScan(directories: [empty.path])
         try await Task.sleep(nanoseconds: 500_000_000)
 
-        XCTAssertEqual(sandbox.engine.getTrackCount(), 1)
+        XCTAssertEqual(sandbox.engine.libraryGetTrackCount(), 1)
     }
 
     /// Removing a library folder drops its tracks synchronously; the queue view
@@ -103,19 +103,19 @@ final class LibraryScanTests: XCTestCase {
         let sandbox = try Sandbox()
         defer { sandbox.cleanUp() }
 
-        sandbox.engine.scanDirectories(directories: [sandbox.music.path])
+        sandbox.engine.libraryScan(directories: [sandbox.music.path])
         try await waitForTracks(sandbox.engine, expected: 1)
 
-        sandbox.engine.queueAlbum(index: 0)
-        let queue = sandbox.engine.getQueueView()
+        sandbox.engine.albumQueue(index: 0)
+        let queue = sandbox.engine.queueGet()
         XCTAssertEqual(queue.count, 1)
         XCTAssertEqual(queue.first?.index, 0, "row index is the queue position")
 
         sandbox.engine.queueClear()
-        XCTAssertTrue(sandbox.engine.getQueueView().isEmpty)
+        XCTAssertTrue(sandbox.engine.queueGet().isEmpty)
 
-        sandbox.engine.removeFolder(directory: sandbox.music.path)
-        XCTAssertEqual(sandbox.engine.getTrackCount(), 0)
+        sandbox.engine.libraryRemoveFolder(directory: sandbox.music.path)
+        XCTAssertEqual(sandbox.engine.libraryGetTrackCount(), 0)
     }
 
     /// The scan runs on a background runtime, so results are not available on return.
@@ -126,10 +126,10 @@ final class LibraryScanTests: XCTestCase {
     ) async throws {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
-            if engine.getTrackCount() == expected { return }
+            if engine.libraryGetTrackCount() == expected { return }
             try await Task.sleep(nanoseconds: 50_000_000)
         }
-        XCTFail("timed out waiting for \(expected) track(s), got \(engine.getTrackCount())")
+        XCTFail("timed out waiting for \(expected) track(s), got \(engine.libraryGetTrackCount())")
         throw XCTSkip("scan timed out")
     }
 }

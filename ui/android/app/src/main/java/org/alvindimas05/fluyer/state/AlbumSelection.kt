@@ -85,14 +85,14 @@ class AlbumSelection(private val library: LibraryState) {
         for (t in library.tracks) byPath.putIfAbsent(t.path, t.index)
         val indices = queue.mapNotNull { byPath[it.path] }
         val start = startingAt?.let { byPath[it] }?.let { indices.indexOf(it) }?.takeIf { it >= 0 } ?: 0
-        engine?.playLibraryTracks(indices, start.toULong())
+        engine?.libraryPlayTracks(indices, start.toULong())
     }
 
     /** Open an album's tracks; from the album grid this returns to the track view. */
     fun select(index: Int) {
         this.index = index
         mode = LibraryMode.TRACKS
-        detail = engine?.getAlbumDetail(index.toULong())
+        detail = engine?.albumGetDetail(index.toULong())
     }
 
     fun clear() {
@@ -102,7 +102,7 @@ class AlbumSelection(private val library: LibraryState) {
 
     /** Re-read the selected album after a library rescan. */
     fun reload() {
-        detail = index?.let { engine?.getAlbumDetail(it.toULong()) }
+        detail = index?.let { engine?.albumGetDetail(it.toULong()) }
     }
 
     // Playback
@@ -115,9 +115,9 @@ class AlbumSelection(private val library: LibraryState) {
 
     fun queueSelected() { index?.let(::queueAlbum) }
     fun shuffleSelected() { index?.let(::shuffleAlbum) }
-    fun playAlbum(index: Int) { engine?.playAlbum(index.toULong()) }
-    fun queueAlbum(index: Int) { engine?.queueAlbum(index.toULong()) }
-    fun shuffleAlbum(index: Int) { engine?.shuffleAlbum(index.toULong()) }
+    fun playAlbum(index: Int) { engine?.albumPlay(index.toULong()) }
+    fun queueAlbum(index: Int) { engine?.albumQueue(index.toULong()) }
+    fun shuffleAlbum(index: Int) { engine?.albumShuffle(index.toULong()) }
 
     companion object {
         // `index` breaks ties so equal keys keep library order.

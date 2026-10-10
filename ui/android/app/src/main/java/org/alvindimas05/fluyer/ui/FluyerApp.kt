@@ -103,11 +103,11 @@ private suspend fun backdropBitmap(state: AppState, engine: uniffi.fluyer_core.F
         var bmp: Bitmap? = null
         if (source == BackdropSource.ARTWORK && hasTrack) {
             // ponytail: 1200px is ample for a full-screen blurred backdrop.
-            bmp = engine.loadCurrentThumbnail(1200u)?.let { state.thumbnails.decode(it) }
+            bmp = engine.artworkLoadCurrentThumbnail(1200u)?.let { state.thumbnails.decode(it) }
         }
         // Blocks mode, no track, or coverless track: Rust gives palette/grey blocks.
         if (bmp == null) {
-            val f = engine.loadBlockArtwork()
+            val f = engine.backdropLoadBlockArtwork()
             val w = f.width.toInt()
             val h = f.height.toInt()
             if (w > 0 && h > 0 && f.rgba.size == w * h * 4) bmp = state.thumbnails.rgbaToBitmap(f.rgba, w, h)
@@ -167,7 +167,7 @@ fun Cover(
 @Composable
 fun CurrentCover(state: AppState, px: Int, modifier: Modifier = Modifier) {
     val path = state.playback.playView.track?.path ?: "idx${state.playback.bar.trackIndex}"
-    Cover(state, org.alvindimas05.fluyer.state.ThumbnailKey.current(px, path), px, modifier) { state.engine?.loadCurrentThumbnail(it) }
+    Cover(state, org.alvindimas05.fluyer.state.ThumbnailKey.current(px, path), px, modifier) { state.engine?.artworkLoadCurrentThumbnail(it) }
 }
 
 @Composable

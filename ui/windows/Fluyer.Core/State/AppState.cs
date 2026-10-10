@@ -188,7 +188,7 @@ public sealed class AppState : Support.ObservableObject, IFluyerEventSink
     public void OnToast(string message)
     {
         Toast.Show(message);
-        // Mirror of the core's own fan-out (uniffi_api.rs emits LibraryUpdated
+        // Mirror of the core's own fan-out (uniffi_api/events.rs emits LibraryUpdated
         // after this toast): the C ABI has no library-updated callback, so the
         // shell performs the same string check.
         if (message == FluyerEngine.ScanCompletedToast)

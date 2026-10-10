@@ -35,7 +35,7 @@ fun QueueSheet(state: AppState) {
         LazyColumn(Modifier.navigationBarsPadding()) {
             itemsIndexed(q.tracks, key = { i, t -> "$i-${t.path}" }) { i, t ->
                 Row(Modifier.fillMaxWidth().clickable { q.goto(i) }.padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Cover(state, ThumbnailKey.track(t.index, 88), 88, Modifier.size(40.dp)) { state.engine?.loadTrackThumbnail(t.index, it) }
+                    Cover(state, ThumbnailKey.track(t.index, 88), 88, Modifier.size(40.dp)) { state.engine?.artworkLoadTrackThumbnail(t.index, it) }
                     Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                         Text(t.title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = if (t.isCurrent) FontWeight.Bold else null)
                         Text(t.artist, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 12.sp, color = Color.White.copy(alpha = 0.6f))

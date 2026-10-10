@@ -170,7 +170,7 @@ class PlaybackService : Service() {
     private fun loadCover(key: String) {
         coverJob?.cancel()
         coverJob = state.scope.launch {
-            val data = withContext(Dispatchers.Default) { state.engine?.loadCurrentThumbnail(400u) } ?: return@launch
+            val data = withContext(Dispatchers.Default) { state.engine?.artworkLoadCurrentThumbnail(400u) } ?: return@launch
             val bmp = withContext(Dispatchers.Default) { BitmapFactory.decodeByteArray(data, 0, data.size) } ?: return@launch
             if (key == trackKey) {
                 cover = bmp

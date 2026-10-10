@@ -213,7 +213,7 @@ struct AlbumCard: View {
             }
             guard let engine = state.engine else { return }
             let maxSize = UInt32(pixelSize)
-            let data = await engine.loadAlbumThumbnail(index: album.index, maxSize: maxSize)
+            let data = await engine.artworkLoadAlbumThumbnail(index: album.index, maxSize: maxSize)
             guard let data, !data.isEmpty else { return }
             let image = await ThumbnailStore.shared.image(key: cacheKey) { data }
             withAnimation(.easeIn(duration: 0.3)) { thumbnail = image }

@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 namespace Fluyer.Core.Native;
 
 /// <summary>
-/// Mirrors <c>FluyerRepeatMode</c> in <c>crates/fluyer_core/src/ffi.rs</c>.
+/// Mirrors <c>FluyerRepeatMode</c> in <c>crates/fluyer_core/src/c_api/</c>.
 /// Byte-backed to match Rust's <c>#[repr(u8)]</c>.
 /// </summary>
 internal enum FluyerRepeatMode : byte
@@ -14,7 +14,7 @@ internal enum FluyerRepeatMode : byte
 }
 
 /// <summary>
-/// Mirrors <c>FluyerPlayerState</c> in <c>ffi.rs</c>.
+/// Mirrors <c>FluyerPlayerState</c> in <c>c_api/events.rs</c>.
 /// Rust <c>bool</c> is one byte — <see cref="UnmanagedType.U1"/> is required;
 /// the default 4-byte marshaling would misalign every field after <c>Index</c>.
 /// </summary>
@@ -50,7 +50,7 @@ internal delegate void OnCoverLoaded(IntPtr userData, ulong index);
 internal delegate void OnLyricsLoaded(IntPtr userData, IntPtr lyrics);
 
 /// <summary>
-/// Mirrors <c>FluyerCallbacks</c> in <c>ffi.rs</c>. Function pointers are held as
+/// Mirrors <c>FluyerCallbacks</c> in <c>c_api/events.rs</c>. Function pointers are held as
 /// <see cref="IntPtr"/> (via <c>Marshal.GetFunctionPointerForDelegate</c>) so the
 /// managed delegates can be kept alive in fields on <see cref="FluyerEngine"/>
 /// for the engine's whole lifetime.
@@ -70,7 +70,7 @@ internal struct FluyerCallbacks
 
 /// <summary>
 /// Raw P/Invoke surface over <c>fluyer_core.dll</c> (C ABI in
-/// <c>crates/fluyer_core/src/ffi.rs</c>). All string returns are Rust-owned
+/// <c>crates/fluyer_core/src/c_api/</c>). All string returns are Rust-owned
 /// <c>CString</c> pointers freed with <c>fluyer_string_free</c>; all byte
 /// returns are Rust-owned buffers freed with <c>fluyer_bytes_free</c>.
 /// </summary>
@@ -87,11 +87,7 @@ internal static class FluyerNative
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     public static extern void fluyer_free(IntPtr engine);
 
-    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void fluyer_player_play(IntPtr engine);
 
-    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void fluyer_player_pause(IntPtr engine);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     public static extern void fluyer_player_toggle_play(IntPtr engine);
@@ -108,11 +104,7 @@ internal static class FluyerNative
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     public static extern void fluyer_player_set_volume(IntPtr engine, float volume);
 
-    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern float fluyer_player_get_volume(IntPtr engine);
 
-    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void fluyer_player_set_repeat(IntPtr engine, FluyerRepeatMode mode);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     public static extern void fluyer_player_cycle_repeat(IntPtr engine);
@@ -124,10 +116,8 @@ internal static class FluyerNative
     public static extern ulong fluyer_player_get_position(IntPtr engine);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int fluyer_player_get_active_lyric_index(IntPtr engine, ulong positionMs);
+    public static extern int fluyer_lyrics_get_active_index(IntPtr engine, ulong positionMs);
 
-    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void fluyer_player_request_sync(IntPtr engine);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     public static extern void fluyer_library_scan(IntPtr engine, IntPtr paths, ulong count);
@@ -140,46 +130,44 @@ internal static class FluyerNative
     public static extern void fluyer_discord_set_enabled([MarshalAs(UnmanagedType.U1)] bool enabled);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern ulong fluyer_library_get_count(IntPtr engine);
+    public static extern ulong fluyer_library_get_track_count(IntPtr engine);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern ulong fluyer_library_get_album_count(IntPtr engine);
+    public static extern ulong fluyer_album_get_count(IntPtr engine);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr fluyer_library_get_track_view_json(IntPtr engine, ulong index);
+    public static extern IntPtr fluyer_library_get_track(IntPtr engine, ulong index);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr fluyer_library_get_album_view_json(IntPtr engine, ulong index);
+    public static extern IntPtr fluyer_album_get_card(IntPtr engine, ulong index);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr fluyer_library_get_album_detail_json(IntPtr engine, ulong index);
+    public static extern IntPtr fluyer_album_get_detail(IntPtr engine, ulong index);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr fluyer_player_get_bar_view_json(IntPtr engine);
+    public static extern IntPtr fluyer_player_get_bar(IntPtr engine);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr fluyer_player_get_play_view_json(IntPtr engine);
+    public static extern IntPtr fluyer_player_get_play_view(IntPtr engine);
+
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void fluyer_library_play_index(IntPtr engine, ulong index);
+    public static extern void fluyer_library_play_all(IntPtr engine, ulong index);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void fluyer_library_play_all_from_index(IntPtr engine, ulong index);
+    public static extern void fluyer_album_play(IntPtr engine, ulong index);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void fluyer_library_play_album(IntPtr engine, ulong index);
+    public static extern void fluyer_album_play_track(IntPtr engine, ulong albumIndex, ulong trackIndex);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void fluyer_library_play_album_track(IntPtr engine, ulong albumIndex, ulong trackIndex);
+    public static extern void fluyer_album_queue(IntPtr engine, ulong index);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void fluyer_library_queue_album(IntPtr engine, ulong index);
+    public static extern void fluyer_album_shuffle(IntPtr engine, ulong index);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void fluyer_library_shuffle_album(IntPtr engine, ulong index);
-
-    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr fluyer_queue_get_json(IntPtr engine);
+    public static extern IntPtr fluyer_queue_get(IntPtr engine);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     public static extern void fluyer_queue_goto(IntPtr engine, ulong index);
@@ -194,24 +182,18 @@ internal static class FluyerNative
     public static extern void fluyer_queue_clear(IntPtr engine);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr fluyer_library_get_track_thumbnail(
+    public static extern IntPtr fluyer_artwork_get_track_thumbnail(
         IntPtr engine, ulong index, uint maxSize, out ulong outLen);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr fluyer_library_get_album_thumbnail(
+    public static extern IntPtr fluyer_artwork_get_album_thumbnail(
         IntPtr engine, ulong index, uint maxSize, out ulong outLen);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr fluyer_player_get_current_thumbnail(
+    public static extern IntPtr fluyer_artwork_get_current_thumbnail(
         IntPtr engine, uint maxSize, out ulong outLen);
 
-    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr fluyer_player_generate_background(
-        IntPtr engine, uint width, uint height,
-        out uint outW, out uint outH, out ulong outLen);
 
-    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr fluyer_format_time(ulong ms);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     public static extern void fluyer_bytes_free(IntPtr ptr, ulong len);

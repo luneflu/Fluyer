@@ -193,7 +193,7 @@ private struct QueueRow: View {
             return
         }
         cover = await ThumbnailStore.shared.image(key: key) {
-            await engine.loadTrackThumbnail(index: index, maxSize: UInt32(Self.pixels))
+            await engine.artworkLoadTrackThumbnail(index: index, maxSize: UInt32(Self.pixels))
         }
     }
 }

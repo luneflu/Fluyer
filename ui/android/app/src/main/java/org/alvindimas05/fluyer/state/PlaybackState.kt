@@ -54,11 +54,11 @@ class PlaybackState(scope: CoroutineScope) {
     }
 
     fun reloadBar() {
-        engine?.let { applyBar(it.getPlayerBarView()) }
+        engine?.let { applyBar(it.playerGetBar()) }
     }
 
     fun reloadPlayView() {
-        engine?.let { playView = it.getPlayView() }
+        engine?.let { playView = it.playerGetPlayView() }
     }
 
     fun applyPlayView(vm: PlayViewModel) { playView = vm }
@@ -73,7 +73,7 @@ class PlaybackState(scope: CoroutineScope) {
     // Transport
 
     fun togglePlay() {
-        engine?.togglePlay()
+        engine?.playerTogglePlay()
         // Optimistic: the core confirms with its own PlayerBarUpdated.
         bar = bar.copy(isPlaying = !bar.isPlaying)
         syncClockToTransport()
@@ -82,14 +82,14 @@ class PlaybackState(scope: CoroutineScope) {
     /** Idempotent play/pause for system media controls, which name the target state. */
     fun play() { if (!bar.isPlaying) togglePlay() }
     fun pause() { if (bar.isPlaying) togglePlay() }
-    fun next() { engine?.next() }
-    fun previous() { engine?.previous() }
-    fun cycleRepeat() { engine?.cycleRepeat() }
-    fun shuffle() { engine?.shuffle() }
+    fun next() { engine?.playerNext() }
+    fun previous() { engine?.playerPrevious() }
+    fun cycleRepeat() { engine?.playerCycleRepeat() }
+    fun shuffle() { engine?.playerShuffle() }
 
     fun seek(toMs: ULong) {
         val e = engine ?: return
-        e.seek(toMs)
+        e.playerSeek(toMs)
         clock.applyLocalPosition(toMs)
         seekEpoch++
         syncLyricCursor()
@@ -104,7 +104,7 @@ class PlaybackState(scope: CoroutineScope) {
         val v = volume.clamped(0f, 1f)
         if (v > AUDIBLE) lastAudibleVolume = v
         bar = bar.copy(volume = v)
-        engine?.setVolume(v)
+        engine?.playerSetVolume(v)
     }
 
     fun toggleMute() {
@@ -118,7 +118,7 @@ class PlaybackState(scope: CoroutineScope) {
     private fun syncLyricCursor() {
         val e = engine ?: return
         if (!showPlayView) return
-        clock.currentLyricIndex = e.getActiveLyricIndex(clock.positionMs)
+        clock.currentLyricIndex = e.lyricsGetActiveIndex(clock.positionMs)
     }
 
     private companion object {

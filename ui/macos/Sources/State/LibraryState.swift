@@ -21,17 +21,17 @@ final class LibraryState {
     /// `compactMap` sizes its result from the source.
     func reload() {
         guard let engine else { return }
-        scanStatus = engine.getScanStatus()
-        tracks = (0..<Int(engine.getTrackCount())).compactMap { engine.getTrackView(index: UInt64($0)) }
-        albums = (0..<Int(engine.getAlbumCount())).compactMap { engine.getAlbumCard(index: UInt64($0)) }
+        scanStatus = engine.libraryGetScanStatus()
+        tracks = (0..<Int(engine.libraryGetTrackCount())).compactMap { engine.libraryGetTrack(index: UInt64($0)) }
+        albums = (0..<Int(engine.albumGetCount())).compactMap { engine.albumGetCard(index: UInt64($0)) }
     }
 
     /// Refresh only the "now playing" marker, so a track change does not rebuild
     /// every row in the grid.
     func reloadActiveFlags() {
-        guard let engine, tracks.count == Int(engine.getTrackCount()) else { return }
+        guard let engine, tracks.count == Int(engine.libraryGetTrackCount()) else { return }
         for row in tracks.indices {
-            if let updated = engine.getTrackView(index: UInt64(row)) {
+            if let updated = engine.libraryGetTrack(index: UInt64(row)) {
                 tracks[row].isCurrent = updated.isCurrent
             }
         }

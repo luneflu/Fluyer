@@ -812,50 +812,6 @@ internal open class UniffiVTableCallbackInterfaceFluyerEventListener(
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -882,120 +838,76 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_fluyer_core_fn_constructor_fluyerappengine_new(`dataDir`: RustBuffer.ByValue,`cacheDir`: RustBuffer.ByValue,`listener`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Pointer
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_cycle_repeat(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_generate_background_for_current(`ptr`: Pointer,`width`: Int,`height`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_album_get_card(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_active_lyric_index(`ptr`: Pointer,`positionMs`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_album_get_count(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Long
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_album_get_detail(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_album_play(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_album_queue(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_album_shuffle(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_artwork_load_album_thumbnail(`ptr`: Pointer,`index`: Long,`maxSize`: Int,
+    ): Long
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_artwork_load_current_thumbnail(`ptr`: Pointer,`maxSize`: Int,
+    ): Long
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_artwork_load_track_thumbnail(`ptr`: Pointer,`index`: Long,`maxSize`: Int,
+    ): Long
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_backdrop_load_block_artwork(`ptr`: Pointer,
+    ): Long
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_discord_set_enabled(`ptr`: Pointer,`enabled`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_library_get_scan_status(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_library_get_track(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_library_get_track_count(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Long
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_library_play_all(`ptr`: Pointer,`startIndex`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_library_play_tracks(`ptr`: Pointer,`indices`: RustBuffer.ByValue,`startIndex`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_library_remove_folder(`ptr`: Pointer,`directory`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_library_scan(`ptr`: Pointer,`directories`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_lyrics_get_active_index(`ptr`: Pointer,`positionMs`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_album_card(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_player_cycle_repeat(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_player_get_bar(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_album_count(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_player_get_play_view(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_player_get_position(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Long
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_album_detail(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_album_image(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_album_thumbnail(`ptr`: Pointer,`index`: Long,`maxSize`: Int,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_album_thumbnail_rgba(`ptr`: Pointer,`index`: Long,`width`: Int,`height`: Int,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_album_tracks(`ptr`: Pointer,`albumIndex`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_album_view(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_current_image(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_current_thumbnail(`ptr`: Pointer,`maxSize`: Int,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_lyrics(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_play_view(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_player_bar_view(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_position(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): Long
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_queue_view(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_scan_status(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_track_count(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): Long
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_track_image(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_track_thumbnail(`ptr`: Pointer,`index`: Long,`maxSize`: Int,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_track_thumbnail_rgba(`ptr`: Pointer,`index`: Long,`width`: Int,`height`: Int,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_track_view(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_get_volume(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): Float
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_load_album_thumbnail(`ptr`: Pointer,`index`: Long,`maxSize`: Int,
-    ): Long
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_load_animated_background(`ptr`: Pointer,`width`: Int,`height`: Int,
-    ): Long
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_load_block_artwork(`ptr`: Pointer,
-    ): Long
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_load_current_thumbnail(`ptr`: Pointer,`maxSize`: Int,
-    ): Long
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_load_track_thumbnail(`ptr`: Pointer,`index`: Long,`maxSize`: Int,
-    ): Long
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_next(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_player_next(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_pause(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_player_previous(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_play(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_player_seek(`ptr`: Pointer,`positionMs`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_play_album(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_player_set_volume(`ptr`: Pointer,`volume`: Float,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_play_album_track(`ptr`: Pointer,`albumIndex`: Long,`trackIndex`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_player_shuffle(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_play_all_from_library(`ptr`: Pointer,`startIndex`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_play_library_tracks(`ptr`: Pointer,`indices`: RustBuffer.ByValue,`startIndex`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_play_single_from_library(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_previous(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_queue_album(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_player_toggle_play(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_fluyer_core_fn_method_fluyerappengine_queue_clear(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_queue_get(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_fluyer_core_fn_method_fluyerappengine_queue_goto(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_fluyer_core_fn_method_fluyerappengine_queue_move(`ptr`: Pointer,`from`: Long,`to`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_fluyer_core_fn_method_fluyerappengine_queue_remove(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_remove_folder(`ptr`: Pointer,`directory`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_request_sync(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_scan_directories(`ptr`: Pointer,`directories`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_seek(`ptr`: Pointer,`positionMs`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_set_discord_enabled(`ptr`: Pointer,`enabled`: Byte,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_set_repeat_mode(`ptr`: Pointer,`mode`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_set_volume(`ptr`: Pointer,`volume`: Float,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_shuffle(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_shuffle_album(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_fluyer_core_fn_method_fluyerappengine_toggle_play(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
     fun uniffi_fluyer_core_fn_init_callback_vtable_fluyereventlistener(`vtable`: UniffiVTableCallbackInterfaceFluyerEventListener,
     ): Unit
-    fun uniffi_fluyer_core_fn_func_format_time_label(`ms`: Long,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_fluyer_core_fn_func_parse_lrc_lyrics(`lrcText`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
     fun ffi_fluyer_core_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun ffi_fluyer_core_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1108,117 +1020,73 @@ internal interface UniffiLib : Library {
     ): Unit
     fun ffi_fluyer_core_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_fluyer_core_checksum_func_format_time_label(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_album_get_card(
     ): Short
-    fun uniffi_fluyer_core_checksum_func_parse_lrc_lyrics(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_album_get_count(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_cycle_repeat(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_album_get_detail(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_generate_background_for_current(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_album_play(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_active_lyric_index(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_album_queue(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_card(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_album_shuffle(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_count(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_artwork_load_album_thumbnail(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_detail(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_artwork_load_current_thumbnail(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_image(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_artwork_load_track_thumbnail(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_thumbnail(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_backdrop_load_block_artwork(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_thumbnail_rgba(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_discord_set_enabled(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_tracks(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_library_get_scan_status(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_view(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_library_get_track(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_current_image(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_library_get_track_count(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_current_thumbnail(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_library_play_all(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_lyrics(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_library_play_tracks(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_play_view(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_library_remove_folder(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_player_bar_view(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_library_scan(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_position(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_lyrics_get_active_index(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_queue_view(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_player_cycle_repeat(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_scan_status(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_player_get_bar(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_count(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_player_get_play_view(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_image(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_player_get_position(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_thumbnail(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_player_next(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_thumbnail_rgba(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_player_previous(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_view(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_player_seek(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_get_volume(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_player_set_volume(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_load_album_thumbnail(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_player_shuffle(
     ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_load_animated_background(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_load_block_artwork(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_load_current_thumbnail(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_load_track_thumbnail(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_next(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_pause(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_play(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_play_album(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_play_album_track(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_play_all_from_library(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_play_library_tracks(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_play_single_from_library(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_previous(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_queue_album(
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_player_toggle_play(
     ): Short
     fun uniffi_fluyer_core_checksum_method_fluyerappengine_queue_clear(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_queue_get(
     ): Short
     fun uniffi_fluyer_core_checksum_method_fluyerappengine_queue_goto(
     ): Short
     fun uniffi_fluyer_core_checksum_method_fluyerappengine_queue_move(
     ): Short
     fun uniffi_fluyer_core_checksum_method_fluyerappengine_queue_remove(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_remove_folder(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_request_sync(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_scan_directories(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_seek(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_set_discord_enabled(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_set_repeat_mode(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_set_volume(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_shuffle(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_shuffle_album(
-    ): Short
-    fun uniffi_fluyer_core_checksum_method_fluyerappengine_toggle_play(
     ): Short
     fun uniffi_fluyer_core_checksum_constructor_fluyerappengine_new(
     ): Short
@@ -1241,133 +1109,97 @@ private fun uniffiCheckContractApiVersion(lib: UniffiLib) {
 
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: UniffiLib) {
-    if (lib.uniffi_fluyer_core_checksum_func_format_time_label() != 52881.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_album_get_card() != 33982.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_func_parse_lrc_lyrics() != 60133.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_album_get_count() != 58725.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_cycle_repeat() != 39027.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_album_get_detail() != 16302.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_generate_background_for_current() != 47697.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_album_play() != 49802.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_active_lyric_index() != 35442.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_album_queue() != 9010.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_card() != 10560.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_album_shuffle() != 47556.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_count() != 36969.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_artwork_load_album_thumbnail() != 48152.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_detail() != 49270.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_artwork_load_current_thumbnail() != 7013.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_image() != 8223.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_artwork_load_track_thumbnail() != 53146.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_thumbnail() != 15426.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_backdrop_load_block_artwork() != 53796.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_thumbnail_rgba() != 35604.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_discord_set_enabled() != 34134.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_tracks() != 23190.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_library_get_scan_status() != 53341.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_view() != 60993.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_library_get_track() != 1514.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_current_image() != 14012.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_library_get_track_count() != 18594.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_current_thumbnail() != 29066.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_library_play_all() != 38260.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_lyrics() != 3464.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_library_play_tracks() != 20510.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_play_view() != 52488.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_library_remove_folder() != 5336.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_player_bar_view() != 64426.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_library_scan() != 10675.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_position() != 45143.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_lyrics_get_active_index() != 17835.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_queue_view() != 61295.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_player_cycle_repeat() != 13298.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_scan_status() != 20235.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_player_get_bar() != 65247.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_count() != 42709.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_player_get_play_view() != 37332.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_image() != 12325.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_player_get_position() != 56606.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_thumbnail() != 41648.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_player_next() != 41382.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_thumbnail_rgba() != 54932.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_player_previous() != 3484.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_view() != 48451.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_player_seek() != 16178.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_get_volume() != 58439.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_player_set_volume() != 41023.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_load_album_thumbnail() != 48618.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_player_shuffle() != 48102.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_load_animated_background() != 14573.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_load_block_artwork() != 18301.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_load_current_thumbnail() != 58446.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_load_track_thumbnail() != 9651.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_next() != 33101.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_pause() != 65069.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_play() != 64620.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_play_album() != 19961.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_play_album_track() != 10505.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_play_all_from_library() != 64362.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_play_library_tracks() != 19197.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_play_single_from_library() != 55280.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_previous() != 6186.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_queue_album() != 55067.toShort()) {
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_player_toggle_play() != 34310.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_queue_clear() != 53786.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_queue_get() != 29063.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_queue_goto() != 18631.toShort()) {
@@ -1377,36 +1209,6 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_queue_remove() != 11064.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_remove_folder() != 565.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_request_sync() != 59451.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_scan_directories() != 24830.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_seek() != 54539.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_set_discord_enabled() != 46701.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_set_repeat_mode() != 52718.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_set_volume() != 38895.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_shuffle() != 7595.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_shuffle_album() != 38700.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_toggle_play() != 3078.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_fluyer_core_checksum_constructor_fluyerappengine_new() != 38275.toShort()) {
@@ -1903,128 +1705,98 @@ private class JavaLangRefCleanable(
 }
 public interface FluyerAppEngineInterface {
     
-    fun `cycleRepeat`()
+    fun `albumGetCard`(`index`: kotlin.ULong): AlbumCardViewModel?
     
-    fun `generateBackgroundForCurrent`(`width`: kotlin.UInt, `height`: kotlin.UInt): kotlin.ByteArray?
+    fun `albumGetCount`(): kotlin.ULong
     
-    fun `getActiveLyricIndex`(`positionMs`: kotlin.ULong): kotlin.Int
+    fun `albumGetDetail`(`index`: kotlin.ULong): AlbumDetailViewModel?
     
-    fun `getAlbumCard`(`index`: kotlin.ULong): AlbumCardViewModel?
+    fun `albumPlay`(`index`: kotlin.ULong)
     
-    fun `getAlbumCount`(): kotlin.ULong
+    fun `albumQueue`(`index`: kotlin.ULong)
     
-    fun `getAlbumDetail`(`index`: kotlin.ULong): AlbumDetailViewModel?
+    fun `albumShuffle`(`index`: kotlin.ULong)
     
-    fun `getAlbumImage`(`index`: kotlin.ULong): kotlin.ByteArray?
+    suspend fun `artworkLoadAlbumThumbnail`(`index`: kotlin.ULong, `maxSize`: kotlin.UInt): kotlin.ByteArray?
     
-    fun `getAlbumThumbnail`(`index`: kotlin.ULong, `maxSize`: kotlin.UInt): kotlin.ByteArray?
+    suspend fun `artworkLoadCurrentThumbnail`(`maxSize`: kotlin.UInt): kotlin.ByteArray?
     
-    fun `getAlbumThumbnailRgba`(`index`: kotlin.ULong, `width`: kotlin.UInt, `height`: kotlin.UInt): kotlin.ByteArray?
-    
-    fun `getAlbumTracks`(`albumIndex`: kotlin.ULong): List<TrackItemViewModel>
-    
-    fun `getAlbumView`(`index`: kotlin.ULong): AlbumCardViewModel?
-    
-    fun `getCurrentImage`(): kotlin.ByteArray?
-    
-    fun `getCurrentThumbnail`(`maxSize`: kotlin.UInt): kotlin.ByteArray?
-    
-    fun `getLyrics`(): List<LyricLine>
-    
-    fun `getPlayView`(): PlayViewModel
-    
-    fun `getPlayerBarView`(): PlayerBarViewModel
-    
-    fun `getPosition`(): kotlin.ULong
-    
-    /**
-     * Queue in play order; `index` on each row is the queue position.
-     */
-    fun `getQueueView`(): List<TrackItemViewModel>
-    
-    fun `getScanStatus`(): ScanStatusViewModel
-    
-    fun `getTrackCount`(): kotlin.ULong
-    
-    fun `getTrackImage`(`index`: kotlin.ULong): kotlin.ByteArray?
-    
-    fun `getTrackThumbnail`(`index`: kotlin.ULong, `maxSize`: kotlin.UInt): kotlin.ByteArray?
-    
-    fun `getTrackThumbnailRgba`(`index`: kotlin.ULong, `width`: kotlin.UInt, `height`: kotlin.UInt): kotlin.ByteArray?
-    
-    fun `getTrackView`(`index`: kotlin.ULong): TrackItemViewModel?
-    
-    fun `getVolume`(): kotlin.Float
-    
-    suspend fun `loadAlbumThumbnail`(`index`: kotlin.ULong, `maxSize`: kotlin.UInt): kotlin.ByteArray?
-    
-    /**
-     * Async twin of `generate_background_for_current`. Blurring and the palette
-     * decode are blocking work, so the UI must not call the sync variant on the
-     * main thread.
-     */
-    suspend fun `loadAnimatedBackground`(`width`: kotlin.UInt, `height`: kotlin.UInt): AnimatedBackgroundFrame?
+    suspend fun `artworkLoadTrackThumbnail`(`index`: kotlin.ULong, `maxSize`: kotlin.UInt): kotlin.ByteArray?
     
     /**
      * Unblurred palette-block square that replaces the cover as backdrop input.
      * Random per call: the UI calls it once per track.
      */
-    suspend fun `loadBlockArtwork`(): AnimatedBackgroundFrame
+    suspend fun `backdropLoadBlockArtwork`(): AnimatedBackgroundFrame
     
-    suspend fun `loadCurrentThumbnail`(`maxSize`: kotlin.UInt): kotlin.ByteArray?
+    /**
+     * Process-global in the core (not per engine).
+     */
+    fun `discordSetEnabled`(`enabled`: kotlin.Boolean)
     
-    suspend fun `loadTrackThumbnail`(`index`: kotlin.ULong, `maxSize`: kotlin.UInt): kotlin.ByteArray?
+    fun `libraryGetScanStatus`(): ScanStatusViewModel
     
-    fun `next`()
+    fun `libraryGetTrack`(`index`: kotlin.ULong): TrackItemViewModel?
     
-    fun `pause`()
+    fun `libraryGetTrackCount`(): kotlin.ULong
     
-    fun `play`()
+    fun `libraryPlayAll`(`startIndex`: kotlin.ULong)
     
-    fun `playAlbum`(`index`: kotlin.ULong)
+    /**
+     * Plays library tracks in the caller's (sorted) order.
+     */
+    fun `libraryPlayTracks`(`indices`: List<kotlin.ULong>, `startIndex`: kotlin.ULong)
     
-    fun `playAlbumTrack`(`albumIndex`: kotlin.ULong, `trackIndex`: kotlin.ULong)
+    /**
+     * Drops every row under `directory` and rebuilds the library synchronously.
+     */
+    fun `libraryRemoveFolder`(`directory`: kotlin.String)
     
-    fun `playAllFromLibrary`(`startIndex`: kotlin.ULong)
+    fun `libraryScan`(`directories`: List<kotlin.String>)
     
-    fun `playLibraryTracks`(`indices`: List<kotlin.ULong>, `startIndex`: kotlin.ULong)
+    /**
+     * Index of the lyric line at `position_ms`, or -1. Runs on the UI's position tick.
+     */
+    fun `lyricsGetActiveIndex`(`positionMs`: kotlin.ULong): kotlin.Int
     
-    fun `playSingleFromLibrary`(`index`: kotlin.ULong)
+    fun `playerCycleRepeat`()
     
-    fun `previous`()
+    /**
+     * Bottom player bar: title, artist, progress, play state, volume.
+     */
+    fun `playerGetBar`(): PlayerBarViewModel
     
-    fun `queueAlbum`(`index`: kotlin.ULong)
+    /**
+     * Full-screen play view: current track, lyrics, palette.
+     */
+    fun `playerGetPlayView`(): PlayViewModel
+    
+    fun `playerGetPosition`(): kotlin.ULong
+    
+    fun `playerNext`()
+    
+    fun `playerPrevious`()
+    
+    fun `playerSeek`(`positionMs`: kotlin.ULong)
+    
+    fun `playerSetVolume`(`volume`: kotlin.Float)
+    
+    fun `playerShuffle`()
+    
+    fun `playerTogglePlay`()
     
     fun `queueClear`()
+    
+    /**
+     * Queue in play order; `index` on each row is the queue position.
+     */
+    fun `queueGet`(): List<TrackItemViewModel>
     
     fun `queueGoto`(`index`: kotlin.ULong)
     
     fun `queueMove`(`from`: kotlin.ULong, `to`: kotlin.ULong)
     
     fun `queueRemove`(`index`: kotlin.ULong)
-    
-    /**
-     * Drops every row under `directory` and rebuilds the library synchronously.
-     */
-    fun `removeFolder`(`directory`: kotlin.String)
-    
-    fun `requestSync`()
-    
-    fun `scanDirectories`(`directories`: List<kotlin.String>)
-    
-    fun `seek`(`positionMs`: kotlin.ULong)
-    
-    fun `setDiscordEnabled`(`enabled`: kotlin.Boolean)
-    
-    fun `setRepeatMode`(`mode`: NativeRepeatMode)
-    
-    fun `setVolume`(`volume`: kotlin.Float)
-    
-    fun `shuffle`()
-    
-    fun `shuffleAlbum`(`index`: kotlin.ULong)
-    
-    fun `togglePlay`()
     
     companion object
 }
@@ -2117,46 +1889,11 @@ open class FluyerAppEngine: Disposable, AutoCloseable, FluyerAppEngineInterface 
         }
     }
 
-    override fun `cycleRepeat`()
-        = 
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_cycle_repeat(
-        it, _status)
-}
-    }
-    
-    
-
-    override fun `generateBackgroundForCurrent`(`width`: kotlin.UInt, `height`: kotlin.UInt): kotlin.ByteArray? {
-            return FfiConverterOptionalByteArray.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_generate_background_for_current(
-        it, FfiConverterUInt.lower(`width`),FfiConverterUInt.lower(`height`),_status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getActiveLyricIndex`(`positionMs`: kotlin.ULong): kotlin.Int {
-            return FfiConverterInt.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_active_lyric_index(
-        it, FfiConverterULong.lower(`positionMs`),_status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getAlbumCard`(`index`: kotlin.ULong): AlbumCardViewModel? {
+    override fun `albumGetCard`(`index`: kotlin.ULong): AlbumCardViewModel? {
             return FfiConverterOptionalTypeAlbumCardViewModel.lift(
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_album_card(
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_album_get_card(
         it, FfiConverterULong.lower(`index`),_status)
 }
     }
@@ -2164,11 +1901,11 @@ open class FluyerAppEngine: Disposable, AutoCloseable, FluyerAppEngineInterface 
     }
     
 
-    override fun `getAlbumCount`(): kotlin.ULong {
+    override fun `albumGetCount`(): kotlin.ULong {
             return FfiConverterULong.lift(
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_album_count(
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_album_get_count(
         it, _status)
 }
     }
@@ -2176,11 +1913,11 @@ open class FluyerAppEngine: Disposable, AutoCloseable, FluyerAppEngineInterface 
     }
     
 
-    override fun `getAlbumDetail`(`index`: kotlin.ULong): AlbumDetailViewModel? {
+    override fun `albumGetDetail`(`index`: kotlin.ULong): AlbumDetailViewModel? {
             return FfiConverterOptionalTypeAlbumDetailViewModel.lift(
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_album_detail(
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_album_get_detail(
         it, FfiConverterULong.lower(`index`),_status)
 }
     }
@@ -2188,243 +1925,45 @@ open class FluyerAppEngine: Disposable, AutoCloseable, FluyerAppEngineInterface 
     }
     
 
-    override fun `getAlbumImage`(`index`: kotlin.ULong): kotlin.ByteArray? {
-            return FfiConverterOptionalByteArray.lift(
+    override fun `albumPlay`(`index`: kotlin.ULong)
+        = 
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_album_image(
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_album_play(
         it, FfiConverterULong.lower(`index`),_status)
 }
     }
-    )
-    }
+    
     
 
-    override fun `getAlbumThumbnail`(`index`: kotlin.ULong, `maxSize`: kotlin.UInt): kotlin.ByteArray? {
-            return FfiConverterOptionalByteArray.lift(
+    override fun `albumQueue`(`index`: kotlin.ULong)
+        = 
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_album_thumbnail(
-        it, FfiConverterULong.lower(`index`),FfiConverterUInt.lower(`maxSize`),_status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getAlbumThumbnailRgba`(`index`: kotlin.ULong, `width`: kotlin.UInt, `height`: kotlin.UInt): kotlin.ByteArray? {
-            return FfiConverterOptionalByteArray.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_album_thumbnail_rgba(
-        it, FfiConverterULong.lower(`index`),FfiConverterUInt.lower(`width`),FfiConverterUInt.lower(`height`),_status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getAlbumTracks`(`albumIndex`: kotlin.ULong): List<TrackItemViewModel> {
-            return FfiConverterSequenceTypeTrackItemViewModel.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_album_tracks(
-        it, FfiConverterULong.lower(`albumIndex`),_status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getAlbumView`(`index`: kotlin.ULong): AlbumCardViewModel? {
-            return FfiConverterOptionalTypeAlbumCardViewModel.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_album_view(
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_album_queue(
         it, FfiConverterULong.lower(`index`),_status)
 }
     }
-    )
-    }
+    
     
 
-    override fun `getCurrentImage`(): kotlin.ByteArray? {
-            return FfiConverterOptionalByteArray.lift(
+    override fun `albumShuffle`(`index`: kotlin.ULong)
+        = 
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_current_image(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getCurrentThumbnail`(`maxSize`: kotlin.UInt): kotlin.ByteArray? {
-            return FfiConverterOptionalByteArray.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_current_thumbnail(
-        it, FfiConverterUInt.lower(`maxSize`),_status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getLyrics`(): List<LyricLine> {
-            return FfiConverterSequenceTypeLyricLine.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_lyrics(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getPlayView`(): PlayViewModel {
-            return FfiConverterTypePlayViewModel.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_play_view(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getPlayerBarView`(): PlayerBarViewModel {
-            return FfiConverterTypePlayerBarViewModel.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_player_bar_view(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getPosition`(): kotlin.ULong {
-            return FfiConverterULong.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_position(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    
-    /**
-     * Queue in play order; `index` on each row is the queue position.
-     */override fun `getQueueView`(): List<TrackItemViewModel> {
-            return FfiConverterSequenceTypeTrackItemViewModel.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_queue_view(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getScanStatus`(): ScanStatusViewModel {
-            return FfiConverterTypeScanStatusViewModel.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_scan_status(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getTrackCount`(): kotlin.ULong {
-            return FfiConverterULong.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_track_count(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getTrackImage`(`index`: kotlin.ULong): kotlin.ByteArray? {
-            return FfiConverterOptionalByteArray.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_track_image(
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_album_shuffle(
         it, FfiConverterULong.lower(`index`),_status)
 }
     }
-    )
-    }
     
-
-    override fun `getTrackThumbnail`(`index`: kotlin.ULong, `maxSize`: kotlin.UInt): kotlin.ByteArray? {
-            return FfiConverterOptionalByteArray.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_track_thumbnail(
-        it, FfiConverterULong.lower(`index`),FfiConverterUInt.lower(`maxSize`),_status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getTrackThumbnailRgba`(`index`: kotlin.ULong, `width`: kotlin.UInt, `height`: kotlin.UInt): kotlin.ByteArray? {
-            return FfiConverterOptionalByteArray.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_track_thumbnail_rgba(
-        it, FfiConverterULong.lower(`index`),FfiConverterUInt.lower(`width`),FfiConverterUInt.lower(`height`),_status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getTrackView`(`index`: kotlin.ULong): TrackItemViewModel? {
-            return FfiConverterOptionalTypeTrackItemViewModel.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_track_view(
-        it, FfiConverterULong.lower(`index`),_status)
-}
-    }
-    )
-    }
-    
-
-    override fun `getVolume`(): kotlin.Float {
-            return FfiConverterFloat.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_get_volume(
-        it, _status)
-}
-    }
-    )
-    }
     
 
     
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `loadAlbumThumbnail`(`index`: kotlin.ULong, `maxSize`: kotlin.UInt) : kotlin.ByteArray? {
+    override suspend fun `artworkLoadAlbumThumbnail`(`index`: kotlin.ULong, `maxSize`: kotlin.UInt) : kotlin.ByteArray? {
         return uniffiRustCallAsync(
         callWithPointer { thisPtr ->
-            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_load_album_thumbnail(
+            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_artwork_load_album_thumbnail(
                 thisPtr,
                 FfiConverterULong.lower(`index`),FfiConverterUInt.lower(`maxSize`),
             )
@@ -2440,60 +1979,11 @@ open class FluyerAppEngine: Disposable, AutoCloseable, FluyerAppEngineInterface 
     }
 
     
-    /**
-     * Async twin of `generate_background_for_current`. Blurring and the palette
-     * decode are blocking work, so the UI must not call the sync variant on the
-     * main thread.
-     */
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `loadAnimatedBackground`(`width`: kotlin.UInt, `height`: kotlin.UInt) : AnimatedBackgroundFrame? {
+    override suspend fun `artworkLoadCurrentThumbnail`(`maxSize`: kotlin.UInt) : kotlin.ByteArray? {
         return uniffiRustCallAsync(
         callWithPointer { thisPtr ->
-            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_load_animated_background(
-                thisPtr,
-                FfiConverterUInt.lower(`width`),FfiConverterUInt.lower(`height`),
-            )
-        },
-        { future, callback, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterOptionalTypeAnimatedBackgroundFrame.lift(it) },
-        // Error FFI converter
-        UniffiNullRustCallStatusErrorHandler,
-    )
-    }
-
-    
-    /**
-     * Unblurred palette-block square that replaces the cover as backdrop input.
-     * Random per call: the UI calls it once per track.
-     */
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `loadBlockArtwork`() : AnimatedBackgroundFrame {
-        return uniffiRustCallAsync(
-        callWithPointer { thisPtr ->
-            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_load_block_artwork(
-                thisPtr,
-                
-            )
-        },
-        { future, callback, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_poll_rust_buffer(future, callback, continuation) },
-        { future, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_complete_rust_buffer(future, continuation) },
-        { future -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_free_rust_buffer(future) },
-        // lift function
-        { FfiConverterTypeAnimatedBackgroundFrame.lift(it) },
-        // Error FFI converter
-        UniffiNullRustCallStatusErrorHandler,
-    )
-    }
-
-    
-    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `loadCurrentThumbnail`(`maxSize`: kotlin.UInt) : kotlin.ByteArray? {
-        return uniffiRustCallAsync(
-        callWithPointer { thisPtr ->
-            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_load_current_thumbnail(
+            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_artwork_load_current_thumbnail(
                 thisPtr,
                 FfiConverterUInt.lower(`maxSize`),
             )
@@ -2510,10 +2000,10 @@ open class FluyerAppEngine: Disposable, AutoCloseable, FluyerAppEngineInterface 
 
     
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    override suspend fun `loadTrackThumbnail`(`index`: kotlin.ULong, `maxSize`: kotlin.UInt) : kotlin.ByteArray? {
+    override suspend fun `artworkLoadTrackThumbnail`(`index`: kotlin.ULong, `maxSize`: kotlin.UInt) : kotlin.ByteArray? {
         return uniffiRustCallAsync(
         callWithPointer { thisPtr ->
-            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_load_track_thumbnail(
+            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_artwork_load_track_thumbnail(
                 thisPtr,
                 FfiConverterULong.lower(`index`),FfiConverterUInt.lower(`maxSize`),
             )
@@ -2528,111 +2018,259 @@ open class FluyerAppEngine: Disposable, AutoCloseable, FluyerAppEngineInterface 
     )
     }
 
-    override fun `next`()
+    
+    /**
+     * Unblurred palette-block square that replaces the cover as backdrop input.
+     * Random per call: the UI calls it once per track.
+     */
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `backdropLoadBlockArtwork`() : AnimatedBackgroundFrame {
+        return uniffiRustCallAsync(
+        callWithPointer { thisPtr ->
+            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_backdrop_load_block_artwork(
+                thisPtr,
+                
+            )
+        },
+        { future, callback, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterTypeAnimatedBackgroundFrame.lift(it) },
+        // Error FFI converter
+        UniffiNullRustCallStatusErrorHandler,
+    )
+    }
+
+    
+    /**
+     * Process-global in the core (not per engine).
+     */override fun `discordSetEnabled`(`enabled`: kotlin.Boolean)
         = 
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_next(
-        it, _status)
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_discord_set_enabled(
+        it, FfiConverterBoolean.lower(`enabled`),_status)
 }
     }
     
     
 
-    override fun `pause`()
-        = 
+    override fun `libraryGetScanStatus`(): ScanStatusViewModel {
+            return FfiConverterTypeScanStatusViewModel.lift(
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_pause(
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_library_get_scan_status(
         it, _status)
 }
     }
-    
-    
-
-    override fun `play`()
-        = 
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_play(
-        it, _status)
-}
+    )
     }
     
-    
 
-    override fun `playAlbum`(`index`: kotlin.ULong)
-        = 
+    override fun `libraryGetTrack`(`index`: kotlin.ULong): TrackItemViewModel? {
+            return FfiConverterOptionalTypeTrackItemViewModel.lift(
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_play_album(
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_library_get_track(
         it, FfiConverterULong.lower(`index`),_status)
 }
     }
-    
-    
-
-    override fun `playAlbumTrack`(`albumIndex`: kotlin.ULong, `trackIndex`: kotlin.ULong)
-        = 
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_play_album_track(
-        it, FfiConverterULong.lower(`albumIndex`),FfiConverterULong.lower(`trackIndex`),_status)
-}
+    )
     }
     
+
+    override fun `libraryGetTrackCount`(): kotlin.ULong {
+            return FfiConverterULong.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_library_get_track_count(
+        it, _status)
+}
+    }
+    )
+    }
     
 
-    override fun `playAllFromLibrary`(`startIndex`: kotlin.ULong)
+    override fun `libraryPlayAll`(`startIndex`: kotlin.ULong)
         = 
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_play_all_from_library(
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_library_play_all(
         it, FfiConverterULong.lower(`startIndex`),_status)
 }
     }
     
     
 
-    override fun `playLibraryTracks`(`indices`: List<kotlin.ULong>, `startIndex`: kotlin.ULong)
+    
+    /**
+     * Plays library tracks in the caller's (sorted) order.
+     */override fun `libraryPlayTracks`(`indices`: List<kotlin.ULong>, `startIndex`: kotlin.ULong)
         = 
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_play_library_tracks(
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_library_play_tracks(
         it, FfiConverterSequenceULong.lower(`indices`),FfiConverterULong.lower(`startIndex`),_status)
 }
     }
     
     
 
-    override fun `playSingleFromLibrary`(`index`: kotlin.ULong)
+    
+    /**
+     * Drops every row under `directory` and rebuilds the library synchronously.
+     */override fun `libraryRemoveFolder`(`directory`: kotlin.String)
         = 
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_play_single_from_library(
-        it, FfiConverterULong.lower(`index`),_status)
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_library_remove_folder(
+        it, FfiConverterString.lower(`directory`),_status)
 }
     }
     
     
 
-    override fun `previous`()
+    override fun `libraryScan`(`directories`: List<kotlin.String>)
         = 
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_previous(
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_library_scan(
+        it, FfiConverterSequenceString.lower(`directories`),_status)
+}
+    }
+    
+    
+
+    
+    /**
+     * Index of the lyric line at `position_ms`, or -1. Runs on the UI's position tick.
+     */override fun `lyricsGetActiveIndex`(`positionMs`: kotlin.ULong): kotlin.Int {
+            return FfiConverterInt.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_lyrics_get_active_index(
+        it, FfiConverterULong.lower(`positionMs`),_status)
+}
+    }
+    )
+    }
+    
+
+    override fun `playerCycleRepeat`()
+        = 
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_player_cycle_repeat(
         it, _status)
 }
     }
     
     
 
-    override fun `queueAlbum`(`index`: kotlin.ULong)
+    
+    /**
+     * Bottom player bar: title, artist, progress, play state, volume.
+     */override fun `playerGetBar`(): PlayerBarViewModel {
+            return FfiConverterTypePlayerBarViewModel.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_player_get_bar(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Full-screen play view: current track, lyrics, palette.
+     */override fun `playerGetPlayView`(): PlayViewModel {
+            return FfiConverterTypePlayViewModel.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_player_get_play_view(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    override fun `playerGetPosition`(): kotlin.ULong {
+            return FfiConverterULong.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_player_get_position(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    override fun `playerNext`()
         = 
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_queue_album(
-        it, FfiConverterULong.lower(`index`),_status)
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_player_next(
+        it, _status)
+}
+    }
+    
+    
+
+    override fun `playerPrevious`()
+        = 
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_player_previous(
+        it, _status)
+}
+    }
+    
+    
+
+    override fun `playerSeek`(`positionMs`: kotlin.ULong)
+        = 
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_player_seek(
+        it, FfiConverterULong.lower(`positionMs`),_status)
+}
+    }
+    
+    
+
+    override fun `playerSetVolume`(`volume`: kotlin.Float)
+        = 
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_player_set_volume(
+        it, FfiConverterFloat.lower(`volume`),_status)
+}
+    }
+    
+    
+
+    override fun `playerShuffle`()
+        = 
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_player_shuffle(
+        it, _status)
+}
+    }
+    
+    
+
+    override fun `playerTogglePlay`()
+        = 
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_player_toggle_play(
+        it, _status)
 }
     }
     
@@ -2647,6 +2285,21 @@ open class FluyerAppEngine: Disposable, AutoCloseable, FluyerAppEngineInterface 
 }
     }
     
+    
+
+    
+    /**
+     * Queue in play order; `index` on each row is the queue position.
+     */override fun `queueGet`(): List<TrackItemViewModel> {
+            return FfiConverterSequenceTypeTrackItemViewModel.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_queue_get(
+        it, _status)
+}
+    }
+    )
+    }
     
 
     override fun `queueGoto`(`index`: kotlin.ULong)
@@ -2677,119 +2330,6 @@ open class FluyerAppEngine: Disposable, AutoCloseable, FluyerAppEngineInterface 
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_queue_remove(
         it, FfiConverterULong.lower(`index`),_status)
-}
-    }
-    
-    
-
-    
-    /**
-     * Drops every row under `directory` and rebuilds the library synchronously.
-     */override fun `removeFolder`(`directory`: kotlin.String)
-        = 
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_remove_folder(
-        it, FfiConverterString.lower(`directory`),_status)
-}
-    }
-    
-    
-
-    override fun `requestSync`()
-        = 
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_request_sync(
-        it, _status)
-}
-    }
-    
-    
-
-    override fun `scanDirectories`(`directories`: List<kotlin.String>)
-        = 
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_scan_directories(
-        it, FfiConverterSequenceString.lower(`directories`),_status)
-}
-    }
-    
-    
-
-    override fun `seek`(`positionMs`: kotlin.ULong)
-        = 
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_seek(
-        it, FfiConverterULong.lower(`positionMs`),_status)
-}
-    }
-    
-    
-
-    override fun `setDiscordEnabled`(`enabled`: kotlin.Boolean)
-        = 
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_set_discord_enabled(
-        it, FfiConverterBoolean.lower(`enabled`),_status)
-}
-    }
-    
-    
-
-    override fun `setRepeatMode`(`mode`: NativeRepeatMode)
-        = 
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_set_repeat_mode(
-        it, FfiConverterTypeNativeRepeatMode.lower(`mode`),_status)
-}
-    }
-    
-    
-
-    override fun `setVolume`(`volume`: kotlin.Float)
-        = 
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_set_volume(
-        it, FfiConverterFloat.lower(`volume`),_status)
-}
-    }
-    
-    
-
-    override fun `shuffle`()
-        = 
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_shuffle(
-        it, _status)
-}
-    }
-    
-    
-
-    override fun `shuffleAlbum`(`index`: kotlin.ULong)
-        = 
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_shuffle_album(
-        it, FfiConverterULong.lower(`index`),_status)
-}
-    }
-    
-    
-
-    override fun `togglePlay`()
-        = 
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_toggle_play(
-        it, _status)
 }
     }
     
@@ -3257,14 +2797,6 @@ sealed class FluyerException: kotlin.Exception() {
             get() = "reason=${ `reason` }"
     }
     
-    class OperationFailed(
-        
-        val `reason`: kotlin.String
-        ) : FluyerException() {
-        override val message
-            get() = "reason=${ `reason` }"
-    }
-    
 
     companion object ErrorHandler : UniffiRustCallStatusErrorHandler<FluyerException> {
         override fun lift(error_buf: RustBuffer.ByValue): FluyerException = FfiConverterTypeFluyerError.lift(error_buf)
@@ -3284,9 +2816,6 @@ public object FfiConverterTypeFluyerError : FfiConverterRustBuffer<FluyerExcepti
             1 -> FluyerException.InitFailed(
                 FfiConverterString.read(buf),
                 )
-            2 -> FluyerException.OperationFailed(
-                FfiConverterString.read(buf),
-                )
             else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
         }
     }
@@ -3298,11 +2827,6 @@ public object FfiConverterTypeFluyerError : FfiConverterRustBuffer<FluyerExcepti
                 4UL
                 + FfiConverterString.allocationSize(value.`reason`)
             )
-            is FluyerException.OperationFailed -> (
-                // Add the size for the Int that specifies the variant plus the size needed for all fields
-                4UL
-                + FfiConverterString.allocationSize(value.`reason`)
-            )
         }
     }
 
@@ -3310,11 +2834,6 @@ public object FfiConverterTypeFluyerError : FfiConverterRustBuffer<FluyerExcepti
         when(value) {
             is FluyerException.InitFailed -> {
                 buf.putInt(1)
-                FfiConverterString.write(value.`reason`, buf)
-                Unit
-            }
-            is FluyerException.OperationFailed -> {
-                buf.putInt(2)
                 FfiConverterString.write(value.`reason`, buf)
                 Unit
             }
@@ -3748,38 +3267,6 @@ public object FfiConverterOptionalTypeAlbumDetailViewModel: FfiConverterRustBuff
 /**
  * @suppress
  */
-public object FfiConverterOptionalTypeAnimatedBackgroundFrame: FfiConverterRustBuffer<AnimatedBackgroundFrame?> {
-    override fun read(buf: ByteBuffer): AnimatedBackgroundFrame? {
-        if (buf.get().toInt() == 0) {
-            return null
-        }
-        return FfiConverterTypeAnimatedBackgroundFrame.read(buf)
-    }
-
-    override fun allocationSize(value: AnimatedBackgroundFrame?): ULong {
-        if (value == null) {
-            return 1UL
-        } else {
-            return 1UL + FfiConverterTypeAnimatedBackgroundFrame.allocationSize(value)
-        }
-    }
-
-    override fun write(value: AnimatedBackgroundFrame?, buf: ByteBuffer) {
-        if (value == null) {
-            buf.put(0)
-        } else {
-            buf.put(1)
-            FfiConverterTypeAnimatedBackgroundFrame.write(value, buf)
-        }
-    }
-}
-
-
-
-
-/**
- * @suppress
- */
 public object FfiConverterOptionalTypeTrackItemViewModel: FfiConverterRustBuffer<TrackItemViewModel?> {
     override fun read(buf: ByteBuffer): TrackItemViewModel? {
         if (buf.get().toInt() == 0) {
@@ -3984,23 +3471,5 @@ public object FfiConverterSequenceTypeTrackItemViewModel: FfiConverterRustBuffer
 
 
 
- fun `formatTimeLabel`(`ms`: kotlin.ULong): kotlin.String {
-            return FfiConverterString.lift(
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_func_format_time_label(
-        FfiConverterULong.lower(`ms`),_status)
-}
-    )
-    }
-    
- fun `parseLrcLyrics`(`lrcText`: kotlin.String): List<LyricLine> {
-            return FfiConverterSequenceTypeLyricLine.lift(
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_func_parse_lrc_lyrics(
-        FfiConverterString.lower(`lrcText`),_status)
-}
-    )
-    }
-    
 
 

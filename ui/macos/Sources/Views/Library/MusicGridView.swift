@@ -149,9 +149,9 @@ private struct TrackCard: View {
         let pixels = UInt32(Self.pixels)
         let data: Data?
         if let albumIndex = state.selection.index {
-            data = await engine.loadAlbumThumbnail(index: UInt64(albumIndex), maxSize: pixels)
+            data = await engine.artworkLoadAlbumThumbnail(index: UInt64(albumIndex), maxSize: pixels)
         } else {
-            data = await engine.loadTrackThumbnail(index: track.index, maxSize: pixels)
+            data = await engine.artworkLoadTrackThumbnail(index: track.index, maxSize: pixels)
         }
 
         guard let data, !data.isEmpty else { return }

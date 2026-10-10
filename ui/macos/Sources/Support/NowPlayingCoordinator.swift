@@ -84,7 +84,7 @@ final class NowPlayingCoordinator {
 
     private func loadArtwork(for key: String) async {
         guard let engine = state.engine,
-              let data = await engine.loadCurrentThumbnail(maxSize: 400),
+              let data = await engine.artworkLoadCurrentThumbnail(maxSize: 400),
               let image = NSImage(data: data),
               key == trackKey else { return }
         artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }

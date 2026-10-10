@@ -48,11 +48,11 @@ struct AnimatedBackgroundView: View {
             }
             var image: NSImage?
             if state.settings.backdropSource == .artwork, state.playback.playView.track != nil {
-                image = await engine.loadCurrentThumbnail(maxSize: Self.backdropPixels).flatMap { NSImage(data: $0) }
+                image = await engine.artworkLoadCurrentThumbnail(maxSize: Self.backdropPixels).flatMap { NSImage(data: $0) }
             }
             // Blocks mode, no track, or coverless track: Rust gives palette/grey blocks.
             if image == nil {
-                image = Self.image(from: await engine.loadBlockArtwork())
+                image = Self.image(from: await engine.backdropLoadBlockArtwork())
             }
             guard !Task.isCancelled, key == artworkKey else { return }
             artwork = image

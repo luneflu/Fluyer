@@ -168,7 +168,7 @@ private fun AlbumCard(state: AppState, album: AlbumCardViewModel, modifier: Modi
         if (selected) sel.clear() else sel.select(i)
     }.then(if (selected) Modifier.background(Color.White.copy(alpha = 0.14f)) else Modifier).padding(6.dp)) {
         Cover(state, ThumbnailKey.album(album.index, 300), 300, Modifier.fillMaxWidth().aspectRatio(1f)) {
-            state.engine?.loadAlbumThumbnail(album.index, it)
+            state.engine?.artworkLoadAlbumThumbnail(album.index, it)
         }
         Text(album.name, Modifier.padding(top = 6.dp), maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 14.sp)
         Text(album.artist, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 12.sp, color = Color.White.copy(alpha = 0.6f))
@@ -207,8 +207,8 @@ private fun TrackRow(state: AppState, track: TrackItemViewModel) {
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Cover(state, key, 88, Modifier.size(44.dp)) {
-            if (albumIndex != null) state.engine?.loadAlbumThumbnail(albumIndex.toULong(), it)
-            else state.engine?.loadTrackThumbnail(track.index, it)
+            if (albumIndex != null) state.engine?.artworkLoadAlbumThumbnail(albumIndex.toULong(), it)
+            else state.engine?.artworkLoadTrackThumbnail(track.index, it)
         }
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

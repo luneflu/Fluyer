@@ -55,7 +55,7 @@ final class PlaybackState {
     /// ponytail: `FluyerEvent::PlayerBarUpdated` looks like it carries the full view
     /// model but it does not — the Rust bridge fills `title`/`artist`/`album` with
     /// empty strings and hardcodes `volume` to 1.0
-    /// (`crates/fluyer_core/src/uniffi_api.rs`). The previous handler worked around
+    /// (`crates/fluyer_core/src/uniffi_api/events.rs`). The previous handler worked around
     /// that by re-reading `getPlayerBarView()` on every tick and sniffing the title
     /// against `"No Track"` to decide which fields to trust. The snapshot from
     /// `getPlayerBarView()` is complete and authoritative — including the real volume
@@ -69,12 +69,12 @@ final class PlaybackState {
 
     func reloadBar() {
         guard let engine else { return }
-        applyBar(engine.getPlayerBarView())
+        applyBar(engine.playerGetBar())
     }
 
     func reloadPlayView() {
         guard let engine else { return }
-        playView = engine.getPlayView()
+        playView = engine.playerGetPlayView()
     }
 
     /// Adopt a now-playing snapshot the core already sent us.
@@ -97,7 +97,7 @@ final class PlaybackState {
     // MARK: - Transport commands
 
     func togglePlay() {
-        engine?.togglePlay()
+        engine?.playerTogglePlay()
         // Optimistic: the core confirms with its own `PlayerBarUpdated`.
         bar.isPlaying.toggle()
         syncClockToTransport()
@@ -114,17 +114,17 @@ final class PlaybackState {
         togglePlay()
     }
 
-    func next() { engine?.next() }
+    func next() { engine?.playerNext() }
 
-    func previous() { engine?.previous() }
+    func previous() { engine?.playerPrevious() }
 
-    func cycleRepeat() { engine?.cycleRepeat() }
+    func cycleRepeat() { engine?.playerCycleRepeat() }
 
-    func shuffle() { engine?.shuffle() }
+    func shuffle() { engine?.playerShuffle() }
 
     func seek(toMs positionMs: UInt64) {
         guard let engine else { return }
-        engine.seek(positionMs: positionMs)
+        engine.playerSeek(positionMs: positionMs)
         clock.applyLocalPosition(positionMs)
         syncLyricCursor()
     }
@@ -141,7 +141,7 @@ final class PlaybackState {
             lastAudibleVolume = clamped
         }
         bar.volume = clamped
-        engine?.setVolume(volume: clamped)
+        engine?.playerSetVolume(volume: clamped)
     }
 
     func toggleMute() {
@@ -164,6 +164,6 @@ final class PlaybackState {
 
     private func syncLyricCursor() {
         guard showPlayView, let engine else { return }
-        clock.currentLyricIndex = Int(engine.getActiveLyricIndex(positionMs: clock.positionMs))
+        clock.currentLyricIndex = Int(engine.lyricsGetActiveIndex(positionMs: clock.positionMs))
     }
 }

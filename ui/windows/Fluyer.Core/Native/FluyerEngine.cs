@@ -36,10 +36,7 @@ public interface IFluyerEngine : IDisposable
     AlbumDetailViewModel? GetAlbumDetail(ulong index);
     ulong GetPosition();
     int GetActiveLyricIndex(ulong positionMs);
-    float GetVolume();
 
-    void Play();
-    void Pause();
     void TogglePlay();
     void Next();
     void Previous();
@@ -47,11 +44,9 @@ public interface IFluyerEngine : IDisposable
     void SetVolume(float volume);
     void CycleRepeat();
     void Shuffle();
-    void RequestSync();
     void ScanDirectories(string[] directories);
     void RemoveFolder(string directory);
     void SetDiscordEnabled(bool enabled);
-    void PlaySingleFromLibrary(ulong index);
     void PlayAllFromLibrary(ulong startIndex);
     void PlayAlbum(ulong index);
     void PlayAlbumTrack(ulong albumIndex, ulong trackIndex);
@@ -69,7 +64,6 @@ public interface IFluyerEngine : IDisposable
     public Task<byte[]?> GetTrackThumbnailAsync(ulong index, uint maxSize);
     public Task<byte[]?> GetAlbumThumbnailAsync(ulong index, uint maxSize);
     public Task<byte[]?> GetCurrentThumbnailAsync(uint maxSize);
-    (byte[] Rgba, uint Width, uint Height)? GenerateBackground(uint width, uint height);
 }
 
 /// <summary>
@@ -145,41 +139,37 @@ public sealed class FluyerEngine : IFluyerEngine
 
     public PlayerBarViewModel GetPlayerBarView()
         => DeserializeOrDefault(
-            () => TakeString(FluyerNative.fluyer_player_get_bar_view_json(_handle)),
+            () => TakeString(FluyerNative.fluyer_player_get_bar(_handle)),
             Support.ViewModelDefaults.NoTrack);
 
     public PlayViewModel GetPlayView()
         => DeserializeOrDefault(
-            () => TakeString(FluyerNative.fluyer_player_get_play_view_json(_handle)),
+            () => TakeString(FluyerNative.fluyer_player_get_play_view(_handle)),
             Support.ViewModelDefaults.EmptyPlayView);
 
-    public ulong GetTrackCount() => Check(() => FluyerNative.fluyer_library_get_count(_handle));
+    public ulong GetTrackCount() => Check(() => FluyerNative.fluyer_library_get_track_count(_handle));
 
-    public ulong GetAlbumCount() => Check(() => FluyerNative.fluyer_library_get_album_count(_handle));
+    public ulong GetAlbumCount() => Check(() => FluyerNative.fluyer_album_get_count(_handle));
 
     public TrackItemViewModel? GetTrackView(ulong index)
         => DeserializeNullable<TrackItemViewModel>(
-            () => TakeString(FluyerNative.fluyer_library_get_track_view_json(_handle, index)));
+            () => TakeString(FluyerNative.fluyer_library_get_track(_handle, index)));
 
     public AlbumCardViewModel? GetAlbumCard(ulong index)
         => DeserializeNullable<AlbumCardViewModel>(
-            () => TakeString(FluyerNative.fluyer_library_get_album_view_json(_handle, index)));
+            () => TakeString(FluyerNative.fluyer_album_get_card(_handle, index)));
 
     public AlbumDetailViewModel? GetAlbumDetail(ulong index)
         => DeserializeNullable<AlbumDetailViewModel>(
-            () => TakeString(FluyerNative.fluyer_library_get_album_detail_json(_handle, index)));
+            () => TakeString(FluyerNative.fluyer_album_get_detail(_handle, index)));
 
     public ulong GetPosition() => Check(() => FluyerNative.fluyer_player_get_position(_handle));
 
     public int GetActiveLyricIndex(ulong positionMs)
-        => Check(() => FluyerNative.fluyer_player_get_active_lyric_index(_handle, positionMs));
-
-    public float GetVolume() => Check(() => FluyerNative.fluyer_player_get_volume(_handle));
+        => Check(() => FluyerNative.fluyer_lyrics_get_active_index(_handle, positionMs));
 
     // MARK: - Commands
 
-    public void Play() => Invoke(() => FluyerNative.fluyer_player_play(_handle));
-    public void Pause() => Invoke(() => FluyerNative.fluyer_player_pause(_handle));
     public void TogglePlay() => Invoke(() => FluyerNative.fluyer_player_toggle_play(_handle));
     public void Next() => Invoke(() => FluyerNative.fluyer_player_next(_handle));
     public void Previous() => Invoke(() => FluyerNative.fluyer_player_previous(_handle));
@@ -187,7 +177,6 @@ public sealed class FluyerEngine : IFluyerEngine
     public void SetVolume(float volume) => Invoke(() => FluyerNative.fluyer_player_set_volume(_handle, volume));
     public void CycleRepeat() => Invoke(() => FluyerNative.fluyer_player_cycle_repeat(_handle));
     public void Shuffle() => Invoke(() => FluyerNative.fluyer_player_shuffle(_handle));
-    public void RequestSync() => Invoke(() => FluyerNative.fluyer_player_request_sync(_handle));
 
     public void ScanDirectories(string[] directories)
     {
@@ -226,20 +215,17 @@ public sealed class FluyerEngine : IFluyerEngine
         }
     }
 
-    public void PlaySingleFromLibrary(ulong index)
-        => Invoke(() => FluyerNative.fluyer_library_play_index(_handle, index));
-
     public void PlayAllFromLibrary(ulong startIndex)
-        => Invoke(() => FluyerNative.fluyer_library_play_all_from_index(_handle, startIndex));
+        => Invoke(() => FluyerNative.fluyer_library_play_all(_handle, startIndex));
 
     public void PlayAlbum(ulong index)
-        => Invoke(() => FluyerNative.fluyer_library_play_album(_handle, index));
+        => Invoke(() => FluyerNative.fluyer_album_play(_handle, index));
 
     public void PlayAlbumTrack(ulong albumIndex, ulong trackIndex)
-        => Invoke(() => FluyerNative.fluyer_library_play_album_track(_handle, albumIndex, trackIndex));
+        => Invoke(() => FluyerNative.fluyer_album_play_track(_handle, albumIndex, trackIndex));
 
     public void QueueAlbum(ulong index)
-        => Invoke(() => FluyerNative.fluyer_library_queue_album(_handle, index));
+        => Invoke(() => FluyerNative.fluyer_album_queue(_handle, index));
 
     public void RemoveFolder(string directory)
         => Invoke(() => FluyerNative.fluyer_library_remove_folder(_handle, directory));
@@ -249,11 +235,11 @@ public sealed class FluyerEngine : IFluyerEngine
         => Invoke(() => FluyerNative.fluyer_discord_set_enabled(enabled));
 
     public void ShuffleAlbum(ulong index)
-        => Invoke(() => FluyerNative.fluyer_library_shuffle_album(_handle, index));
+        => Invoke(() => FluyerNative.fluyer_album_shuffle(_handle, index));
 
     public IReadOnlyList<TrackItemViewModel> GetQueue()
         => DeserializeNullable<List<TrackItemViewModel>>(
-            () => TakeString(FluyerNative.fluyer_queue_get_json(_handle)))
+            () => TakeString(FluyerNative.fluyer_queue_get(_handle)))
            ?? (IReadOnlyList<TrackItemViewModel>)Array.Empty<TrackItemViewModel>();
 
     public void QueueGoto(ulong index) => Invoke(() => FluyerNative.fluyer_queue_goto(_handle, index));
@@ -273,7 +259,7 @@ public sealed class FluyerEngine : IFluyerEngine
         {
             return null;
         }
-        var ptr = FluyerNative.fluyer_library_get_track_thumbnail(_handle, index, maxSize, out var len);
+        var ptr = FluyerNative.fluyer_artwork_get_track_thumbnail(_handle, index, maxSize, out var len);
         return TakeBytes(ptr, len);
     }
 
@@ -283,7 +269,7 @@ public sealed class FluyerEngine : IFluyerEngine
         {
             return null;
         }
-        var ptr = FluyerNative.fluyer_library_get_album_thumbnail(_handle, index, maxSize, out var len);
+        var ptr = FluyerNative.fluyer_artwork_get_album_thumbnail(_handle, index, maxSize, out var len);
         return TakeBytes(ptr, len);
     }
 
@@ -293,7 +279,7 @@ public sealed class FluyerEngine : IFluyerEngine
         {
             return null;
         }
-        var ptr = FluyerNative.fluyer_player_get_current_thumbnail(_handle, maxSize, out var len);
+        var ptr = FluyerNative.fluyer_artwork_get_current_thumbnail(_handle, maxSize, out var len);
         return TakeBytes(ptr, len);
     }
 
@@ -306,29 +292,6 @@ public sealed class FluyerEngine : IFluyerEngine
     public Task<byte[]?> GetCurrentThumbnailAsync(uint maxSize)
         => Task.Run(() => GetCurrentThumbnail(maxSize));
 
-    public (byte[] Rgba, uint Width, uint Height)? GenerateBackground(uint width, uint height)
-    {
-        if (_handle == IntPtr.Zero)
-        {
-            return null;
-        }
-        var ptr = FluyerNative.fluyer_player_generate_background(
-            _handle, width, height, out var w, out var h, out var len);
-        if (ptr == IntPtr.Zero || len == 0)
-        {
-            return null;
-        }
-        try
-        {
-            var bytes = new byte[len];
-            Marshal.Copy(ptr, bytes, 0, checked((int)len));
-            return (bytes, w, h);
-        }
-        finally
-        {
-            FluyerNative.fluyer_bytes_free(ptr, len);
-        }
-    }
 
     // MARK: - Callbacks (fire on arbitrary Rust threads — hop to _context)
 

@@ -78,12 +78,12 @@ class PlaybackClock(private val scope: CoroutineScope) {
 
     private fun tick() {
         val e = engine ?: return
-        val pos = e.getPosition()
+        val pos = e.playerGetPosition()
         positionMs = pos
         if (durationMs == 0uL) return
         progressPct = pos.toFloat() / durationMs.toFloat()
         timeLabel = TimeFormat.pair(pos, durationMs)
-        if (followsLyrics) currentLyricIndex = e.getActiveLyricIndex(pos)
+        if (followsLyrics) currentLyricIndex = e.lyricsGetActiveIndex(pos)
     }
 
     private companion object {

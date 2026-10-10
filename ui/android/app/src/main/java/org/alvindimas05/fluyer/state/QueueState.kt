@@ -26,7 +26,7 @@ class QueueState {
 
     fun reload() {
         val e = engine ?: return
-        if (isOpen) tracks = e.getQueueView()
+        if (isOpen) tracks = e.queueGet()
     }
 
     fun goto(index: Int) {

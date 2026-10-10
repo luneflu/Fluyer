@@ -45,7 +45,7 @@ struct CurrentCoverView: View {
             guard let engine = state.engine else { return }
             let maxSize = UInt32(pixelSize)
             let loaded = await ThumbnailStore.shared.image(key: cacheKey) {
-                await engine.loadCurrentThumbnail(maxSize: maxSize)
+                await engine.artworkLoadCurrentThumbnail(maxSize: maxSize)
             }
             // A cancelled task can still resume after its `await`; drop the result so a
             // slow load from the previous track cannot overwrite the new artwork.

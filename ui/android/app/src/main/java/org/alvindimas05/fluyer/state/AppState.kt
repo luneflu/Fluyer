@@ -86,26 +86,26 @@ class AppState(dataDir: File, cacheDir: File, createEngine: Boolean = true) : Fl
     fun scanFolders(paths: List<String>) {
         if (paths.isEmpty()) return
         settings.addFolders(paths)
-        engine?.scanDirectories(paths.map(SettingsState::normalize))
+        engine?.libraryScan(paths.map(SettingsState::normalize))
     }
 
     /** Re-scan every saved folder. */
     fun scanSavedFolders() {
         if (settings.musicFolders.isEmpty()) return
-        engine?.scanDirectories(settings.musicFolders)
+        engine?.libraryScan(settings.musicFolders)
     }
 
     /** Forget a folder and drop its tracks from the library. */
     fun removeFolder(path: String) {
         val stored = settings.removeFolder(path) ?: return
-        engine?.removeFolder(stored)
+        engine?.libraryRemoveFolder(stored)
         refresh()
     }
 
     /** Play the whole library from the first track. */
     fun playAll() {
         if (library.tracks.isEmpty()) return
-        engine?.playAllFromLibrary(0uL)
+        engine?.libraryPlayAll(0uL)
     }
 
     /** Persist session state that changes too often to save live (volume). */

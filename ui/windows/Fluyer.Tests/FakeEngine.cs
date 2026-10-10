@@ -41,10 +41,7 @@ internal sealed class FakeEngine : IFluyerEngine
     public AlbumDetailViewModel? GetAlbumDetail(ulong index) => AlbumDetail(index);
     public ulong GetPosition() => Position();
     public int GetActiveLyricIndex(ulong positionMs) => LyricIndex(positionMs);
-    public float GetVolume() => 1.0f;
 
-    public void Play() => Calls.Add("play");
-    public void Pause() => Calls.Add("pause");
     public void TogglePlay() => Calls.Add("toggle");
     public void Next() => Calls.Add("next");
     public void Previous() => Calls.Add("previous");
@@ -52,11 +49,9 @@ internal sealed class FakeEngine : IFluyerEngine
     public void SetVolume(float volume) { Calls.Add("volume"); VolumeSets.Add(volume); }
     public void CycleRepeat() => Calls.Add("repeat");
     public void Shuffle() => Calls.Add("shuffle");
-    public void RequestSync() => Calls.Add("sync");
     public void ScanDirectories(string[] directories) => Scanned.Add(directories);
     public void RemoveFolder(string directory) => Calls.Add($"removefolder:{directory}");
     public void SetDiscordEnabled(bool enabled) => Calls.Add($"discord:{enabled}");
-    public void PlaySingleFromLibrary(ulong index) => Calls.Add($"single:{index}");
     public void PlayAllFromLibrary(ulong startIndex) => Calls.Add($"all:{startIndex}");
     public void PlayAlbum(ulong index) => Calls.Add($"album:{index}");
     public void PlayAlbumTrack(ulong albumIndex, ulong trackIndex) => Calls.Add($"albumtrack:{albumIndex}:{trackIndex}");
@@ -80,7 +75,6 @@ internal sealed class FakeEngine : IFluyerEngine
     public Task<byte[]?> GetTrackThumbnailAsync(ulong index, uint maxSize) => Task.FromResult<byte[]?>(null);
     public Task<byte[]?> GetAlbumThumbnailAsync(ulong index, uint maxSize) => Task.FromResult<byte[]?>(null);
     public Task<byte[]?> GetCurrentThumbnailAsync(uint maxSize) => Task.FromResult<byte[]?>(null);
-    public (byte[] Rgba, uint Width, uint Height)? GenerateBackground(uint width, uint height) => null;
 
     internal static TrackItemViewModel Track(ulong index, bool current = false) => new(
         Index: index, Path: $"/music/{index}.mp3", Title: $"T{index}", Artist: "A",

@@ -138,14 +138,14 @@ final class AlbumSelection {
         let byPath = Dictionary(library.tracks.map { ($0.path, $0.index) }, uniquingKeysWith: { first, _ in first })
         let indices = queue.compactMap { byPath[$0.path] }
         let start = path.flatMap { byPath[$0] }.flatMap { indices.firstIndex(of: $0) } ?? 0
-        engine?.playLibraryTracks(indices: indices, startIndex: UInt64(start))
+        engine?.libraryPlayTracks(indices: indices, startIndex: UInt64(start))
     }
 
     /// Open an album's tracks; from the album grid this returns to the track view.
     func select(_ index: Int) {
         self.index = index
         mode = .tracks
-        detail = engine?.getAlbumDetail(index: UInt64(index))
+        detail = engine?.albumGetDetail(index: UInt64(index))
     }
 
     func clear() {
@@ -159,7 +159,7 @@ final class AlbumSelection {
             detail = nil
             return
         }
-        detail = engine?.getAlbumDetail(index: UInt64(index))
+        detail = engine?.albumGetDetail(index: UInt64(index))
     }
 
     // MARK: - Playback
@@ -173,7 +173,7 @@ final class AlbumSelection {
     func queueSelected() { index.map(queueAlbum) }
     func shuffleSelected() { index.map(shuffleAlbum) }
 
-    func playAlbum(_ index: Int) { engine?.playAlbum(index: UInt64(index)) }
-    func queueAlbum(_ index: Int) { engine?.queueAlbum(index: UInt64(index)) }
-    func shuffleAlbum(_ index: Int) { engine?.shuffleAlbum(index: UInt64(index)) }
+    func playAlbum(_ index: Int) { engine?.albumPlay(index: UInt64(index)) }
+    func queueAlbum(_ index: Int) { engine?.albumQueue(index: UInt64(index)) }
+    func shuffleAlbum(_ index: Int) { engine?.albumShuffle(index: UInt64(index)) }
 }

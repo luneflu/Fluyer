@@ -19,7 +19,7 @@ final class QueueState {
 
     func reload() {
         guard isOpen, let engine else { return }
-        tracks = engine.getQueueView()
+        tracks = engine.queueGet()
     }
 
     func goto(_ index: Int) {

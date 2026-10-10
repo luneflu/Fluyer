@@ -3,7 +3,7 @@ pub mod logger;
 pub mod audio;
 pub mod db;
 pub mod events;
-pub mod ffi;
+pub mod c_api;
 pub mod library;
 pub mod metadata;
 pub mod services;
@@ -117,7 +117,7 @@ impl FluyerEngine {
 
     /// Upserts files under `directories` and drops rows for files under those
     /// same roots that no longer exist. Rows outside the roots are untouched.
-    pub fn scan_and_update(&self, directories: &[String]) {
+    pub fn library_scan(&self, directories: &[String]) {
         let db = Arc::clone(&self.db);
         let library = Arc::clone(&self.library);
         let sink = self.event_sink.clone();
@@ -149,61 +149,57 @@ impl FluyerEngine {
 
     /// Synchronously drops every row under `directory` (removed library folder)
     /// and rebuilds the in-memory library; caller re-reads afterwards.
-    pub fn remove_folder(&self, directory: &str) {
+    pub fn library_remove_folder(&self, directory: &str) {
         let root = Path::new(directory);
         prune_rows(&self.db, |p| Path::new(p).starts_with(root));
         let music = library::load_all_music_from_db(&self.db);
         self.library.write().unwrap().rebuild(music);
     }
 
-    pub fn play(&self) {
-        self.player.play();
-    }
 
-    pub fn pause(&self) {
-        self.player.pause();
-    }
 
-    pub fn toggle_play(&self) {
+    pub fn player_toggle_play(&self) {
         self.player.toggle_play();
     }
 
-    pub fn next(&self) {
+    pub fn player_next(&self) {
         self.player.next();
     }
 
-    pub fn previous(&self) {
+    pub fn player_previous(&self) {
         self.player.previous();
     }
 
-    pub fn seek(&self, position_ms: u64) {
+    pub fn player_get_position(&self) -> u64 {
+        self.player.get_sync_info(false).position_ms()
+    }
+
+
+    pub fn player_seek(&self, position_ms: u64) {
         self.player.set_pos(position_ms);
     }
 
-    pub fn set_volume(&self, volume: f32) {
+    pub fn player_set_volume(&self, volume: f32) {
         self.player.set_volume(volume);
     }
 
-    pub fn get_volume(&self) -> f32 {
-        self.player.get_volume()
+
+    /// None -> All -> One -> None.
+    pub fn player_cycle_repeat(&self) {
+        let next = match self.player.get_sync_info(false).repeat_mode {
+            RepeatMode::None => RepeatMode::All,
+            RepeatMode::All => RepeatMode::One,
+            RepeatMode::One => RepeatMode::None,
+        };
+        self.player.set_repeat_mode(next);
     }
 
-    pub fn set_repeat_mode(&self, mode: RepeatMode) {
-        self.player.set_repeat_mode(mode);
-    }
-
-    pub fn shuffle(&self) {
+    pub fn player_shuffle(&self) {
         self.player.shuffle_track();
     }
 
-    pub fn play_single_from_library(&self, index: usize) {
-        if let Some(track) = self.library.read().unwrap().get_by_index(index) {
-            self.player.clear();
-            self.player.add_track(vec![track.clone()]);
-        }
-    }
 
-    pub fn play_all_from_library(&self, start_index: usize) {
+    pub fn library_play_all(&self, start_index: usize) {
         let music = self.library.read().unwrap().music_list.clone();
         if music.is_empty() {
             return;
@@ -215,7 +211,7 @@ impl FluyerEngine {
 
     /// Play library tracks in the caller's order (UI sort), starting at `start_index`
     /// of `indices`. Unknown indices are skipped.
-    pub fn play_library_tracks(&self, indices: &[usize], start_index: usize) {
+    pub fn library_play_tracks(&self, indices: &[usize], start_index: usize) {
         let music: Vec<MusicMetadata> = {
             let library = self.library.read().unwrap();
             indices.iter().filter_map(|&i| library.get_by_index(i)).collect()
@@ -228,7 +224,7 @@ impl FluyerEngine {
         self.player.goto_track(start_index);
     }
 
-    pub fn play_album(&self, index: usize) {
+    pub fn album_play(&self, index: usize) {
         if let Some(album) = self.library.read().unwrap().album_get_by_index(index) {
             if album.is_empty() {
                 return;
@@ -239,7 +235,7 @@ impl FluyerEngine {
         }
     }
 
-    pub fn play_album_track(&self, album_index: usize, track_index: usize) {
+    pub fn album_play_track(&self, album_index: usize, track_index: usize) {
         if let Some(album) = self.library.read().unwrap().album_get_by_index(album_index) {
             if track_index < album.len() {
                 self.player.clear();
@@ -249,7 +245,7 @@ impl FluyerEngine {
         }
     }
 
-    pub fn queue_album(&self, index: usize) {
+    pub fn album_queue(&self, index: usize) {
         if let Some(album) = self.library.read().unwrap().album_get_by_index(index) {
             if album.is_empty() {
                 return;
@@ -258,7 +254,7 @@ impl FluyerEngine {
         }
     }
 
-    pub fn shuffle_album(&self, index: usize) {
+    pub fn album_shuffle(&self, index: usize) {
         if let Some(album) = self.library.read().unwrap().album_get_by_index(index) {
             if album.is_empty() {
                 return;
@@ -270,12 +266,9 @@ impl FluyerEngine {
         }
     }
 
-    pub fn add_track_to_queue(&self, track: MusicMetadata) {
-        self.player.add_track(vec![track]);
-    }
 
     /// Queue in play order; `index` is the queue position, not a library index.
-    pub fn get_queue_view(&self) -> Vec<view_models::TrackItemViewModel> {
+    pub fn queue_get(&self) -> Vec<view_models::TrackItemViewModel> {
         let (tracks, current) = self.player.queue_snapshot();
         tracks
             .iter()
@@ -304,7 +297,7 @@ impl FluyerEngine {
         self.player.emit_sync(false);
     }
 
-    pub fn resolve_track_cover(
+    pub fn artwork_resolve_track(
         &self,
         track: &MusicMetadata,
         notify_index: Option<usize>,
@@ -348,7 +341,7 @@ impl FluyerEngine {
         None
     }
 
-    pub fn resolve_album_cover(
+    pub fn artwork_resolve_album(
         &self,
         album: &[MusicMetadata],
         notify_index: Option<usize>,
@@ -401,25 +394,12 @@ impl FluyerEngine {
         None
     }
 
-    /// Blurred ambient background for the current cover: the
-    /// `AnimatedBackground.svelte` -> `TauriBackgroundAPI.updateBackground` path.
-    /// Returns raw RGBA plus its dimensions; the UI stretches it to fill.
-    /// The colour blocks are randomised per call so only the palette is memoised.
-    pub fn generate_background_for_current(&self, width: u32, height: u32) -> (Vec<u8>, u32, u32) {
-        let colors = match self.player.get_current_track() {
-            Some(ref t) => self.cover_palette(t),
-            None => vec![services::background::balance_color([30, 30, 40], true)],
-        };
-        let blurred = services::background::generate_blurred_background(&colors, width, height);
-        let (w, h) = (blurred.width(), blurred.height());
-        (blurred.into_raw(), w, h)
-    }
 
     /// Sharp block-colour square fed to the GPU backdrops instead of the real cover,
     /// so every palette colour gets equal share. Greys when nothing is playing.
-    pub fn generate_block_artwork_for_current(&self) -> (Vec<u8>, u32, u32) {
+    pub fn backdrop_block_artwork(&self) -> (Vec<u8>, u32, u32) {
         let colors = match self.player.get_current_track() {
-            Some(ref t) => self.cover_palette(t),
+            Some(ref t) => self.backdrop_palette(t),
             None => services::background::GREY_PALETTE.to_vec(),
         };
         let img = services::background::generate_block_artwork(
@@ -431,7 +411,7 @@ impl FluyerEngine {
         (img.into_raw(), w, h)
     }
 
-    pub fn resolve_lyrics(&self, track: &MusicMetadata) -> Option<String> {
+    pub fn lyrics_resolve(&self, track: &MusicMetadata) -> Option<String> {
         if let Some(lyrics) = metadata::probe::extract_lyrics_file(&track.path) {
             return Some(lyrics);
         }
@@ -461,7 +441,15 @@ impl FluyerEngine {
         None
     }
 
-    pub fn get_track_view(&self, index: usize) -> Option<view_models::TrackItemViewModel> {
+    pub fn library_get_track_count(&self) -> usize {
+        self.library.read().unwrap().count()
+    }
+
+    pub fn album_get_count(&self) -> usize {
+        self.library.read().unwrap().album_count()
+    }
+
+    pub fn library_get_track(&self, index: usize) -> Option<view_models::TrackItemViewModel> {
         let current_path = self.player.get_current_track().map(|t| t.path);
         self.library.read().unwrap().get_by_index(index).map(|t| {
             let is_current = current_path.as_deref() == Some(&t.path);
@@ -469,7 +457,7 @@ impl FluyerEngine {
         })
     }
 
-    pub fn get_album_card(&self, index: usize) -> Option<view_models::AlbumCardViewModel> {
+    pub fn album_get_card(&self, index: usize) -> Option<view_models::AlbumCardViewModel> {
         self.library
             .read()
             .unwrap()
@@ -477,7 +465,7 @@ impl FluyerEngine {
             .map(|tracks| view_models::AlbumCardViewModel::from_tracks(index, &tracks))
     }
 
-    pub fn get_album_detail(&self, index: usize) -> Option<view_models::AlbumDetailViewModel> {
+    pub fn album_get_detail(&self, index: usize) -> Option<view_models::AlbumDetailViewModel> {
         let current_path = self.player.get_current_track().map(|t| t.path);
         self.library
             .read()
@@ -492,11 +480,8 @@ impl FluyerEngine {
             })
     }
 
-    pub fn get_album_view(&self, index: usize) -> Option<view_models::AlbumCardViewModel> {
-        self.get_album_card(index)
-    }
 
-    pub fn get_player_bar_view(&self) -> view_models::PlayerBarViewModel {
+    pub fn player_get_bar(&self) -> view_models::PlayerBarViewModel {
         let sync = self.player.get_sync_info(false);
         let current_track = self.player.get_current_track();
         let (title, artist, album) = match current_track {
@@ -542,7 +527,7 @@ impl FluyerEngine {
         }
     }
 
-    pub fn get_play_view(&self) -> view_models::PlayViewModel {
+    pub fn player_get_play_view(&self) -> view_models::PlayViewModel {
         let current_track = self.player.get_current_track();
         let track_vm = current_track.as_ref().map(|t| {
             let sync = self.player.get_sync_info(false);
@@ -554,12 +539,12 @@ impl FluyerEngine {
             view_models::TrackItemViewModel::from_metadata(idx, t, true)
         });
 
-        let lyrics = self.get_parsed_lyrics();
+        let lyrics = self.lyrics_get();
         let pos_ms = self.player.get_sync_info(false).position_ms();
         let current_lyric_index = view_models::find_active_lyric_index(&lyrics, pos_ms);
 
         let colors = match current_track.as_ref() {
-            Some(t) => self.cover_palette(t),
+            Some(t) => self.backdrop_palette(t),
             None => vec![services::background::balance_color([30, 30, 40], true)],
         };
         let palette = colors
@@ -579,8 +564,8 @@ impl FluyerEngine {
         }
     }
 
-    pub fn get_parsed_lyrics(&self) -> Vec<view_models::LyricLine> {
-        self.get_parsed_lyrics_arc()
+    pub fn lyrics_get(&self) -> Vec<view_models::LyricLine> {
+        self.lyrics_get_arc()
             .as_ref()
             .map(|lines| lines.as_ref().clone())
             .unwrap_or_default()
@@ -588,8 +573,8 @@ impl FluyerEngine {
 
     /// Active lyric index without cloning the parsed lyric vector; this runs on
     /// the UI's 250ms position tick, so the Arc path matters.
-    pub fn active_lyric_index(&self, position_ms: u64) -> i32 {
-        match self.get_parsed_lyrics_arc() {
+    pub fn lyrics_get_active_index(&self, position_ms: u64) -> i32 {
+        match self.lyrics_get_arc() {
             Some(lines) => view_models::find_active_lyric_index(&lines, position_ms),
             None => -1,
         }
@@ -597,7 +582,7 @@ impl FluyerEngine {
 
     // ponytail: memoized down-scaled JPEG cover. `key` identifies the source
     // cover so repeated scroll renders of the same row are allocation-free.
-    pub fn get_thumbnail(
+    pub fn artwork_cached_thumbnail(
         &self,
         key: String,
         source: impl FnOnce() -> Option<Vec<u8>>,
@@ -619,14 +604,14 @@ impl FluyerEngine {
 
     // ponytail: dominant-color extraction decodes the full cover, so it is
     // memoized per track path. PlayView polls this on every state change.
-    fn cover_palette(&self, track: &MusicMetadata) -> Vec<[u8; 3]> {
+    fn backdrop_palette(&self, track: &MusicMetadata) -> Vec<[u8; 3]> {
         if let Some((cached_path, colors)) = self.palette_cache.read().unwrap().as_ref() {
             if cached_path == &track.path {
                 return colors.as_ref().clone();
             }
         }
 
-        let colors = match self.resolve_track_cover(track, None) {
+        let colors = match self.artwork_resolve_track(track, None) {
             Some(ref bytes) => services::background::extract_prominent_from_bytes(bytes, 10, false),
             None => services::background::GREY_PALETTE.to_vec(),
         };
@@ -635,44 +620,44 @@ impl FluyerEngine {
         colors
     }
 
-    pub fn track_thumbnail(&self, index: usize, max_size: u32) -> Option<Arc<Vec<u8>>> {
-        self.get_thumbnail(
+    pub fn artwork_track_thumbnail(&self, index: usize, max_size: u32) -> Option<Arc<Vec<u8>>> {
+        self.artwork_cached_thumbnail(
             format!("track:{}", index),
             || {
                 self.library
                     .read()
                     .unwrap()
                     .get_by_index(index)
-                    .and_then(|t| self.resolve_track_cover(&t, Some(index)))
+                    .and_then(|t| self.artwork_resolve_track(&t, Some(index)))
             },
             max_size,
         )
     }
 
-    pub fn album_thumbnail(&self, index: usize, max_size: u32) -> Option<Arc<Vec<u8>>> {
-        self.get_thumbnail(
+    pub fn artwork_album_thumbnail(&self, index: usize, max_size: u32) -> Option<Arc<Vec<u8>>> {
+        self.artwork_cached_thumbnail(
             format!("album:{}", index),
             || {
                 self.library
                     .read()
                     .unwrap()
                     .album_get_by_index(index)
-                    .and_then(|a| self.resolve_album_cover(&a, Some(index)))
+                    .and_then(|a| self.artwork_resolve_album(&a, Some(index)))
             },
             max_size,
         )
     }
 
-    pub fn current_thumbnail(&self, max_size: u32) -> Option<Arc<Vec<u8>>> {
+    pub fn artwork_current_thumbnail(&self, max_size: u32) -> Option<Arc<Vec<u8>>> {
         let track = self.player.get_current_track()?;
-        self.get_thumbnail(
+        self.artwork_cached_thumbnail(
             format!("path:{}", track.path),
-            || self.resolve_track_cover(&track, None),
+            || self.artwork_resolve_track(&track, None),
             max_size,
         )
     }
 
-    pub fn get_parsed_lyrics_arc(&self) -> Option<Arc<Vec<view_models::LyricLine>>> {
+    pub fn lyrics_get_arc(&self) -> Option<Arc<Vec<view_models::LyricLine>>> {
         let track = self.player.get_current_track()?;
 
         if let Some((cached_path, lines)) = self.lyrics_cache.read().unwrap().as_ref() {
@@ -681,7 +666,7 @@ impl FluyerEngine {
             }
         }
 
-        let lrc = self.resolve_lyrics(&track)?;
+        let lrc = self.lyrics_resolve(&track)?;
         let lines = Arc::new(view_models::parse_lrc(&lrc));
         *self.lyrics_cache.write().unwrap() = Some((track.path.clone(), Arc::clone(&lines)));
         Some(lines)

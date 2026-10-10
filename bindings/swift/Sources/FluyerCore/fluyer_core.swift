@@ -580,128 +580,98 @@ fileprivate struct FfiConverterData: FfiConverterRustBuffer {
 
 public protocol FluyerAppEngineProtocol : AnyObject {
     
-    func cycleRepeat() 
+    func albumGetCard(index: UInt64)  -> AlbumCardViewModel?
     
-    func generateBackgroundForCurrent(width: UInt32, height: UInt32)  -> Data?
+    func albumGetCount()  -> UInt64
     
-    func getActiveLyricIndex(positionMs: UInt64)  -> Int32
+    func albumGetDetail(index: UInt64)  -> AlbumDetailViewModel?
     
-    func getAlbumCard(index: UInt64)  -> AlbumCardViewModel?
+    func albumPlay(index: UInt64) 
     
-    func getAlbumCount()  -> UInt64
+    func albumQueue(index: UInt64) 
     
-    func getAlbumDetail(index: UInt64)  -> AlbumDetailViewModel?
+    func albumShuffle(index: UInt64) 
     
-    func getAlbumImage(index: UInt64)  -> Data?
+    func artworkLoadAlbumThumbnail(index: UInt64, maxSize: UInt32) async  -> Data?
     
-    func getAlbumThumbnail(index: UInt64, maxSize: UInt32)  -> Data?
+    func artworkLoadCurrentThumbnail(maxSize: UInt32) async  -> Data?
     
-    func getAlbumThumbnailRgba(index: UInt64, width: UInt32, height: UInt32)  -> Data?
-    
-    func getAlbumTracks(albumIndex: UInt64)  -> [TrackItemViewModel]
-    
-    func getAlbumView(index: UInt64)  -> AlbumCardViewModel?
-    
-    func getCurrentImage()  -> Data?
-    
-    func getCurrentThumbnail(maxSize: UInt32)  -> Data?
-    
-    func getLyrics()  -> [LyricLine]
-    
-    func getPlayView()  -> PlayViewModel
-    
-    func getPlayerBarView()  -> PlayerBarViewModel
-    
-    func getPosition()  -> UInt64
-    
-    /**
-     * Queue in play order; `index` on each row is the queue position.
-     */
-    func getQueueView()  -> [TrackItemViewModel]
-    
-    func getScanStatus()  -> ScanStatusViewModel
-    
-    func getTrackCount()  -> UInt64
-    
-    func getTrackImage(index: UInt64)  -> Data?
-    
-    func getTrackThumbnail(index: UInt64, maxSize: UInt32)  -> Data?
-    
-    func getTrackThumbnailRgba(index: UInt64, width: UInt32, height: UInt32)  -> Data?
-    
-    func getTrackView(index: UInt64)  -> TrackItemViewModel?
-    
-    func getVolume()  -> Float
-    
-    func loadAlbumThumbnail(index: UInt64, maxSize: UInt32) async  -> Data?
-    
-    /**
-     * Async twin of `generate_background_for_current`. Blurring and the palette
-     * decode are blocking work, so the UI must not call the sync variant on the
-     * main thread.
-     */
-    func loadAnimatedBackground(width: UInt32, height: UInt32) async  -> AnimatedBackgroundFrame?
+    func artworkLoadTrackThumbnail(index: UInt64, maxSize: UInt32) async  -> Data?
     
     /**
      * Unblurred palette-block square that replaces the cover as backdrop input.
      * Random per call: the UI calls it once per track.
      */
-    func loadBlockArtwork() async  -> AnimatedBackgroundFrame
+    func backdropLoadBlockArtwork() async  -> AnimatedBackgroundFrame
     
-    func loadCurrentThumbnail(maxSize: UInt32) async  -> Data?
+    /**
+     * Process-global in the core (not per engine).
+     */
+    func discordSetEnabled(enabled: Bool) 
     
-    func loadTrackThumbnail(index: UInt64, maxSize: UInt32) async  -> Data?
+    func libraryGetScanStatus()  -> ScanStatusViewModel
     
-    func next() 
+    func libraryGetTrack(index: UInt64)  -> TrackItemViewModel?
     
-    func pause() 
+    func libraryGetTrackCount()  -> UInt64
     
-    func play() 
+    func libraryPlayAll(startIndex: UInt64) 
     
-    func playAlbum(index: UInt64) 
+    /**
+     * Plays library tracks in the caller's (sorted) order.
+     */
+    func libraryPlayTracks(indices: [UInt64], startIndex: UInt64) 
     
-    func playAlbumTrack(albumIndex: UInt64, trackIndex: UInt64) 
+    /**
+     * Drops every row under `directory` and rebuilds the library synchronously.
+     */
+    func libraryRemoveFolder(directory: String) 
     
-    func playAllFromLibrary(startIndex: UInt64) 
+    func libraryScan(directories: [String]) 
     
-    func playLibraryTracks(indices: [UInt64], startIndex: UInt64) 
+    /**
+     * Index of the lyric line at `position_ms`, or -1. Runs on the UI's position tick.
+     */
+    func lyricsGetActiveIndex(positionMs: UInt64)  -> Int32
     
-    func playSingleFromLibrary(index: UInt64) 
+    func playerCycleRepeat() 
     
-    func previous() 
+    /**
+     * Bottom player bar: title, artist, progress, play state, volume.
+     */
+    func playerGetBar()  -> PlayerBarViewModel
     
-    func queueAlbum(index: UInt64) 
+    /**
+     * Full-screen play view: current track, lyrics, palette.
+     */
+    func playerGetPlayView()  -> PlayViewModel
+    
+    func playerGetPosition()  -> UInt64
+    
+    func playerNext() 
+    
+    func playerPrevious() 
+    
+    func playerSeek(positionMs: UInt64) 
+    
+    func playerSetVolume(volume: Float) 
+    
+    func playerShuffle() 
+    
+    func playerTogglePlay() 
     
     func queueClear() 
+    
+    /**
+     * Queue in play order; `index` on each row is the queue position.
+     */
+    func queueGet()  -> [TrackItemViewModel]
     
     func queueGoto(index: UInt64) 
     
     func queueMove(from: UInt64, to: UInt64) 
     
     func queueRemove(index: UInt64) 
-    
-    /**
-     * Drops every row under `directory` and rebuilds the library synchronously.
-     */
-    func removeFolder(directory: String) 
-    
-    func requestSync() 
-    
-    func scanDirectories(directories: [String]) 
-    
-    func seek(positionMs: UInt64) 
-    
-    func setDiscordEnabled(enabled: Bool) 
-    
-    func setRepeatMode(mode: NativeRepeatMode) 
-    
-    func setVolume(volume: Float) 
-    
-    func shuffle() 
-    
-    func shuffleAlbum(index: UInt64) 
-    
-    func togglePlay() 
     
 }
 
@@ -765,209 +735,55 @@ public convenience init(dataDir: String, cacheDir: String, listener: FluyerEvent
     
 
     
-open func cycleRepeat() {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_cycle_repeat(self.uniffiClonePointer(),$0
-    )
-}
-}
-    
-open func generateBackgroundForCurrent(width: UInt32, height: UInt32) -> Data? {
-    return try!  FfiConverterOptionData.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_generate_background_for_current(self.uniffiClonePointer(),
-        FfiConverterUInt32.lower(width),
-        FfiConverterUInt32.lower(height),$0
-    )
-})
-}
-    
-open func getActiveLyricIndex(positionMs: UInt64) -> Int32 {
-    return try!  FfiConverterInt32.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_active_lyric_index(self.uniffiClonePointer(),
-        FfiConverterUInt64.lower(positionMs),$0
-    )
-})
-}
-    
-open func getAlbumCard(index: UInt64) -> AlbumCardViewModel? {
+open func albumGetCard(index: UInt64) -> AlbumCardViewModel? {
     return try!  FfiConverterOptionTypeAlbumCardViewModel.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_album_card(self.uniffiClonePointer(),
+    uniffi_fluyer_core_fn_method_fluyerappengine_album_get_card(self.uniffiClonePointer(),
         FfiConverterUInt64.lower(index),$0
     )
 })
 }
     
-open func getAlbumCount() -> UInt64 {
+open func albumGetCount() -> UInt64 {
     return try!  FfiConverterUInt64.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_album_count(self.uniffiClonePointer(),$0
+    uniffi_fluyer_core_fn_method_fluyerappengine_album_get_count(self.uniffiClonePointer(),$0
     )
 })
 }
     
-open func getAlbumDetail(index: UInt64) -> AlbumDetailViewModel? {
+open func albumGetDetail(index: UInt64) -> AlbumDetailViewModel? {
     return try!  FfiConverterOptionTypeAlbumDetailViewModel.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_album_detail(self.uniffiClonePointer(),
+    uniffi_fluyer_core_fn_method_fluyerappengine_album_get_detail(self.uniffiClonePointer(),
         FfiConverterUInt64.lower(index),$0
     )
 })
 }
     
-open func getAlbumImage(index: UInt64) -> Data? {
-    return try!  FfiConverterOptionData.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_album_image(self.uniffiClonePointer(),
+open func albumPlay(index: UInt64) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_album_play(self.uniffiClonePointer(),
         FfiConverterUInt64.lower(index),$0
     )
-})
+}
 }
     
-open func getAlbumThumbnail(index: UInt64, maxSize: UInt32) -> Data? {
-    return try!  FfiConverterOptionData.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_album_thumbnail(self.uniffiClonePointer(),
-        FfiConverterUInt64.lower(index),
-        FfiConverterUInt32.lower(maxSize),$0
-    )
-})
-}
-    
-open func getAlbumThumbnailRgba(index: UInt64, width: UInt32, height: UInt32) -> Data? {
-    return try!  FfiConverterOptionData.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_album_thumbnail_rgba(self.uniffiClonePointer(),
-        FfiConverterUInt64.lower(index),
-        FfiConverterUInt32.lower(width),
-        FfiConverterUInt32.lower(height),$0
-    )
-})
-}
-    
-open func getAlbumTracks(albumIndex: UInt64) -> [TrackItemViewModel] {
-    return try!  FfiConverterSequenceTypeTrackItemViewModel.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_album_tracks(self.uniffiClonePointer(),
-        FfiConverterUInt64.lower(albumIndex),$0
-    )
-})
-}
-    
-open func getAlbumView(index: UInt64) -> AlbumCardViewModel? {
-    return try!  FfiConverterOptionTypeAlbumCardViewModel.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_album_view(self.uniffiClonePointer(),
+open func albumQueue(index: UInt64) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_album_queue(self.uniffiClonePointer(),
         FfiConverterUInt64.lower(index),$0
     )
-})
+}
 }
     
-open func getCurrentImage() -> Data? {
-    return try!  FfiConverterOptionData.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_current_image(self.uniffiClonePointer(),$0
-    )
-})
-}
-    
-open func getCurrentThumbnail(maxSize: UInt32) -> Data? {
-    return try!  FfiConverterOptionData.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_current_thumbnail(self.uniffiClonePointer(),
-        FfiConverterUInt32.lower(maxSize),$0
-    )
-})
-}
-    
-open func getLyrics() -> [LyricLine] {
-    return try!  FfiConverterSequenceTypeLyricLine.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_lyrics(self.uniffiClonePointer(),$0
-    )
-})
-}
-    
-open func getPlayView() -> PlayViewModel {
-    return try!  FfiConverterTypePlayViewModel.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_play_view(self.uniffiClonePointer(),$0
-    )
-})
-}
-    
-open func getPlayerBarView() -> PlayerBarViewModel {
-    return try!  FfiConverterTypePlayerBarViewModel.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_player_bar_view(self.uniffiClonePointer(),$0
-    )
-})
-}
-    
-open func getPosition() -> UInt64 {
-    return try!  FfiConverterUInt64.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_position(self.uniffiClonePointer(),$0
-    )
-})
-}
-    
-    /**
-     * Queue in play order; `index` on each row is the queue position.
-     */
-open func getQueueView() -> [TrackItemViewModel] {
-    return try!  FfiConverterSequenceTypeTrackItemViewModel.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_queue_view(self.uniffiClonePointer(),$0
-    )
-})
-}
-    
-open func getScanStatus() -> ScanStatusViewModel {
-    return try!  FfiConverterTypeScanStatusViewModel.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_scan_status(self.uniffiClonePointer(),$0
-    )
-})
-}
-    
-open func getTrackCount() -> UInt64 {
-    return try!  FfiConverterUInt64.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_track_count(self.uniffiClonePointer(),$0
-    )
-})
-}
-    
-open func getTrackImage(index: UInt64) -> Data? {
-    return try!  FfiConverterOptionData.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_track_image(self.uniffiClonePointer(),
+open func albumShuffle(index: UInt64) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_album_shuffle(self.uniffiClonePointer(),
         FfiConverterUInt64.lower(index),$0
     )
-})
+}
 }
     
-open func getTrackThumbnail(index: UInt64, maxSize: UInt32) -> Data? {
-    return try!  FfiConverterOptionData.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_track_thumbnail(self.uniffiClonePointer(),
-        FfiConverterUInt64.lower(index),
-        FfiConverterUInt32.lower(maxSize),$0
-    )
-})
-}
-    
-open func getTrackThumbnailRgba(index: UInt64, width: UInt32, height: UInt32) -> Data? {
-    return try!  FfiConverterOptionData.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_track_thumbnail_rgba(self.uniffiClonePointer(),
-        FfiConverterUInt64.lower(index),
-        FfiConverterUInt32.lower(width),
-        FfiConverterUInt32.lower(height),$0
-    )
-})
-}
-    
-open func getTrackView(index: UInt64) -> TrackItemViewModel? {
-    return try!  FfiConverterOptionTypeTrackItemViewModel.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_track_view(self.uniffiClonePointer(),
-        FfiConverterUInt64.lower(index),$0
-    )
-})
-}
-    
-open func getVolume() -> Float {
-    return try!  FfiConverterFloat.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_get_volume(self.uniffiClonePointer(),$0
-    )
-})
-}
-    
-open func loadAlbumThumbnail(index: UInt64, maxSize: UInt32)async  -> Data? {
+open func artworkLoadAlbumThumbnail(index: UInt64, maxSize: UInt32)async  -> Data? {
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_fluyer_core_fn_method_fluyerappengine_load_album_thumbnail(
+                uniffi_fluyer_core_fn_method_fluyerappengine_artwork_load_album_thumbnail(
                     self.uniffiClonePointer(),
                     FfiConverterUInt64.lower(index),FfiConverterUInt32.lower(maxSize)
                 )
@@ -981,56 +797,11 @@ open func loadAlbumThumbnail(index: UInt64, maxSize: UInt32)async  -> Data? {
         )
 }
     
-    /**
-     * Async twin of `generate_background_for_current`. Blurring and the palette
-     * decode are blocking work, so the UI must not call the sync variant on the
-     * main thread.
-     */
-open func loadAnimatedBackground(width: UInt32, height: UInt32)async  -> AnimatedBackgroundFrame? {
+open func artworkLoadCurrentThumbnail(maxSize: UInt32)async  -> Data? {
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_fluyer_core_fn_method_fluyerappengine_load_animated_background(
-                    self.uniffiClonePointer(),
-                    FfiConverterUInt32.lower(width),FfiConverterUInt32.lower(height)
-                )
-            },
-            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
-            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
-            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterOptionTypeAnimatedBackgroundFrame.lift,
-            errorHandler: nil
-            
-        )
-}
-    
-    /**
-     * Unblurred palette-block square that replaces the cover as backdrop input.
-     * Random per call: the UI calls it once per track.
-     */
-open func loadBlockArtwork()async  -> AnimatedBackgroundFrame {
-    return
-        try!  await uniffiRustCallAsync(
-            rustFutureFunc: {
-                uniffi_fluyer_core_fn_method_fluyerappengine_load_block_artwork(
-                    self.uniffiClonePointer()
-                    
-                )
-            },
-            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
-            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
-            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterTypeAnimatedBackgroundFrame.lift,
-            errorHandler: nil
-            
-        )
-}
-    
-open func loadCurrentThumbnail(maxSize: UInt32)async  -> Data? {
-    return
-        try!  await uniffiRustCallAsync(
-            rustFutureFunc: {
-                uniffi_fluyer_core_fn_method_fluyerappengine_load_current_thumbnail(
+                uniffi_fluyer_core_fn_method_fluyerappengine_artwork_load_current_thumbnail(
                     self.uniffiClonePointer(),
                     FfiConverterUInt32.lower(maxSize)
                 )
@@ -1044,11 +815,11 @@ open func loadCurrentThumbnail(maxSize: UInt32)async  -> Data? {
         )
 }
     
-open func loadTrackThumbnail(index: UInt64, maxSize: UInt32)async  -> Data? {
+open func artworkLoadTrackThumbnail(index: UInt64, maxSize: UInt32)async  -> Data? {
     return
         try!  await uniffiRustCallAsync(
             rustFutureFunc: {
-                uniffi_fluyer_core_fn_method_fluyerappengine_load_track_thumbnail(
+                uniffi_fluyer_core_fn_method_fluyerappengine_artwork_load_track_thumbnail(
                     self.uniffiClonePointer(),
                     FfiConverterUInt64.lower(index),FfiConverterUInt32.lower(maxSize)
                 )
@@ -1062,70 +833,173 @@ open func loadTrackThumbnail(index: UInt64, maxSize: UInt32)async  -> Data? {
         )
 }
     
-open func next() {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_next(self.uniffiClonePointer(),$0
+    /**
+     * Unblurred palette-block square that replaces the cover as backdrop input.
+     * Random per call: the UI calls it once per track.
+     */
+open func backdropLoadBlockArtwork()async  -> AnimatedBackgroundFrame {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_backdrop_load_block_artwork(
+                    self.uniffiClonePointer()
+                    
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeAnimatedBackgroundFrame.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+    /**
+     * Process-global in the core (not per engine).
+     */
+open func discordSetEnabled(enabled: Bool) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_discord_set_enabled(self.uniffiClonePointer(),
+        FfiConverterBool.lower(enabled),$0
     )
 }
 }
     
-open func pause() {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_pause(self.uniffiClonePointer(),$0
+open func libraryGetScanStatus() -> ScanStatusViewModel {
+    return try!  FfiConverterTypeScanStatusViewModel.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_library_get_scan_status(self.uniffiClonePointer(),$0
     )
-}
+})
 }
     
-open func play() {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_play(self.uniffiClonePointer(),$0
-    )
-}
-}
-    
-open func playAlbum(index: UInt64) {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_play_album(self.uniffiClonePointer(),
+open func libraryGetTrack(index: UInt64) -> TrackItemViewModel? {
+    return try!  FfiConverterOptionTypeTrackItemViewModel.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_library_get_track(self.uniffiClonePointer(),
         FfiConverterUInt64.lower(index),$0
     )
-}
+})
 }
     
-open func playAlbumTrack(albumIndex: UInt64, trackIndex: UInt64) {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_play_album_track(self.uniffiClonePointer(),
-        FfiConverterUInt64.lower(albumIndex),
-        FfiConverterUInt64.lower(trackIndex),$0
+open func libraryGetTrackCount() -> UInt64 {
+    return try!  FfiConverterUInt64.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_library_get_track_count(self.uniffiClonePointer(),$0
     )
-}
+})
 }
     
-open func playAllFromLibrary(startIndex: UInt64) {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_play_all_from_library(self.uniffiClonePointer(),
+open func libraryPlayAll(startIndex: UInt64) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_library_play_all(self.uniffiClonePointer(),
         FfiConverterUInt64.lower(startIndex),$0
     )
 }
 }
     
-open func playLibraryTracks(indices: [UInt64], startIndex: UInt64) {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_play_library_tracks(self.uniffiClonePointer(),
+    /**
+     * Plays library tracks in the caller's (sorted) order.
+     */
+open func libraryPlayTracks(indices: [UInt64], startIndex: UInt64) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_library_play_tracks(self.uniffiClonePointer(),
         FfiConverterSequenceUInt64.lower(indices),
         FfiConverterUInt64.lower(startIndex),$0
     )
 }
 }
     
-open func playSingleFromLibrary(index: UInt64) {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_play_single_from_library(self.uniffiClonePointer(),
-        FfiConverterUInt64.lower(index),$0
+    /**
+     * Drops every row under `directory` and rebuilds the library synchronously.
+     */
+open func libraryRemoveFolder(directory: String) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_library_remove_folder(self.uniffiClonePointer(),
+        FfiConverterString.lower(directory),$0
     )
 }
 }
     
-open func previous() {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_previous(self.uniffiClonePointer(),$0
+open func libraryScan(directories: [String]) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_library_scan(self.uniffiClonePointer(),
+        FfiConverterSequenceString.lower(directories),$0
     )
 }
 }
     
-open func queueAlbum(index: UInt64) {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_queue_album(self.uniffiClonePointer(),
-        FfiConverterUInt64.lower(index),$0
+    /**
+     * Index of the lyric line at `position_ms`, or -1. Runs on the UI's position tick.
+     */
+open func lyricsGetActiveIndex(positionMs: UInt64) -> Int32 {
+    return try!  FfiConverterInt32.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_lyrics_get_active_index(self.uniffiClonePointer(),
+        FfiConverterUInt64.lower(positionMs),$0
+    )
+})
+}
+    
+open func playerCycleRepeat() {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_player_cycle_repeat(self.uniffiClonePointer(),$0
+    )
+}
+}
+    
+    /**
+     * Bottom player bar: title, artist, progress, play state, volume.
+     */
+open func playerGetBar() -> PlayerBarViewModel {
+    return try!  FfiConverterTypePlayerBarViewModel.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_player_get_bar(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * Full-screen play view: current track, lyrics, palette.
+     */
+open func playerGetPlayView() -> PlayViewModel {
+    return try!  FfiConverterTypePlayViewModel.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_player_get_play_view(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+open func playerGetPosition() -> UInt64 {
+    return try!  FfiConverterUInt64.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_player_get_position(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+open func playerNext() {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_player_next(self.uniffiClonePointer(),$0
+    )
+}
+}
+    
+open func playerPrevious() {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_player_previous(self.uniffiClonePointer(),$0
+    )
+}
+}
+    
+open func playerSeek(positionMs: UInt64) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_player_seek(self.uniffiClonePointer(),
+        FfiConverterUInt64.lower(positionMs),$0
+    )
+}
+}
+    
+open func playerSetVolume(volume: Float) {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_player_set_volume(self.uniffiClonePointer(),
+        FfiConverterFloat.lower(volume),$0
+    )
+}
+}
+    
+open func playerShuffle() {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_player_shuffle(self.uniffiClonePointer(),$0
+    )
+}
+}
+    
+open func playerTogglePlay() {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_player_toggle_play(self.uniffiClonePointer(),$0
     )
 }
 }
@@ -1134,6 +1008,16 @@ open func queueClear() {try! rustCall() {
     uniffi_fluyer_core_fn_method_fluyerappengine_queue_clear(self.uniffiClonePointer(),$0
     )
 }
+}
+    
+    /**
+     * Queue in play order; `index` on each row is the queue position.
+     */
+open func queueGet() -> [TrackItemViewModel] {
+    return try!  FfiConverterSequenceTypeTrackItemViewModel.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_queue_get(self.uniffiClonePointer(),$0
+    )
+})
 }
     
 open func queueGoto(index: UInt64) {try! rustCall() {
@@ -1154,76 +1038,6 @@ open func queueMove(from: UInt64, to: UInt64) {try! rustCall() {
 open func queueRemove(index: UInt64) {try! rustCall() {
     uniffi_fluyer_core_fn_method_fluyerappengine_queue_remove(self.uniffiClonePointer(),
         FfiConverterUInt64.lower(index),$0
-    )
-}
-}
-    
-    /**
-     * Drops every row under `directory` and rebuilds the library synchronously.
-     */
-open func removeFolder(directory: String) {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_remove_folder(self.uniffiClonePointer(),
-        FfiConverterString.lower(directory),$0
-    )
-}
-}
-    
-open func requestSync() {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_request_sync(self.uniffiClonePointer(),$0
-    )
-}
-}
-    
-open func scanDirectories(directories: [String]) {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_scan_directories(self.uniffiClonePointer(),
-        FfiConverterSequenceString.lower(directories),$0
-    )
-}
-}
-    
-open func seek(positionMs: UInt64) {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_seek(self.uniffiClonePointer(),
-        FfiConverterUInt64.lower(positionMs),$0
-    )
-}
-}
-    
-open func setDiscordEnabled(enabled: Bool) {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_set_discord_enabled(self.uniffiClonePointer(),
-        FfiConverterBool.lower(enabled),$0
-    )
-}
-}
-    
-open func setRepeatMode(mode: NativeRepeatMode) {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_set_repeat_mode(self.uniffiClonePointer(),
-        FfiConverterTypeNativeRepeatMode.lower(mode),$0
-    )
-}
-}
-    
-open func setVolume(volume: Float) {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_set_volume(self.uniffiClonePointer(),
-        FfiConverterFloat.lower(volume),$0
-    )
-}
-}
-    
-open func shuffle() {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_shuffle(self.uniffiClonePointer(),$0
-    )
-}
-}
-    
-open func shuffleAlbum(index: UInt64) {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_shuffle_album(self.uniffiClonePointer(),
-        FfiConverterUInt64.lower(index),$0
-    )
-}
-}
-    
-open func togglePlay() {try! rustCall() {
-    uniffi_fluyer_core_fn_method_fluyerappengine_toggle_play(self.uniffiClonePointer(),$0
     )
 }
 }
@@ -2127,8 +1941,6 @@ public enum FluyerError {
     
     case InitFailed(reason: String
     )
-    case OperationFailed(reason: String
-    )
 }
 
 
@@ -2148,9 +1960,6 @@ public struct FfiConverterTypeFluyerError: FfiConverterRustBuffer {
         case 1: return .InitFailed(
             reason: try FfiConverterString.read(from: &buf)
             )
-        case 2: return .OperationFailed(
-            reason: try FfiConverterString.read(from: &buf)
-            )
 
          default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -2165,11 +1974,6 @@ public struct FfiConverterTypeFluyerError: FfiConverterRustBuffer {
         
         case let .InitFailed(reason):
             writeInt(&buf, Int32(1))
-            FfiConverterString.write(reason, into: &buf)
-            
-        
-        case let .OperationFailed(reason):
-            writeInt(&buf, Int32(2))
             FfiConverterString.write(reason, into: &buf)
             
         }
@@ -2574,30 +2378,6 @@ fileprivate struct FfiConverterOptionTypeAlbumDetailViewModel: FfiConverterRustB
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-fileprivate struct FfiConverterOptionTypeAnimatedBackgroundFrame: FfiConverterRustBuffer {
-    typealias SwiftType = AnimatedBackgroundFrame?
-
-    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
-        guard let value = value else {
-            writeInt(&buf, Int8(0))
-            return
-        }
-        writeInt(&buf, Int8(1))
-        FfiConverterTypeAnimatedBackgroundFrame.write(value, into: &buf)
-    }
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
-        switch try readInt(&buf) as Int8 {
-        case 0: return nil
-        case 1: return try FfiConverterTypeAnimatedBackgroundFrame.read(from: &buf)
-        default: throw UniffiInternalError.unexpectedOptionalTag
-        }
-    }
-}
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
 fileprivate struct FfiConverterOptionTypeTrackItemViewModel: FfiConverterRustBuffer {
     typealias SwiftType = TrackItemViewModel?
 
@@ -2813,20 +2593,6 @@ fileprivate func uniffiFutureContinuationCallback(handle: UInt64, pollResult: In
         print("uniffiFutureContinuationCallback invalid handle")
     }
 }
-public func formatTimeLabel(ms: UInt64) -> String {
-    return try!  FfiConverterString.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_func_format_time_label(
-        FfiConverterUInt64.lower(ms),$0
-    )
-})
-}
-public func parseLrcLyrics(lrcText: String) -> [LyricLine] {
-    return try!  FfiConverterSequenceTypeLyricLine.lift(try! rustCall() {
-    uniffi_fluyer_core_fn_func_parse_lrc_lyrics(
-        FfiConverterString.lower(lrcText),$0
-    )
-})
-}
 
 private enum InitializationResult {
     case ok
@@ -2843,133 +2609,97 @@ private var initializationResult: InitializationResult = {
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
-    if (uniffi_fluyer_core_checksum_func_format_time_label() != 52881) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_album_get_card() != 33982) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_func_parse_lrc_lyrics() != 60133) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_album_get_count() != 58725) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_cycle_repeat() != 39027) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_album_get_detail() != 16302) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_generate_background_for_current() != 47697) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_album_play() != 49802) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_active_lyric_index() != 35442) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_album_queue() != 9010) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_card() != 10560) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_album_shuffle() != 47556) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_count() != 36969) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_artwork_load_album_thumbnail() != 48152) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_detail() != 49270) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_artwork_load_current_thumbnail() != 7013) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_image() != 8223) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_artwork_load_track_thumbnail() != 53146) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_thumbnail() != 15426) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_backdrop_load_block_artwork() != 53796) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_thumbnail_rgba() != 35604) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_discord_set_enabled() != 34134) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_tracks() != 23190) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_library_get_scan_status() != 53341) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_album_view() != 60993) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_library_get_track() != 1514) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_current_image() != 14012) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_library_get_track_count() != 18594) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_current_thumbnail() != 29066) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_library_play_all() != 38260) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_lyrics() != 3464) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_library_play_tracks() != 20510) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_play_view() != 52488) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_library_remove_folder() != 5336) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_player_bar_view() != 64426) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_library_scan() != 10675) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_position() != 45143) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_lyrics_get_active_index() != 17835) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_queue_view() != 61295) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_player_cycle_repeat() != 13298) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_scan_status() != 20235) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_player_get_bar() != 65247) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_count() != 42709) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_player_get_play_view() != 37332) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_image() != 12325) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_player_get_position() != 56606) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_thumbnail() != 41648) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_player_next() != 41382) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_thumbnail_rgba() != 54932) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_player_previous() != 3484) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_track_view() != 48451) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_player_seek() != 16178) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_get_volume() != 58439) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_player_set_volume() != 41023) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_load_album_thumbnail() != 48618) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_player_shuffle() != 48102) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_load_animated_background() != 14573) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_load_block_artwork() != 18301) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_load_current_thumbnail() != 58446) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_load_track_thumbnail() != 9651) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_next() != 33101) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_pause() != 65069) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_play() != 64620) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_play_album() != 19961) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_play_album_track() != 10505) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_play_all_from_library() != 64362) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_play_library_tracks() != 19197) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_play_single_from_library() != 55280) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_previous() != 6186) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_queue_album() != 55067) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_player_toggle_play() != 34310) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_queue_clear() != 53786) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_queue_get() != 29063) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_queue_goto() != 18631) {
@@ -2979,36 +2709,6 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_queue_remove() != 11064) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_remove_folder() != 565) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_request_sync() != 59451) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_scan_directories() != 24830) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_seek() != 54539) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_set_discord_enabled() != 46701) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_set_repeat_mode() != 52718) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_set_volume() != 38895) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_shuffle() != 7595) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_shuffle_album() != 38700) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_toggle_play() != 3078) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_constructor_fluyerappengine_new() != 38275) {

@@ -40,3 +40,24 @@ Learner decisions:
 Accepted additions (via Implement confirmation): `BackdropSource` enum in SettingsState.swift; source in the task key so switching reloads; coverless track in artwork mode falls back to grey blocks; unknown saved value decodes to `.artwork`; default `.artwork`.
 Implemented: SettingsState.swift (enum + persistence), SettingsView.swift (Picker under Appearance), AnimatedBackgroundView.swift (branch on source).
 Verified: `swift build` OK; SettingsStateTests 7/7 pass (round-trip, default, unknown value). Visual check not done yet.
+
+## Readability refactor (Rust core + macOS Swift)
+Status: R1 (FFI layer) implemented. Next: R2 engine split, then Swift.
+Requirement (learner): code findable by humans; e.g. couldn't find where to change a view's padding. Scope: Rust core + Swift only.
+Learner decisions:
+- Lookup by UI keyword (searches "Now Playing" to find queue view); names should follow UI words.
+- Layout constants in one shared file; accepts that one change can affect many places.
+- Rust: readability goal; FFI may be modified entirely.
+- Order: md doc first, Rust (FFI first), then Swift.
+- Finds code by file name too; queue is main focus.
+- Rewrite both FFI layers (UniFFI + Windows C ABI); Windows untestable now; Android (UniFFI Kotlin) must keep working; FFI renames must be easy.
+- Rust: many small properly named files over few big ones.
+- "Now Playing" stays with the queue; full-screen player stays PlayView (alt name: lyrics page).
+- FFI naming: `<feature>_<verb>` (queue_get, player_seek).
+- Windows keeps hand-written C ABI (P/Invoke + JSON), renamed to the same convention (after explanation that all 3 platforms use FFI).
+- UniFFI wrapper stays a separate layer, split into small properly named files (reason: separate files open in tabs and are searchable; avoids scrolling).
+- Delete unused FFI functions; rename engine methods too in R1.
+- Learner asked to write R1 directly and will verify other platforms later.
+Implemented R1: `uniffi_api/{mod,error,events,player,queue,library,album,artwork,lyrics,backdrop,discord}.rs`, `c_api/{mod,memory,events,player,queue,library,album,artwork,lyrics,discord}.rs`; engine methods renamed in lib.rs; Swift/Kotlin callers + Windows FluyerNative.cs/FluyerEngine.cs/FakeEngine.cs updated; README paths fixed.
+Verified: cargo test 26 pass (new memory.rs round-trip test); swift build + swift test 66 pass; Android bindings + gradle compile/unit tests OK; nm check: all C# imports exist. Not verified: dotnet build, Windows runtime.
+Proposed (not confirmed): Rust `engine/*.rs` impl-block split (R2); Swift `Features/<UI name>/`, one type per file, `Theme/Layout.swift` with role-named constants, per-file `// UI:` keyword comment.

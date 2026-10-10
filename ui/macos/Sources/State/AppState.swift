@@ -60,7 +60,7 @@ final class AppState: FluyerEventListener {
 
         refresh()
         guard let engine else { return }
-        engine.setDiscordEnabled(enabled: settings.discordRpc)
+        engine.discordSetEnabled(enabled: settings.discordRpc)
         playback.setVolume(settings.volume)
         scanSavedFolders()
     }
@@ -82,31 +82,31 @@ final class AppState: FluyerEventListener {
     func scanFolders(_ paths: [String]) {
         guard !paths.isEmpty else { return }
         settings.addFolders(paths)
-        engine?.scanDirectories(directories: paths.map(SettingsState.normalize))
+        engine?.libraryScan(directories: paths.map(SettingsState.normalize))
     }
 
     /// Re-scan every saved folder.
     func scanSavedFolders() {
         guard !settings.musicFolders.isEmpty else { return }
-        engine?.scanDirectories(directories: settings.musicFolders)
+        engine?.libraryScan(directories: settings.musicFolders)
     }
 
     /// Forget a folder and drop its tracks from the library.
     func removeFolder(_ path: String) {
         guard let stored = settings.removeFolder(path) else { return }
-        engine?.removeFolder(directory: stored)
+        engine?.libraryRemoveFolder(directory: stored)
         refresh()
     }
 
     func setDiscordEnabled(_ enabled: Bool) {
         settings.discordRpc = enabled
-        engine?.setDiscordEnabled(enabled: enabled)
+        engine?.discordSetEnabled(enabled: enabled)
     }
 
     /// Play the whole library from the first track (legacy menu "Play All").
     func playAll() {
         guard !library.tracks.isEmpty else { return }
-        engine?.playAllFromLibrary(startIndex: 0)
+        engine?.libraryPlayAll(startIndex: 0)
     }
 
     /// Persist session state that changes too often to save live (volume).
