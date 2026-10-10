@@ -42,7 +42,7 @@ Implemented: SettingsState.swift (enum + persistence), SettingsView.swift (Picke
 Verified: `swift build` OK; SettingsStateTests 7/7 pass (round-trip, default, unknown value). Visual check not done yet.
 
 ## Readability refactor (Rust core + macOS Swift)
-Status: R1 (FFI layer) implemented. Next: R2 engine split, then Swift.
+Status: R1 (FFI) + R2 (engine split) implemented. Next: Swift step (needs learner decisions).
 Requirement (learner): code findable by humans; e.g. couldn't find where to change a view's padding. Scope: Rust core + Swift only.
 Learner decisions:
 - Lookup by UI keyword (searches "Now Playing" to find queue view); names should follow UI words.
@@ -60,4 +60,5 @@ Learner decisions:
 - Learner asked to write R1 directly and will verify other platforms later.
 Implemented R1: `uniffi_api/{mod,error,events,player,queue,library,album,artwork,lyrics,backdrop,discord}.rs`, `c_api/{mod,memory,events,player,queue,library,album,artwork,lyrics,discord}.rs`; engine methods renamed in lib.rs; Swift/Kotlin callers + Windows FluyerNative.cs/FluyerEngine.cs/FakeEngine.cs updated; README paths fixed.
 Verified: cargo test 26 pass (new memory.rs round-trip test); swift build + swift test 66 pass; Android bindings + gradle compile/unit tests OK; nm check: all C# imports exist. Not verified: dotnet build, Windows runtime.
-Proposed (not confirmed): Rust `engine/*.rs` impl-block split (R2); Swift `Features/<UI name>/`, one type per file, `Theme/Layout.swift` with role-named constants, per-file `// UI:` keyword comment.
+Implemented R2 (learner said "execute"): `engine/{mod,player,queue,library,album,artwork,lyrics,backdrop,thumbnail_cache}.rs`, lib.rs now 16 lines; same feature names as FFI. Verified: cargo test 26, swift test 66, Android compile, nm. Logic unchanged (moved only).
+Proposed (not confirmed): Swift `Features/<UI name>/`, one type per file, `Theme/Layout.swift` with role-named constants, per-file `// UI:` keyword comment.

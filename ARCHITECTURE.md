@@ -1,6 +1,6 @@
 # Fluyer Native Architecture (refactor plan)
 
-Status: R1 (FFI layer) implemented. R2 (engine split) and Swift pending.
+Status: R1 (FFI layer) and R2 (engine split) implemented. Swift pending.
 Scope: Rust core (`crates/fluyer_core`) and macOS Swift (`ui/macos`). Windows UI is out of scope.
 
 ## Goal
@@ -50,24 +50,27 @@ Decision 1 only works if one word maps to one place. **Open:** pick names.
 
 ## Rust target (proposal, pending learner review)
 
+### Step R2: engine split (DONE)
+
 ```
 crates/fluyer_core/src/
-  lib.rs                 module list + uniffi scaffolding only
+  lib.rs                 module list + uniffi scaffolding only (16 lines)
   engine/
     mod.rs               FluyerEngine struct + new()
-    playback.rs          play/pause/seek/volume/repeat/shuffle
-    queue.rs             queue view, goto/remove/move/clear, play album/tracks
-    library.rs           scan, remove folder, track/album lookup
-    artwork.rs           covers, thumbnails (+ ThumbnailCache)
-    lyrics.rs            resolve/parse/active index (+ lyrics cache)
-    backdrop.rs          palette, block artwork, background
-    views.rs             get_*_view builders
-  api/                   the single FFI surface (see open question)
+    player.rs            player_*: transport, volume, repeat, bar + play view
+    queue.rs             queue_*  ("Now Playing" panel)
+    library.rs           library_*: scan, remove folder, tracks (+ prune_rows test)
+    album.rs             album_*
+    artwork.rs           artwork_*: cover resolution + memoized thumbnails
+    lyrics.rs            lyrics_*: resolution + parsed cache
+    backdrop.rs          backdrop_*: palette + block artwork
+    thumbnail_cache.rs   ThumbnailCache (bounded FIFO)
+  uniffi_api/  c_api/    FFI, same feature file names (see R1)
   audio/ db/ library/ metadata/ services/ view_models/   unchanged
 ```
 
 Each `engine/*.rs` is an `impl FluyerEngine` block. Same struct, split by feature.
-Granularity follows decision 7: split further whenever a file mixes two features.
+Verified: cargo test 26 pass, swift test 66 pass, Android compile OK, C# imports present (`nm`).
 
 FFI consumers today:
 - `uniffi_api.rs` serves macOS (Swift) and Android (Kotlin).
@@ -154,7 +157,8 @@ Rules:
 
 ## Open questions
 
-1. R2: split `lib.rs` engine into `engine/<feature>.rs` files (same feature names as the FFI).
+1. Later: split `audio/player.rs` (1102 lines).
+2. Swift step: confirm the proposed layout above.
 
 ## Where to change X (fill in after the move)
 
@@ -162,5 +166,6 @@ Rules:
 |---|---|
 | A Swift/Kotlin engine call, e.g. `queueGet` | `crates/fluyer_core/src/uniffi_api/queue.rs` |
 | A Windows export, e.g. `fluyer_queue_get` | `crates/fluyer_core/src/c_api/queue.rs` + `ui/windows/Fluyer.Core/Native/FluyerNative.cs` |
+| Engine logic behind a call, e.g. queue | `crates/fluyer_core/src/engine/queue.rs` |
 | Events sent to the UI | `uniffi_api/events.rs` / `c_api/events.rs` |
 | Swift views | after the Swift step |
