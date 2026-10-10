@@ -42,7 +42,7 @@ Implemented: SettingsState.swift (enum + persistence), SettingsView.swift (Picke
 Verified: `swift build` OK; SettingsStateTests 7/7 pass (round-trip, default, unknown value). Visual check not done yet.
 
 ## Readability refactor (Rust core + macOS Swift)
-Status: R1 (FFI) + R2 (engine split) implemented. Next: Swift step (needs learner decisions).
+Status: R1 (FFI) + R2 (engine split) implemented. Swift S1-S3 implemented; awaiting learner visual check.
 Requirement (learner): code findable by humans; e.g. couldn't find where to change a view's padding. Scope: Rust core + Swift only.
 Learner decisions:
 - Lookup by UI keyword (searches "Now Playing" to find queue view); names should follow UI words.
@@ -61,4 +61,16 @@ Learner decisions:
 Implemented R1: `uniffi_api/{mod,error,events,player,queue,library,album,artwork,lyrics,backdrop,discord}.rs`, `c_api/{mod,memory,events,player,queue,library,album,artwork,lyrics,discord}.rs`; engine methods renamed in lib.rs; Swift/Kotlin callers + Windows FluyerNative.cs/FluyerEngine.cs/FakeEngine.cs updated; README paths fixed.
 Verified: cargo test 26 pass (new memory.rs round-trip test); swift build + swift test 66 pass; Android bindings + gradle compile/unit tests OK; nm check: all C# imports exist. Not verified: dotnet build, Windows runtime.
 Implemented R2 (learner said "execute"): `engine/{mod,player,queue,library,album,artwork,lyrics,backdrop,thumbnail_cache}.rs`, lib.rs now 16 lines; same feature names as FFI. Verified: cargo test 26, swift test 66, Android compile, nm. Logic unchanged (moved only).
-Proposed (not confirmed): Swift `Features/<UI name>/`, one type per file, `Theme/Layout.swift` with role-named constants, per-file `// UI:` keyword comment.
+Swift decisions (learner):
+- Separate logic and view (MVVM-like).
+- Views never call the engine directly; everything goes through a state object.
+- State per feature, grouped under screens (e.g. Play > PlayerBar, Play > Lyrics, Home > PlayerBar, Home > MusicGrid).
+- Naming: keep `XState` + `XView` (no "ViewModel" suffix in Swift).
+- Folders: Screen > Feature > state + view.
+- Shared state in a shared folder; shared views in `Components/`; one shared layout file.
+- PlayerBar state shared between Home and Play; learner noted the two bars differ (kept as two views).
+Design confirmed (Confirm and continue) incl. accepted additions: CoverState, views get only needed state, @State for hover/idle, SettingsState in Shared, role-named Layout grouped by feature, tests renamed. Recorded in ARCHITECTURE.md.
+Implemented S1 (Implement this step): files moved to App/, Screens/{Home,Play,Settings}/<feature>/, Shared/{State,Support}/, Components/; renames ContentView->HomeView, QueuePaneView->QueueView, CollectionHeaderView->AlbumHeaderView, EdgeTrigger->QueueEdgeTrigger, AlbumSelection->LibraryFilterState, Metrics->AlbumMetrics; split AlbumGridView, AlbumCard, TrackCard, QueueRow, SortMenu, ToastView, PlayControlsView, LyricsView, Metal backdrop types; tests renamed; README layout updated. Verified swift build + swift test 66 pass. Visual check not done.
+Implemented S2 (learner said "continue"): CoverState (Shared/State) wraps engine + ThumbnailStore; views/rows/backdrop/NowPlayingCoordinator use it; every view takes only the state objects it reads (QueueView(queue:playback:library:covers:width:), etc.); AppState only in HomeView/SettingsView/FluyerApp. Test CoverStateTests (no engine returns nil).
+Implemented S3: Shared/Theme/Layout.swift, enums per feature (Window, TrackRow, MusicGrid, Albums, AlbumHeader, Queue, PlayerBar, Play, PlayControls, Lyrics, Toast, Settings); all padding/spacing/frame/cornerRadius numbers in Screens/ and Components/ replaced; fonts, shadows, opacities, timings left inline. AlbumMetrics now reads Layout.Albums; queue sidebar inset uses Layout.Queue.outerInset.
+Verified: swift build, swift test 67 pass. Visual check NOT done (raw binary launch showed no window). Windows not built.

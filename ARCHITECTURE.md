@@ -1,6 +1,6 @@
 # Fluyer Native Architecture (refactor plan)
 
-Status: R1 (FFI layer) and R2 (engine split) implemented. Swift pending.
+Status: R1, R2, S1, S2, S3 implemented. Visual check and Windows build pending.
 Scope: Rust core (`crates/fluyer_core`) and macOS Swift (`ui/macos`). Windows UI is out of scope.
 
 ## Goal
@@ -129,36 +129,63 @@ Verified on macOS: `cargo test` (26 pass), Swift bindings regenerated, `swift bu
 testDebugUnitTest` OK, every `FluyerNative.cs` import exists in the built library (`nm`).
 Not verified: `dotnet build` (no .NET runtime here), Windows runtime.
 
-## Swift target (proposal, pending learner review)
+## Swift target (confirmed design)
+
+Pattern: MVVM-like. Views draw state and forward actions; state objects own logic and
+are the only code that calls the engine. Names: `XState` + `XView`.
 
 ```
 ui/macos/Sources/
-  App/            FluyerApp, AppDelegate, MainWindow (was ContentView)
-  Theme/Layout.swift     every padding/spacing/size constant, named by role
-  Features/
-    Songs/        SongList, SongCard
-    Albums/       AlbumCarousel, AlbumGrid, AlbumCard, AlbumHeader
-    Queue/        QueuePanel, QueueRow, QueueEdgeTrigger, QueueState
-    NowPlaying/   full-screen player: screen, controls, lyrics
-    PlayerBar/    PlayerBar
-    Toolbar/      SortMenu, SearchField, LibraryFilter (was AlbumSelection)
-    Backdrop/     AnimatedBackground, ArtworkBackdropRenderer
-    Settings/     SettingsView, SettingsState
-    Toast/        Toast, ToastState
-  Shared/         SliderTrack, CurrentCover, SidebarOcclusion, helpers
+  App/            FluyerApp, AppDelegate
+  Screens/
+    Home/         HomeView                    (was ContentView)
+      MusicGrid/  MusicGridView, TrackCard
+      Albums/     AlbumCarouselView, AlbumGridView, AlbumCard, AlbumHeaderView
+      Queue/      QueueView, QueueRow, QueueEdgeTrigger, QueueState   ("Now Playing")
+      PlayerBar/  PlayerBarView
+      Toolbar/    SortMenu, ToolbarSearchField
+      LibraryFilterState                       (was AlbumSelection)
+    Play/         PlayView
+      Controls/   PlayControlsView
+      Lyrics/     LyricsView
+    Settings/     SettingsView
+  Shared/
+    State/        AppState, EngineHandle, PlaybackState, PlaybackClock, LibraryState,
+                  SettingsState, ToastState, CoverState (new)
+    Support/      TimeFormat, PlaybackIcons, ThumbnailKey, ThumbnailStore, NowPlayingCoordinator, ...
+    Theme/        Layout.swift
+  Components/     SliderTrack, CurrentCoverView, AnimatedBackgroundView, ArtworkBackdropRenderer,
+                  ToastView, SidebarOcclusion
 ```
 
 Rules:
+- Feature state lives with its screen; state used by several screens lives in `Shared/State`.
+- Views used by several screens live in `Components/`.
 - One view type per file; file name = type name.
-- Each file starts with a one-line comment listing the UI words it renders
-  (e.g. `// UI: "Queue is empty", Clear Queue button`) so keyword search hits it.
-- Layout constants named by role (`Layout.panelInset`), not by value (`Layout.twelve`),
-  so changing one meaning does not silently change an unrelated one.
+- Views receive only the state objects they use (no whole `AppState`).
+- Transient look-only state (hover, idle timer) stays `@State` in the view.
+- Home and Play player bars are different views over the same `PlaybackState`.
+- Layout numbers live in `Shared/Theme/Layout.swift`, named by role, grouped by feature.
+
+Steps:
+- S1 (DONE): move/rename files, one view type per file. No behavior change.
+  Renames: ContentView->HomeView, QueuePaneView->QueueView, CollectionHeaderView->AlbumHeaderView,
+  EdgeTrigger->QueueEdgeTrigger, AlbumSelection->LibraryFilterState, AlbumCarouselView.Metrics->AlbumMetrics.
+  Split out: AlbumGridView, AlbumCard, AlbumMetrics, TrackCard, QueueRow, SortMenu, ToastView,
+  PlayControlsView, LyricsView, MetalBackdropRepresentable, MetalBackdropView.
+  Small option enums (LibraryMode, TrackSort, AlbumSort, BackdropSource) stay with their state.
+  Verified: swift build, swift test 66 pass.
+- S2 (DONE): `Shared/State/CoverState` is the only image path to the engine; every view
+  receives only the state objects it uses (no `AppState` below `HomeView`/`SettingsView`).
+  `NowPlayingCoordinator` and the backdrop also go through `CoverState`. Test: `CoverStateTests`.
+- S3 (DONE): every padding / spacing / frame size / corner radius in `Screens/` and
+  `Components/` comes from `Shared/Theme/Layout.swift` (`Layout.Queue.panelPadding`, ...).
+  Not moved: font sizes, shadows, blur, opacities, animation timings.
 
 ## Open questions
 
 1. Later: split `audio/player.rs` (1102 lines).
-2. Swift step: confirm the proposed layout above.
+2. Swift S1-S3.
 
 ## Where to change X (fill in after the move)
 
@@ -168,4 +195,14 @@ Rules:
 | A Windows export, e.g. `fluyer_queue_get` | `crates/fluyer_core/src/c_api/queue.rs` + `ui/windows/Fluyer.Core/Native/FluyerNative.cs` |
 | Engine logic behind a call, e.g. queue | `crates/fluyer_core/src/engine/queue.rs` |
 | Events sent to the UI | `uniffi_api/events.rs` / `c_api/events.rs` |
-| Swift views | after the Swift step |
+| Any padding / spacing / size | `ui/macos/Sources/Shared/Theme/Layout.swift`, section named after the feature |
+| Cover loading (any view) | `Shared/State/CoverState.swift` |
+| Queue panel look ("Now Playing") | `ui/macos/Sources/Screens/Home/Queue/QueueView.swift`, rows: `QueueRow.swift` |
+| Queue behavior | `Screens/Home/Queue/QueueState.swift` |
+| Song grid / one song row | `Screens/Home/MusicGrid/MusicGridView.swift` / `TrackCard.swift` |
+| Album strip, grid, card, sizes | `Screens/Home/Albums/` (`AlbumMetrics.swift` = card sizing) |
+| Bottom player bar | `Screens/Home/PlayerBar/PlayerBarView.swift` |
+| Play screen layout / controls / lyrics | `Screens/Play/PlayView.swift` / `Controls/PlayControlsView.swift` / `Lyrics/LyricsView.swift` |
+| Window shell, toolbar layout | `Screens/Home/HomeView.swift`, `Screens/Home/Toolbar/` |
+| Shared state (playback, library, settings) | `Shared/State/` |
+| Shared views (slider, cover, toast, backdrop) | `Components/` |

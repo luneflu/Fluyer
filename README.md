@@ -70,20 +70,25 @@ dylibs from `libs/macos`, and sets matching rpaths — so the Swift app needs no
 
 ```
 ui/macos/Sources/
-  FluyerApp.swift     @main App
-  App/                NSApplicationDelegate
-  State/              observable state (see below)
-  Views/Library/      ContentView (window shell), MusicGridView
-  Views/Album/        AlbumCarouselView, CollectionHeaderView
-  Views/Player/       PlayerBarView
-  Views/Play/         PlayView (now playing)
-  Views/Shared/       CurrentCoverView, SliderTrack
-  Views/Background/   AnimatedBackgroundView
-  Rendering/          ArtworkBackdropRenderer (Metal, no SwiftUI)
-  Support/            ThumbnailStore, TimeFormat, PlaybackIcons, FolderPicker
+  App/                FluyerApp (@main), AppDelegate
+  Screens/            one folder per screen, then one per feature (state + views)
+    Home/             HomeView (window shell), LibraryFilterState
+      MusicGrid/      MusicGridView, TrackCard
+      Albums/         AlbumCarouselView, AlbumGridView, AlbumCard, AlbumHeaderView, AlbumMetrics
+      Queue/          QueueView ("Now Playing"), QueueRow, QueueState, QueueEdgeTrigger
+      PlayerBar/      PlayerBarView
+      Toolbar/        SortMenu, ToolbarSearchField
+    Play/             PlayView; Controls/PlayControlsView; Lyrics/LyricsView
+    Settings/         SettingsView
+  Shared/State/       state used by several screens (see below)
+  Shared/Support/     ThumbnailStore, TimeFormat, PlaybackIcons, FolderPicker, ...
+  Components/         views used by several screens: SliderTrack, CurrentCoverView,
+                      ToastView, SidebarOcclusion, Backdrop/ (Metal backdrop)
 ```
 
-`State/AppState` is a coordinator, not a god object. It owns the engine, turns
+See `ARCHITECTURE.md` for the rules.
+
+`Shared/State/AppState` is a coordinator, not a god object. It owns the engine, turns
 `FluyerEvent`s into updates, and runs the cross-cutting full refresh; everything else is
 delegated:
 
@@ -92,7 +97,8 @@ delegated:
 | `PlaybackState` | Player-bar/play-view snapshots and every transport command |
 | `PlaybackClock` | Position sampled ~4×/s, plus the active lyric cursor |
 | `LibraryState` | Scanned tracks/albums and scan progress |
-| `AlbumSelection` | Which album the grid shows, and album-scoped playback commands |
+| `LibraryFilterState` | Mode, sort, search, which album the grid shows, and album-scoped playback commands |
+| `QueueState` | Queue snapshot and queue commands (`Screens/Home/Queue`) |
 | `ToastState` | Transient messages, with a cancellable dismissal task |
 
 Position lives in `PlaybackClock` rather than on the player-bar snapshot so a tick
@@ -115,7 +121,7 @@ measure — debug Swift carries far larger unoptimized images.
 
 Kotlin talks to the core through UniFFI-generated bindings (`bindings/kotlin/`, JNA at
 runtime), the same API surface the Swift shell uses. `ui/android/.../state/` is a 1:1
-port of `ui/macos/Sources/State/` onto Compose snapshot state; `AppState` and the engine
+port of `ui/macos/Sources/Shared/State/` onto Compose snapshot state; `AppState` and the engine
 live in `FluyerApplication` so the Activity and `PlaybackService` (foreground
 `mediaPlayback` service: MediaSession, notification controls, audio focus, unplug-to-pause)
 share one player. The Metal backdrop is ported to OpenGL ES 3 in `ui/android/.../backdrop/`
@@ -157,8 +163,8 @@ UniFFI 0.28 has no C# backend, so the Windows shell talks to the core over the C
 (`crates/fluyer_core/src/c_api/`) via P/Invoke in `ui/windows/Fluyer.Core/Native/`.
 View models cross as JSON and are deserialized into matching records. The state layer
 (`AppState` + `Playback`/`Library`/`Selection`/`Toast`/`Clock`) is a 1:1 port of
-`ui/macos/Sources/State/` onto `INotifyPropertyChanged`; views are XAML ports of
-`ui/macos/Sources/Views/`. The Metal backdrop is ported to D3D11 in
+`ui/macos/Sources/Shared/State/` onto `INotifyPropertyChanged`; views are XAML ports of
+`ui/macos/Sources/Screens/`. The Metal backdrop is ported to D3D11 in
 `ui/windows/Rendering/` (same spinning instances, warp mesh, timing and 0.5s
 crossfade; MPS gaussian becomes a calibrated half-res Kawase chain, and the
 final frame is presented via staging readback since WinUI 3's SwapChainPanel
