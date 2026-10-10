@@ -1,0 +1,53 @@
+<UserControl
+    x:Class="Fluyer.Screens.MenuView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Left sidebar. Port of Menu.svelte; card styling matches AlbumHeaderView. -->
+    <Border
+        Margin="{StaticResource MenuOuterMargin}"
+        Padding="{StaticResource MenuPadding}"
+        Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+        CornerRadius="{StaticResource MenuCornerRadius}">
+        <StackPanel Spacing="{StaticResource MenuRowSpacing}">
+            <TextBlock
+                Margin="{StaticResource MenuTitleMargin}"
+                FontSize="20"
+                FontWeight="SemiBold"
+                Text="Menu" />
+            <Button
+                x:Name="PlayAllButton"
+                Margin="{StaticResource MenuItemMargin}"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Left"
+                Click="OnPlayAll"
+                Style="{StaticResource IconButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource MenuIconToLabel}">
+                    <FontIcon FontSize="16" Glyph="&#xE768;" />
+                    <TextBlock FontSize="16" Text="Play All" />
+                </StackPanel>
+            </Button>
+            <Button
+                Margin="{StaticResource MenuItemMargin}"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Left"
+                Click="OnPlayScreen"
+                Style="{StaticResource IconButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource MenuIconToLabel}">
+                    <FontIcon FontSize="16" Glyph="&#xE740;" />
+                    <TextBlock FontSize="16" Text="Play Screen" />
+                </StackPanel>
+            </Button>
+            <Button
+                Margin="{StaticResource MenuItemMargin}"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Left"
+                Click="OnSettings"
+                Style="{StaticResource IconButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource MenuIconToLabel}">
+                    <FontIcon FontSize="16" Glyph="&#xE713;" />
+                    <TextBlock FontSize="16" Text="Settings" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+    </Border>
+</UserControl>

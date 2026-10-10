@@ -5,7 +5,7 @@ namespace Fluyer.Core.Native;
 
 /// <summary>
 /// Core-to-UI events. Mirrors the <c>FluyerEvent</c> fan-out in
-/// <c>ui/macos/Sources/State/AppState.swift</c>: payloads that the C ABI does
+/// <c>ui/macos/Sources/Shared/State/AppState.swift</c>: payloads that the C ABI does
 /// not carry (player-bar metadata, play-view snapshot) are re-read from the
 /// engine by the state layer instead of being passed through here.
 /// </summary>

@@ -1,5 +1,5 @@
 using Fluyer.Core.State;
-using Fluyer.Support;
+using Fluyer.Shared;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -14,11 +14,13 @@ namespace Fluyer;
 public sealed partial class MainWindow : Window
 {
     public AppState State { get; }
+    public CoverState Covers { get; }
     private readonly MediaTransportCoordinator _mediaTransport;
 
-    public MainWindow(AppState state)
+    public MainWindow(AppState state, CoverState covers)
     {
         State = state;
+        Covers = covers;
         InitializeComponent();
 
         ExtendsContentIntoTitleBar = true;
@@ -28,17 +30,20 @@ public sealed partial class MainWindow : Window
             AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
         }
         AppWindow.SetIcon("Assets/AppIcon.ico");
-        AppWindow.Resize(new SizeInt32(1050, 720));
+        AppWindow.Resize(new SizeInt32(
+            (int)Layout.Number("WindowInitialWidth"), (int)Layout.Number("WindowInitialHeight")));
 
-        _mediaTransport = new MediaTransportCoordinator(this, state);
+        _mediaTransport = new MediaTransportCoordinator(this, state.Playback, covers);
         Closed += (_, _) => _mediaTransport.Dispose();
 
         State.Playback.PropertyChanged += OnPlaybackChanged;
         State.Library.PropertyChanged += OnLibraryChanged;
-        State.Toast.PropertyChanged += OnToastChanged;
         State.Selection.PropertyChanged += OnSelectionChanged;
+        Settings.State = state;
+        Settings.AddFolderRequested += () => _ = PickAndScanAsync();
         MusicGrid.OpenSettingsRequested += ShowSettings;
         MenuPaneContent.SettingsRequested += ShowSettings;
+        MenuPaneContent.PlayAllRequested += State.PlayAll;
         MenuPaneContent.CloseRequested += () => MenuPane.IsPaneOpen = false;
         PlayerBar.QueueRequested += ToggleQueue;
         AddShortcut(Windows.System.VirtualKey.Q, Windows.System.VirtualKeyModifiers.Control, ToggleQueue);
@@ -49,7 +54,6 @@ public sealed partial class MainWindow : Window
 
         RefreshOverlays();
         RefreshScan();
-        RefreshToast();
     }
 
     private void OnPlaybackChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -68,19 +72,11 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void OnToastChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(ToastState.Message))
-        {
-            RefreshToast();
-        }
-    }
-
     private void OnSelectionChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(AlbumSelection.Index) or nameof(AlbumSelection.IsActive))
+        if (e.PropertyName is nameof(LibraryFilterState.Index) or nameof(LibraryFilterState.IsActive))
         {
-            CollectionHeader.Visibility = State.Selection.IsActive
+            AlbumHeader.Visibility = State.Selection.IsActive
                 ? Visibility.Visible : Visibility.Collapsed;
         }
     }
@@ -104,51 +100,24 @@ public sealed partial class MainWindow : Window
         ScanLabel.Text = status.StatusLabel;
     }
 
-    private void RefreshToast()
-    {
-        var message = State.Toast.Message;
-        Toast.Visibility = message is null ? Visibility.Collapsed : Visibility.Visible;
-        ToastText.Text = message ?? string.Empty;
-    }
-
     private void OnSearchChanged(Microsoft.UI.Xaml.Controls.AutoSuggestBox sender,
         Microsoft.UI.Xaml.Controls.AutoSuggestBoxTextChangedEventArgs args)
         => State.Selection.Query = sender.Text;
-
-    private void OnOpenFolder(object sender, RoutedEventArgs e) => _ = PickAndScanAsync();
 
     private async Task PickAndScanAsync()
     {
         var paths = await FolderPicker.PickMusicFoldersAsync(this);
         State.ScanFolders(paths);
-        RefreshFolders();
+        Settings.Refresh();
     }
 
     private void OnOpenSettings(object sender, RoutedEventArgs e) => ShowSettings();
 
     private void ShowSettings()
     {
-        RefreshFolders();
+        Settings.Refresh();
         SettingsDialog.XamlRoot = Content.XamlRoot;
         _ = SettingsDialog.ShowAsync();
-    }
-
-    private void OnRescan(object sender, RoutedEventArgs e) => State.ScanSavedFolders();
-
-    private void OnRemoveFolder(object sender, RoutedEventArgs e)
-    {
-        if (((FrameworkElement)sender).Tag is string path)
-        {
-            State.RemoveFolder(path);
-            RefreshFolders();
-        }
-    }
-
-    private void RefreshFolders()
-    {
-        var empty = State.Settings.MusicFolders.Count == 0;
-        NoFolders.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
-        RescanButton.IsEnabled = !empty;
     }
 
     // MARK: - Sidebars (button / shortcut opened; SplitView overlay closes on outside click + Esc)
@@ -179,11 +148,13 @@ public sealed partial class MainWindow : Window
     private void OnMenuToggle(Microsoft.UI.Xaml.Controls.TitleBar sender, object args) => ToggleMenu();
 
     // Sidebars are two carousel covers + the gap between (Sidebar.svelte: itemWidth * 2).
-    // Carousel sits inside PageGutter (16 per side), so measure the same width.
+    // Carousel sits inside WindowPageGutter, so measure the same width.
     private void OnPaneHostSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        var length = Math.Floor(Views.AlbumCarouselView.ItemWidth(e.NewSize.Width - 32) * 2
-            - Views.AlbumCarouselView.Gap);
+        var gutter = Layout.Edges("WindowPageGutter");
+        var carouselWidth = e.NewSize.Width - gutter.Left - gutter.Right;
+        var length = Math.Floor(Screens.AlbumCarouselView.ItemWidth(carouselWidth) * 2
+            - Screens.AlbumCarouselView.Gap);
         MenuPane.OpenPaneLength = length;
         QueuePane.OpenPaneLength = length;
         RefreshOcclusion();

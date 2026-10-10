@@ -1,19 +1,19 @@
-﻿using Fluyer.Core.State;
-using Fluyer.Support;
+using Fluyer.Core.State;
+using Fluyer.Shared;
 using Microsoft.UI.Xaml;
 
 namespace Fluyer;
 
 /// <summary>
-/// App entry point. Creates the shared <see cref="ThumbnailStore"/>, builds the
-/// root <see cref="AppState"/>, then starts the core against it (the state is
-/// the core's event sink, so it must exist first — mirrors the macOS
-/// <c>EngineHandle.attach(listener:)</c> ordering).
+/// App entry point. Builds the root <see cref="AppState"/> and the
+/// <see cref="CoverState"/> (its thumbnail invalidator), then starts the core
+/// against the state (the state is the core's event sink, so it must exist
+/// first — mirrors the macOS <c>EngineHandle.attach(listener:)</c> ordering).
 /// </summary>
 public partial class App : Application
 {
     public AppState State { get; }
-    public ThumbnailStore Thumbnails { get; } = ThumbnailStore.Shared;
+    public CoverState Covers { get; } = new();
 
     private Window? _window;
 
@@ -35,13 +35,15 @@ public partial class App : Application
         }
 
         var settings = new SettingsState(Path.Combine(EngineHandle.DataDirectory, SettingsState.FileName));
-        State = new AppState(null, Thumbnails, settings);
-        State.AttachEngine(EngineHandle.Attach(State));
+        State = new AppState(null, Covers, settings);
+        var engine = EngineHandle.Attach(State);
+        Covers.Engine = engine;
+        State.AttachEngine(engine);
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        _window = new MainWindow(State);
+        _window = new MainWindow(State, Covers);
         _window.Closed += (_, _) => State.SaveSession();
         _window.Activate();
     }

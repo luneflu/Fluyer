@@ -1,7 +1,7 @@
 # Fluyer Native Architecture (refactor plan)
 
-Status: R1, R2, S1, S2, S3 implemented. Visual check and Windows build pending.
-Scope: Rust core (`crates/fluyer_core`) and macOS Swift (`ui/macos`). Windows UI is out of scope.
+Status: R1, R2, S1, S2, S3 implemented (macOS). W1, W2, W3 implemented (Windows). macOS visual check pending.
+Scope: Rust core (`crates/fluyer_core`), macOS Swift (`ui/macos`), Windows WinUI (`ui/windows`).
 
 ## Goal
 
@@ -182,6 +182,68 @@ Steps:
   `Components/` comes from `Shared/Theme/Layout.swift` (`Layout.Queue.panelPadding`, ...).
   Not moved: font sizes, shadows, blur, opacities, animation timings.
 
+## Windows target (port of the Swift rules)
+
+Same rules as the Swift target: UI-word names, Screen > Feature folders, one view per
+file, views get only the state they use, one shared layout file. Applied by the agent
+on a direct "execute" request; the Windows-specific choices below were the agent's,
+not learner decisions, and are open to change.
+
+Windows has two projects. `Fluyer.Core` (net8.0, no WinUI) holds state + P/Invoke and
+is what `Fluyer.Tests` can test. `Fluyer` (WinUI) holds XAML views. Both mirror the same
+folder tree, so a feature's state and view sit at the same path in each project:
+
+```
+ui/windows/
+  App.xaml(.cs), MainWindow.xaml(.cs)      MainWindow = Home window shell (macOS HomeView)
+  Screens/
+    Home/
+      Albums/     AlbumCarouselView, AlbumHeaderView        (was CollectionHeaderView)
+      MusicGrid/  MusicGridView
+      Queue/      QueueView                                 (was QueuePaneView)
+      Menu/       MenuView  (Windows-only left sidebar)     (was MenuPaneView)
+      PlayerBar/  PlayerBarView
+    Play/         PlayView
+    Settings/     SettingsView   (split out of MainWindow's dialog)
+  Components/     CurrentCoverView, SliderTrack, ToastView (new, split out of MainWindow),
+                  SidebarOcclusion
+    Backdrop/     AnimatedBackgroundView, ArtworkBackdropRenderer, BackdropShaders
+  Shared/
+    State/        CoverState (new)
+    Support/      ThumbnailStore, CoverImages, FolderPicker, MediaTransportCoordinator
+    Theme/        Layout.xaml (+ Layout.cs for code-behind)
+  Fluyer.Core/
+    Native/       FluyerEngine, FluyerNative, Models   (C ABI)
+    Screens/Home/ LibraryFilterState                    (was AlbumSelection)
+      Queue/      QueueState
+    Shared/State/ AppState, EngineHandle, IThumbnailInvalidator, LibraryState,
+                  PlaybackState, PlaybackClock, SettingsState, ToastState
+    Shared/Support/  TimeFormat, ThumbnailKey, PlaybackIcons, ...
+    Components/Backdrop/  BackdropMesh, BackdropUniforms
+```
+
+C# namespaces follow the top folder (`Fluyer.Screens`, `Fluyer.Components`,
+`Fluyer.Shared`); `Fluyer.Core` keeps its old namespaces.
+
+Steps:
+- W1 (DONE): move/rename as above. Tests split one class per file
+  (`LibraryStateTests`, `LibraryFilterStateTests`, `ToastStateTests`).
+- W2 (DONE): `Shared/State/CoverState` is the only UI code that asks the engine for
+  images (grid, carousel, current cover, backdrop, media overlay). It lives in the WinUI
+  project because it loads into `Image` via the UI-thread `ThumbnailStore`. Views take
+  narrow state objects (`QueueView.Queue`, `MusicGridView.Library/Filter/Covers`, ...);
+  only `MainWindow` and `SettingsView` take `AppState`. Menu "Play All" raises an event
+  the window forwards to `AppState.PlayAll`.
+- W3 (DONE): every padding / spacing / size / corner radius in `Screens/`, `Components/`,
+  `MainWindow.xaml`, `App.xaml` comes from `Shared/Theme/Layout.xaml`. Keys are
+  `<Feature><Role>` (`QueuePadding`, `PlayerBarCornerRadius`). Code-behind layout math
+  (carousel slots, grid columns, play-screen cover side, slider thickness, window size)
+  reads the same keys through `Layout.Number(...)` / `Layout.Edges(...)`.
+  Not moved: font sizes, opacities, timings, the carousel responsive ratio table.
+
+Verified: `dotnet build` (x64) OK, `dotnet test` 112 pass, app launches and renders the
+library (window capture). Not checked: queue/menu sidebars, play screen, settings dialog.
+
 ## Open questions
 
 1. Later: split `audio/player.rs` (1102 lines).
@@ -206,3 +268,7 @@ Steps:
 | Window shell, toolbar layout | `Screens/Home/HomeView.swift`, `Screens/Home/Toolbar/` |
 | Shared state (playback, library, settings) | `Shared/State/` |
 | Shared views (slider, cover, toast, backdrop) | `Components/` |
+| Windows: any padding / spacing / size | `ui/windows/Shared/Theme/Layout.xaml`, keys prefixed with the feature |
+| Windows: queue panel look / behavior | `ui/windows/Screens/Home/Queue/QueueView.xaml` / `Fluyer.Core/Screens/Home/Queue/QueueState.cs` |
+| Windows: cover loading | `ui/windows/Shared/State/CoverState.cs` |
+| Windows: window shell, toolbar, sidebars | `ui/windows/MainWindow.xaml` |

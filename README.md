@@ -164,8 +164,9 @@ UniFFI 0.28 has no C# backend, so the Windows shell talks to the core over the C
 View models cross as JSON and are deserialized into matching records. The state layer
 (`AppState` + `Playback`/`Library`/`Selection`/`Toast`/`Clock`) is a 1:1 port of
 `ui/macos/Sources/Shared/State/` onto `INotifyPropertyChanged`; views are XAML ports of
-`ui/macos/Sources/Screens/`. The Metal backdrop is ported to D3D11 in
-`ui/windows/Rendering/` (same spinning instances, warp mesh, timing and 0.5s
+`ui/macos/Sources/Screens/`, in the same `Screens/` / `Components/` / `Shared/` layout
+(see `ARCHITECTURE.md`, Windows section). The Metal backdrop is ported to D3D11 in
+`ui/windows/Components/Backdrop/` (same spinning instances, warp mesh, timing and 0.5s
 crossfade; MPS gaussian becomes a calibrated half-res Kawase chain, and the
 final frame is presented via staging readback since WinUI 3's SwapChainPanel
 does not expose the UWP native interop contract). The core's pre-blurred

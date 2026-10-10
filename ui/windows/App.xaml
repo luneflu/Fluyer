@@ -9,15 +9,15 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <!-- Other merged dictionaries here -->
+                <ResourceDictionary Source="ms-appx:///Shared/Theme/Layout.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <Style x:Key="IconButtonStyle" TargetType="Button">
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="BorderBrush" Value="Transparent" />
                 <Setter Property="BorderThickness" Value="0" />
                 <Setter Property="Foreground" Value="White" />
-                <Setter Property="Padding" Value="6,4" />
-                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="{StaticResource IconButtonPadding}" />
+                <Setter Property="CornerRadius" Value="{StaticResource IconButtonCornerRadius}" />
             </Style>
             <!-- Other app resources here -->
         </ResourceDictionary>

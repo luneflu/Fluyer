@@ -1,0 +1,22 @@
+<UserControl
+    x:Class="Fluyer.Components.ToastView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    HorizontalAlignment="Center"
+    VerticalAlignment="Bottom"
+    Visibility="Collapsed">
+    <!-- Transient core message. Port of ToastView (ui/macos/Sources/Components/ToastView.swift). -->
+    <Border
+        Margin="{StaticResource ToastMargin}"
+        Padding="{StaticResource ToastPadding}"
+        Background="#333333"
+        BorderBrush="#66FFFFFF"
+        BorderThickness="1"
+        CornerRadius="{StaticResource ToastCornerRadius}">
+        <TextBlock
+            x:Name="ToastText"
+            FontSize="13"
+            FontWeight="SemiBold"
+            Foreground="White" />
+    </Border>
+</UserControl>

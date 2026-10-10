@@ -41,6 +41,13 @@ Accepted additions (via Implement confirmation): `BackdropSource` enum in Settin
 Implemented: SettingsState.swift (enum + persistence), SettingsView.swift (Picker under Appearance), AnimatedBackgroundView.swift (branch on source).
 Verified: `swift build` OK; SettingsStateTests 7/7 pass (round-trip, default, unknown value). Visual check not done yet.
 
+## Windows UI architecture port
+Status: W1-W3 implemented. Learner skipped the Build checkpoint ("execute"); Windows-specific choices are AI-made, not learner decisions.
+Explained: two-project split (Fluyer.Core net8.0 testable state vs Fluyer WinUI views); XAML layout constants via ResourceDictionary + StaticResource.
+AI choices (unreviewed): same Screens/Components/Shared tree mirrored in both projects; namespaces by top folder; MenuView under Screens/Home/Menu; MediaTransportCoordinator in Shared/Support; CoverState in WinUI project; SettingsView + ToastView split out of MainWindow; Layout.xaml keys `<Feature><Role>` + Layout.cs for code-behind.
+Verified: dotnet build OK, dotnet test 112 pass, app launch screenshot shows library. Sidebars/play screen/settings not visually checked. Recorded in ARCHITECTURE.md (Windows target).
+Note: stale target/debug/fluyer_core.dll caused 2 smoke-test failures; fixed by cargo build -p fluyer_core.
+
 ## Readability refactor (Rust core + macOS Swift)
 Status: R1 (FFI) + R2 (engine split) implemented. Swift S1-S3 implemented; awaiting learner visual check.
 Requirement (learner): code findable by humans; e.g. couldn't find where to change a view's padding. Scope: Rust core + Swift only.

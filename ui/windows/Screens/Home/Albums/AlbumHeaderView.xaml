@@ -1,0 +1,58 @@
+<UserControl
+    x:Class="Fluyer.Screens.AlbumHeaderView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Album title strip + actions. Port of AlbumHeaderView
+         (ui/macos/Sources/Screens/Home/Albums/AlbumHeaderView.swift). -->
+    <Border
+        Height="{StaticResource AlbumHeaderHeight}"
+        Margin="{StaticResource AlbumHeaderMargin}"
+        Padding="{StaticResource AlbumHeaderPadding}"
+        Background="#14FFFFFF"
+        BorderBrush="#1FFFFFFF"
+        BorderThickness="1"
+        CornerRadius="{StaticResource AlbumHeaderCornerRadius}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                VerticalAlignment="Center"
+                FontSize="13"
+                FontWeight="SemiBold"
+                MaxLines="1"
+                Text="{x:Bind Filter.Detail.Subtitle, Mode=OneWay}"
+                TextTrimming="CharacterEllipsis" />
+            <StackPanel
+                Grid.Column="1"
+                Orientation="Horizontal"
+                Spacing="{StaticResource AlbumHeaderButtonSpacing}">
+                <Button
+                    Click="OnBack"
+                    Style="{StaticResource IconButtonStyle}"
+                    ToolTipService.ToolTip="Back to Albums">
+                    <FontIcon FontSize="13" Glyph="&#xE76B;" />
+                </Button>
+                <Button
+                    Click="OnPlay"
+                    Style="{StaticResource IconButtonStyle}"
+                    ToolTipService.ToolTip="Play Album">
+                    <FontIcon FontSize="13" Glyph="&#xE768;" />
+                </Button>
+                <Button
+                    Click="OnQueue"
+                    Style="{StaticResource IconButtonStyle}"
+                    ToolTipService.ToolTip="Add to Queue">
+                    <FontIcon FontSize="13" Glyph="&#xE8F2;" />
+                </Button>
+                <Button
+                    Click="OnShuffle"
+                    Style="{StaticResource IconButtonStyle}"
+                    ToolTipService.ToolTip="Shuffle Album">
+                    <FontIcon FontSize="13" Glyph="&#xE8B1;" />
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>
