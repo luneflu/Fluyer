@@ -27,6 +27,7 @@ fn main() -> glib::ExitCode {
 }
 
 fn build_ui(app: &adw::Application) {
+    adw::StyleManager::default().set_color_scheme(adw::ColorScheme::ForceDark);
     let data_dir = glib::user_data_dir().join("fluyer");
     let cache_dir = glib::user_cache_dir().join("fluyer");
 
@@ -179,6 +180,11 @@ fn load_css() {
 }
 
 const CSS: &str = r#"
+/* Pin the accent to the app's palette instead of the desktop theme's (Mint-Y-Purple). */
+@define-color accent_color #ffffff;
+@define-color accent_bg_color rgba(255, 255, 255, 0.18);
+@define-color accent_fg_color #ffffff;
+
 window {
     background-color: #121214;
 }
