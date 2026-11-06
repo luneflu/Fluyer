@@ -199,3 +199,15 @@ Follow-up (learner: keep grey animated bg when empty; chose "Grey like Linux"): 
 Status: Implemented (direct request: icons instead of Songs/Albums text, remove checkmark).
 AI choices (unreviewed): Icons.Rounded.MusicNote (Songs), Icons.Rounded.Album (Albums); contentDescription keeps labels for TalkBack; `icon = {}` hides the SegmentedButton checkmark.
 Verified: build OK, installed. Not checked visually.
+
+## Linux player bar (macOS PlayerBarView port)
+Status: Implemented (Implement this step). Learner request: "update the playerbar to be the same as swift".
+Learner decision: match macOS. AI-proposed + confirmed: restyle gtk::Scale via CSS (no custom widget), GTK symbolic icons at PlaybackIcons volume thresholds, drop time label.
+Implemented: player_bar_view.rs rewritten (seek line, capsule 52px, 190px side columns, 24px icon buttons, inactive = 50% white, cover click opens play view); main.rs CSS `.player-bar*`, `.bar-*`, `scale.bar-slider(.thin)`; removed `.player-bar-container/.player-seek-bar/.active-control` (now unused).
+Verified: build 0 warnings, 5 tests, screenshot matches layout. Not verified: hover thickness, drag seek/volume.
+Bugfix: bar cover grew 40px to 52px once a track loaded. Cause: gtk::Picture natural size = texture size (80px @2x thumb); set_size_request is only a minimum. Fix: bar cover is gtk::Image with pixel_size 40 (CoverState::current_image added). Verified via size log: 40x40 with cover loaded (was 52x52).
+
+## Player bar icon sharpness
+Status: Implemented.
+Learner decision: all player bar icons at 16px (was 15/17/13 from macOS pt sizes) — 16 matches GTK symbolic SVG grid and centres on a whole pixel in the 24px button.
+Hypothesis not yet visually confirmed by learner.

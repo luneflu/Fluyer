@@ -77,13 +77,25 @@ impl CoverState {
 
     pub fn current_into(&self, engine: &Arc<FluyerEngine>, px: u32, pic: &gtk::Picture) {
         let p = pic.clone();
+        let set = move |t: Option<&gdk::Texture>| p.set_paintable(t);
+        self.current_with(engine, px, set);
+    }
+
+    /// Same as `current_into` for a `gtk::Image` (fixed `pixel_size`, unlike Picture).
+    pub fn current_image(&self, engine: &Arc<FluyerEngine>, px: u32, image: &gtk::Image) {
+        let i = image.clone();
+        self.current_with(engine, px, move |t| i.set_paintable(t));
+    }
+
+    fn current_with(&self, engine: &Arc<FluyerEngine>, px: u32, set: impl Fn(Option<&gdk::Texture>) + Clone + 'static) {
+        let ready = set.clone();
         let tex = self.load(
             engine,
             format!("current:{px}"),
             move |e| e.artwork_current_thumbnail(px).map(|a| (*a).clone()),
-            move |t| p.set_paintable(Some(t)),
+            move |t| ready(Some(t)),
         );
-        pic.set_paintable(tex.as_ref());
+        set(tex.as_ref());
     }
 
     /// Backdrop texture if ready; otherwise starts loading and redraws `widget`.

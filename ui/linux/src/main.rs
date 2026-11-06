@@ -183,19 +183,54 @@ window {
     background-color: #121214;
 }
 
-.player-bar-container {
-    background: rgba(18, 18, 22, 0.85);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 6px 16px 12px 16px;
+/* Player bar: port of macOS PlayerBarView + Layout.PlayerBar + SliderTrack. */
+.player-bar { padding: 0 16px 10px 16px; }
+.player-bar-capsule {
+    min-height: 52px;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
 }
+.bar-icon {
+    min-width: 24px;
+    min-height: 24px;
+    padding: 0;
+    color: white;
+    background: none;
+    box-shadow: none;
+}
+.bar-icon.inactive { color: rgba(255, 255, 255, 0.5); }
+.bar-cover-button { padding: 0; background: none; box-shadow: none; }
+.bar-cover { border-radius: 6px; background: rgba(255, 255, 255, 0.1); }
+.bar-title { font-size: 13px; font-weight: 500; color: white; }
+.bar-artist { font-size: 11px; color: rgba(255, 255, 255, 0.6); }
 
-.player-bar-controls {
-    padding: 2px 0px;
+/* SliderTrack: knob-less track. Seek 3px (5 hovered), square; volume 4px (5 hovered), capsule. */
+scale.bar-slider { padding: 0; margin: 0; min-height: 6px; }
+scale.bar-slider trough {
+    min-height: 3px;
+    border-radius: 0;
+    background: rgba(255, 255, 255, 0.12);
+    outline: none;
 }
-
-.player-seek-bar highlight {
-    background-color: #3584e4;
+scale.bar-slider:hover trough { min-height: 5px; }
+scale.bar-slider highlight { min-height: 0; border-radius: 0; background: white; }
+scale.bar-slider slider {
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    opacity: 0;
 }
+scale.bar-slider.thin { min-height: 24px; }
+scale.bar-slider.thin trough { min-height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); }
+scale.bar-slider.thin:hover trough { min-height: 5px; }
+scale.bar-slider.thin highlight { border-radius: 999px; background: rgba(255, 255, 255, 0.9); }
+scale.bar-slider.thin:hover highlight { background: white; }
 
 .queue-panel {
     background: rgba(18, 18, 22, 0.88);
@@ -259,10 +294,6 @@ listview, gridview, .album-carousel, .album-grid, .music-grid {
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
 .album-header-title { font-size: 13px; font-weight: 500; }
-
-.active-control {
-    color: #3584e4;
-}
 
 .play-view-container {
     padding: 24px;
