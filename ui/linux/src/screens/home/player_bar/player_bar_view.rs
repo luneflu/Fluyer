@@ -157,7 +157,9 @@ impl PlayerBarView {
                 app.covers.current_image(&app.engine, (COVER_SIDE * 2) as u32, &cover);
             };
             update(playback);
-            playback.connect_title_notify(update);
+            playback.connect_title_notify(update.clone());
+            // Same-title repeat would skip the title notify; the tick is track-scoped.
+            playback.connect_cover_tick_notify(update);
         }
         now_playing.append(&cover_btn);
         now_playing.append(&titles);

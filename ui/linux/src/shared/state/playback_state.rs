@@ -40,6 +40,9 @@ mod imp {
         pub show_play_view: Cell<bool>,
         #[property(get, set)]
         pub current_lyric_index: Cell<i32>,
+        /// Bumped whenever the current track changes, so covers reload.
+        #[property(get, set)]
+        pub cover_tick: Cell<u32>,
 
         pub lyrics: RefCell<Option<gio::ListStore>>,
         pub last_audible_volume: Cell<f32>,
