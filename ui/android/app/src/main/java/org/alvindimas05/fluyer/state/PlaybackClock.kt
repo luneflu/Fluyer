@@ -12,6 +12,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import uniffi.fluyer_core.FluyerAppEngine
 import uniffi.fluyer_core.PlayerBarViewModel
+import org.alvindimas05.fluyer.support.TimeFormat
+import org.alvindimas05.fluyer.support.clamped
 
 /**
  * Locally-ticked playback position and the active lyric cursor.

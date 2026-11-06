@@ -7,6 +7,7 @@ import uniffi.fluyer_core.AlbumCardViewModel
 import uniffi.fluyer_core.AlbumDetailViewModel
 import uniffi.fluyer_core.FluyerAppEngine
 import uniffi.fluyer_core.TrackItemViewModel
+import org.alvindimas05.fluyer.support.naturalCompare
 import java.text.Normalizer
 
 /** What the library pane lists. ponytail: no playlist / folder modes; the core has no such API. */

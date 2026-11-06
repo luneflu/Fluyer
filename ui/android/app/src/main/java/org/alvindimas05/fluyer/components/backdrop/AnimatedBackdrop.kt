@@ -1,4 +1,4 @@
-package org.alvindimas05.fluyer.backdrop
+package org.alvindimas05.fluyer.components.backdrop
 
 import android.app.ActivityManager
 import android.content.Context

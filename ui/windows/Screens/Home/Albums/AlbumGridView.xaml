@@ -53,12 +53,12 @@
                         </Grid>
                         <StackPanel Spacing="{StaticResource AlbumsNameToArtist}">
                             <TextBlock
-                                FontSize="13"
+                                FontSize="16"
                                 MaxLines="1"
                                 Text="{x:Bind Name}"
                                 TextTrimming="CharacterEllipsis" />
                             <TextBlock
-                                FontSize="11"
+                                FontSize="13"
                                 MaxLines="1"
                                 Opacity="0.6"
                                 Text="{x:Bind Artist}"

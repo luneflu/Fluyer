@@ -11,7 +11,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import org.alvindimas05.fluyer.state.AppState
-import org.alvindimas05.fluyer.ui.FluyerApp
 
 class MainActivity : ComponentActivity() {
     private val app get() = application as FluyerApplication

@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import uniffi.fluyer_core.FluyerAppEngine
 import uniffi.fluyer_core.FluyerEvent
 import uniffi.fluyer_core.FluyerEventListener
+import org.alvindimas05.fluyer.support.ThumbnailKey
 import java.io.File
 
 /**

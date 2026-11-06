@@ -9,6 +9,7 @@ import uniffi.fluyer_core.AlbumCardViewModel
 import uniffi.fluyer_core.FluyerAppEngine
 import uniffi.fluyer_core.ScanStatusViewModel
 import uniffi.fluyer_core.TrackItemViewModel
+import org.alvindimas05.fluyer.support.IDLE_SCAN
 
 /** The scanned library: flat track list, album list and scan progress. */
 class LibraryState {

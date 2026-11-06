@@ -1,4 +1,4 @@
-package org.alvindimas05.fluyer.backdrop
+package org.alvindimas05.fluyer.components.backdrop
 
 /**
  * Port of ArtworkBackdropRenderer.makeMesh() (macOS) / BackdropMesh.cs (Windows): 6x6 Music.app warp

@@ -49,7 +49,7 @@
 
     <!-- Album title strip (AlbumHeaderView) -->
     <x:Double x:Key="AlbumHeaderHeight">46</x:Double>
-    <Thickness x:Key="AlbumHeaderMargin">0,4,0,0</Thickness>
+    <Thickness x:Key="AlbumHeaderMargin">0,4,0,12</Thickness>
     <Thickness x:Key="AlbumHeaderPadding">16,0</Thickness>
     <CornerRadius x:Key="AlbumHeaderCornerRadius">8</CornerRadius>
     <x:Double x:Key="AlbumHeaderButtonSpacing">8</x:Double>
@@ -59,7 +59,7 @@
     <CornerRadius x:Key="MusicGridCardCornerRadius">8</CornerRadius>
     <Thickness x:Key="MusicGridListMargin">0,0,-16,0</Thickness>
     <Thickness x:Key="MusicGridItemPadding">8,6,12,6</Thickness>
-    <Thickness x:Key="MusicGridItemMargin">0,0,16,16</Thickness>
+    <Thickness x:Key="MusicGridItemMargin">0,0,16,8</Thickness>
     <x:Double x:Key="MusicGridMinColumnWidth">280</x:Double>
     <x:Double x:Key="MusicGridEmptyStateSpacing">12</x:Double>
 

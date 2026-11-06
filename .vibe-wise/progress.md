@@ -195,6 +195,15 @@ Implemented (BackdropRenderer.kt): highp, ditherNoise in PINCH_FS (time uniform)
 Verified: compile + unit tests OK; installed on Z2351N (Mali-G57, GLES 3.2), app runs, no Backdrop errors/fallback in logcat. Not verified: visual (screenshot black, Firefox was focused).
 Follow-up (learner: keep grey animated bg when empty; chose "Grey like Linux"): empty queue already gets Rust GREY_PALETTE blocks via backdropLoadBlockArtwork (unchanged); null-artwork placeholder now 1x1 rgb(51,51,54) like Linux (music note removed). Build + tests OK, installed. Not verified visually (phone on lock/notification shade).
 
+## Android UI folder split
+Status: Implemented (Implement this step).
+Requirement (learner): Android code "still messy compared to other platforms"; components like PlayerBar were not separated and the folder count was far below the other OSes.
+Learner decisions: mirror the macOS/Linux shape (Screen > Feature folders, one composable per file, shared views in components/, state in state/, pure helpers in support/); rename `MiniPlayer` -> `PlayerBar` to match the other OSes.
+Accepted additions: `LibraryScreen` -> `HomeScreen`, `TrackPane` -> `TrackList`, `CollectionHeader` -> `AlbumHeader`, `Controls` -> `PlayControls` (file/function names had to match the new folders); dropped the dead `Modifier.combinedClickableTap` (it only wrapped `clickable`); `ARCHITECTURE.md` got an Android section.
+Implemented: 22 -> 42 main Kotlin files. `screens/home/{HomeScreen,toolbar/{TopBar,SortMenu},albums/{AlbumCarousel,AlbumCard,AlbumGrid,AlbumHeader},musicgrid/{TrackList,TrackRow},playerbar/PlayerBar,queue/{QueueSheet,QueueRow}}`, `screens/play/{PlayScreen,controls/PlayControls,lyrics/Lyrics}`, `screens/settings/SettingsScreen`, `components/{Backdrop,Cover,Toast}` + `components/backdrop/`, `support/{TimeFormat,PlaybackIcons,ThumbnailKey,NaturalCompare,FloatClamped,Placeholders}` (split out of `state/Support.kt`), `state/` keeps 9 files. `StateTest` split: `state/StateTest` 9 + `support/SupportTest` 5.
+Verified: `gradlew compileDebugKotlin` OK, `gradlew testDebugUnitTest` 18 pass (9 + 5 + 4). Body diff vs the pre-move files shows renames and extraction only, no logic drift. Not verified: device run, no visual check.
+Open (not done): no `theme/Layout` file, so padding / sizes / colors are still inline literals; `AlbumSelection` still merges macOS `AlbumSelection` + `LibraryFilterState`.
+
 ## Android library mode toggle icons
 Status: Implemented (direct request: icons instead of Songs/Albums text, remove checkmark).
 AI choices (unreviewed): Icons.Rounded.MusicNote (Songs), Icons.Rounded.Album (Albums); contentDescription keeps labels for TalkBack; `icon = {}` hides the SegmentedButton checkmark.
