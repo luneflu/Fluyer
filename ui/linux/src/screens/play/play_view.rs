@@ -199,6 +199,25 @@ impl PlayView {
             }
         });
 
+        // The sizes above are minimums: leaving them set after the play view is hidden
+        // makes the window's minimum width stick at the play layout, so the home view
+        // stops responding to resizes. Clear them when the view unmaps.
+        {
+            let gen = gen.clone();
+            let left_col = left_col.clone();
+            let cover = cover.clone();
+            let lyrics = lyrics.container.clone();
+            let controls_box = controls.container.clone();
+            let center_label = controls.center_label.clone();
+            container.connect_unmap(move |_| {
+                gen.set(gen.get() + 1); // cancel a pending arm
+                left_col.set_size_request(-1, -1);
+                cover.set_size_request(-1, -1);
+                lyrics.set_size_request(-1, -1);
+                controls_box.set_size_request(-1, -1);
+                center_label.set_max_width_chars(-1);
+            });
+        }
         {
             let arm = arm.clone();
             container.connect_map(move |c| {

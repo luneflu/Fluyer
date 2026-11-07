@@ -97,6 +97,10 @@ fn build_ui(app: &adw::Application) {
     // Foreground: Stack between Home and PlayView
     let main_stack = gtk::Stack::new();
     main_stack.set_transition_type(gtk::StackTransitionType::Crossfade);
+    // GtkStack is homogeneous by default: it then reports the widest child's minimum,
+    // so the play view's cover/columns kept the window wide after going back home.
+    main_stack.set_hhomogeneous(false);
+    main_stack.set_vhomogeneous(false);
     main_stack.set_vexpand(true);
     main_stack.set_hexpand(true);
 
