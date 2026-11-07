@@ -185,6 +185,8 @@ impl PlayView {
                     if gen.get() != my {
                         return glib::ControlFlow::Break;
                     }
+                    // During the stack's crossfade the allocation is still the old one,
+                    // so require the same width twice before deciding we are settled.
                     let width = view.width();
                     let mode = has_lyrics.get();
                     let last = applied.get();
@@ -220,8 +222,15 @@ impl PlayView {
         }
         {
             let arm = arm.clone();
+            let arm_after_transition = arm.clone();
             container.connect_map(move |c| {
                 arm();
+                // Re-arm once the Play/Home crossfade has finished: the first tick can
+                // run while the view is still being allocated at the old width.
+                gtk::glib::timeout_add_local_once(std::time::Duration::from_millis(350), {
+                    let arm = arm_after_transition.clone();
+                    move || arm()
+                });
                 // Window resizes have no dedicated signal in GTK4; these cover the
                 // interactive cases. Everything else re-arms on lyrics changes.
                 if let Some(win) = c.root().and_downcast::<gtk::Window>() {
@@ -229,6 +238,16 @@ impl PlayView {
                     win.connect_notify_local(Some("default-width"), move |_, _| a1());
                     let a2 = arm.clone();
                     win.connect_notify_local(Some("maximized"), move |_, _| a2());
+                }
+            });
+        }
+        // Re-arm whenever the play view is shown: `map` fires before the crossfade gives
+        // the view its real width, but this notify runs after the stack switch starts.
+        {
+            let arm = arm.clone();
+            app_state.playback.connect_show_play_view_notify(move |ps| {
+                if ps.show_play_view() {
+                    arm();
                 }
             });
         }

@@ -84,6 +84,9 @@ fn build_ui(app: &adw::Application) {
         .default_width(1100)
         .default_height(720)
         .build();
+    // Layout.Window on macOS: builder requests are hints, set_size_request is the
+    // minimum GTK enforces when the user drags an edge.
+    window.set_size_request(920, 680);
 
     let toast_overlay = adw::ToastOverlay::new();
     *app_state.toast_overlay.borrow_mut() = Some(toast_overlay.clone());
