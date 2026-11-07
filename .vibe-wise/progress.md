@@ -220,3 +220,24 @@ Bugfix: bar cover grew 40px to 52px once a track loaded. Cause: gtk::Picture nat
 Status: Implemented.
 Learner decision: all player bar icons at 16px (was 15/17/13 from macOS pt sizes) — 16 matches GTK symbolic SVG grid and centres on a whole pixel in the 24px button.
 Hypothesis not yet visually confirmed by learner.
+
+## Play view (macOS port)
+Status: Implemented (learner: Implement this step).
+Changes: `screens/play/play_view.rs` overlay layout (left column 50% centred without lyrics / 40% + 40px gutter with lyrics, lyrics 55%, 20px trailing, 24px top), floating 28x28 back chevron at 12/24 that hides after 3s idle and returns on pointer motion; `controls/play_controls_view.rs` info row (elapsed | artist • title | duration, 48px time columns, 15px medium centre), knob-less seek, repeat/prev/play/next/shuffle with flex spacers and 0.9/0.4 active states, mute · thin volume · max-volume; `lyrics/lyrics_view.rs` bold 30 active / 25 inactive, note glyph, 28px row spacing, 260px end inset, click seeks, active class now refreshed via item notify (previously stale on reuse).
+Reused `icon_button`, `slider`, `set_active`, `volume_icon` from `player_bar_view` (now pub(crate)).
+Divergences (ponytail): cover is `gtk::Image` contain not fill; no lyrics gradient mask (no CSS mask in GTK); no 0.94 scale on inactive lines; inset only pads ends (no centre scroll anchor).
+Verified: 0 warnings, 5 tests, screenshots with/without lyrics column.
+
+## Lyrics flicker (advisor-guided)
+Status: Implemented.
+Advisor diagnosis: compounding — scroll_to vs set_value race, CssProvider reload invalidating cascade and re-emitting page-size (loop), fresh label per connect_bind (blank frame), row.set_opacity per scroll invalidating render nodes.
+Changes: new `screens/play/lyrics/fade_bin.rs` (gtk::Widget subclass, BinLayout, snapshot() uses gsk MaskMode::Alpha + linear gradient, 120px fade clamped to 25% height) replaces the per-row opacity walk entirely; factory split into setup (label once) / bind (text + classes + is_active notify) / unbind (disconnect only, keeps child); CSS padding reload guarded by rounded page size; centring unchanged (scroll_to + set_value, loop gone once CSS stops re-emitting).
+Learner chose: keep GtkListView, fix the 4 causes (not GtkListBox rewrite).
+Verified: 0 warnings, 5 tests. Flicker not visually confirmed by learner.
+
+## Play view runaway resize (fixed)
+Status: Implemented.
+Trace: window 1100 -> 1103 -> 1110 ... -> 1372 on every `apply` (temporary eprintln in play_view, `notify::default-width` hook).
+Cause: `left_col` min = width*0.40 and `lyrics` min = width*0.55 are GTK minimums, plus gutter 40 + trailing 20 -> child minimum 0.95*width+60 > width, so GTK enlarged the window to satisfy it, which re-ran `apply` with the larger width. Independent of the tick; the tick only made it iterate faster.
+Fix: fixed gaps are subtracted before ratios (`usable = width - (gutter + trailing)`, column/lyrics from `usable`), so children never demand more than the window gives.
+Verified: with 34 lyrics, window stays 1100x720 (logged over 14s), build 0 warnings, 5 tests.

@@ -301,34 +301,37 @@ listview, gridview, .album-carousel, .album-grid, .music-grid {
 }
 .album-header-title { font-size: 13px; font-weight: 500; }
 
-.play-view-container {
-    padding: 24px;
-    background: rgba(0, 0, 0, 0.25);
+.play-back {
+    padding: 0;
+    min-width: 28px;
+    min-height: 28px;
+    border-radius: 999px;
+    color: white;
+    opacity: 0.7;
+    transition: opacity 250ms ease;
+    background: none;
+    box-shadow: none;
 }
-
-.play-view-header {
-    margin-bottom: 16px;
-}
-
-.play-view-cover {
+.play-back.idle { opacity: 0; }
+.play-cover {
     border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
 }
+.play-time {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.75);
+    font-feature-settings: "tnum" 1;
+}
+.play-track-info { font-size: 15px; font-weight: 500; color: rgba(255, 255, 255, 0.9); }
+.play-controls .bar-icon.inactive { color: rgba(255, 255, 255, 0.4); }
 
-.lyric-line {
-    padding: 8px 12px;
-    border-radius: 6px;
-}
-
-.lyric-active {
-    font-size: 1.4em;
-    font-weight: bold;
-    color: #ffffff;
-}
-
-.lyric-inactive {
-    font-size: 1.1em;
-    color: rgba(255, 255, 255, 0.45);
-}
+.lyrics-scroll, .lyrics-list { background: transparent; }
+.lyrics-list > row { margin-bottom: 28px; }
+.lyric-line { padding: 20px 0; }
+.lyric-line.lyric-inactive { font-size: 23px; font-weight: bold; color: rgba(255, 255, 255, 0.4); }
+.lyric-line.lyric-active { font-size: 26px; font-weight: bold; color: #ffffff; }
+.lyric-line.lyric-note { font-size: 30px; }
+.lyric-line.lyric-note.lyric-active { font-size: 36px; }
 
 .dim-label {
     opacity: 0.65;

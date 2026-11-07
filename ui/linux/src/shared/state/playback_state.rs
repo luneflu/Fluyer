@@ -144,13 +144,14 @@ impl PlaybackState {
         if self.current_lyric_index() == idx {
             return;
         }
-        self.set_current_lyric_index(idx);
-        let active_idx = idx;
+        // Flags first, then the index: listeners read `is_active` when the index notify
+        // fires, so emitting first made the highlight lag one line behind the scroll.
         for i in 0..store.n_items() {
             if let Some(item) = store.item(i).and_downcast::<LyricLineObject>() {
-                item.set_is_active(i as i32 == active_idx);
+                item.set_is_active(i as i32 == idx);
             }
         }
+        self.set_current_lyric_index(idx);
     }
 
     pub fn sync_lyrics(&self, engine: &FluyerEngine) {

@@ -20,7 +20,7 @@ pub struct PlayerBarView {
 }
 
 /// 24x24 flat button with a fixed-size symbolic icon (macOS `iconButton`).
-fn icon_button(icon: &str, size: i32, tooltip: &str) -> (gtk::Button, gtk::Image) {
+pub(crate) fn icon_button(icon: &str, size: i32, tooltip: &str) -> (gtk::Button, gtk::Image) {
     let image = gtk::Image::from_icon_name(icon);
     image.set_pixel_size(size);
     let button = gtk::Button::new();
@@ -33,7 +33,7 @@ fn icon_button(icon: &str, size: i32, tooltip: &str) -> (gtk::Button, gtk::Image
 }
 
 /// macOS `isActive`: white when on, 50% white when off.
-fn set_active(button: &gtk::Button, active: bool) {
+pub(crate) fn set_active(button: &gtk::Button, active: bool) {
     if active {
         button.remove_css_class("inactive");
     } else {
@@ -42,7 +42,7 @@ fn set_active(button: &gtk::Button, active: bool) {
 }
 
 /// Knob-less slider styled like macOS `SliderTrack` via the `.bar-slider` CSS.
-fn slider(step: f64) -> gtk::Scale {
+pub(crate) fn slider(step: f64) -> gtk::Scale {
     let scale = gtk::Scale::with_range(gtk::Orientation::Horizontal, 0.0, 1.0, step);
     scale.set_draw_value(false);
     scale.add_css_class("bar-slider");
@@ -50,7 +50,7 @@ fn slider(step: f64) -> gtk::Scale {
 }
 
 /// `PlaybackIcons.volume` thresholds.
-fn volume_icon(v: f32) -> &'static str {
+pub(crate) fn volume_icon(v: f32) -> &'static str {
     match v {
         v if v <= 0.001 => "audio-volume-muted-symbolic",
         v if v < 0.33 => "audio-volume-low-symbolic",
