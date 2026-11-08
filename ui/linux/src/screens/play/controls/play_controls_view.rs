@@ -25,8 +25,6 @@ const VOLUME_ICON_WIDTH: i32 = 20;
 
 pub struct PlayControlsView {
     pub container: gtk::Box,
-    /// Capped by the play view so the card never exceeds the cover's edge.
-    pub center_label: gtk::Label,
 }
 
 impl PlayControlsView {
@@ -34,7 +32,7 @@ impl PlayControlsView {
         let container = gtk::Box::new(gtk::Orientation::Vertical, 0);
         container.add_css_class("play-controls");
         container.set_valign(gtk::Align::Center);
-        container.set_halign(gtk::Align::Center);
+        container.set_halign(gtk::Align::Fill);
 
         // 1. Elapsed | artist • title | duration.
         let info_row = gtk::Box::new(gtk::Orientation::Horizontal, INFO_SPACING);
@@ -270,6 +268,6 @@ impl PlayControlsView {
         container.append(&transport);
         container.append(&volume_row);
 
-        Self { container, center_label: center_lbl }
+        Self { container }
     }
 }

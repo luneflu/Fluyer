@@ -1,11 +1,16 @@
 //! Port of macOS `PlayView.swift` + `Layout.Play`: left cover/controls column
 //! (40% width once lyrics appear, 50% centred when they don't) beside a 55% lyrics
 //! column, plus a floating back chevron that fades out after 3s idle.
+//!
+//! The split lives in a `GtkLayoutManager`, so widths are recomputed by GTK's own
+//! measure/allocate pass on every resize. No frame-clock ticks, no resize signals, no
+//! `set_size_request` minimums that leak into the window's sizing.
 use crate::screens::play::controls::PlayControlsView;
 use crate::screens::play::lyrics::LyricsView;
 use crate::shared::AppState;
 use gtk::glib;
 use gtk::prelude::*;
+use gtk::subclass::prelude::*;
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
@@ -23,6 +28,112 @@ const BACK_SIDE: i32 = 28;
 const BACK_LEADING: i32 = 12;
 const BACK_TOP: i32 = 24;
 const IDLE_SECS: u32 = 3;
+/// Cover texture size: always the largest the layout can show, scaled down by GTK.
+const COVER_TEXTURE: u32 = (MAX_COVER_SIDE * 2) as u32;
+
+// MARK: - Layout manager
+
+mod layout_imp {
+    use super::*;
+
+    #[derive(Default)]
+    pub struct PlayLayout {
+        pub left: RefCell<Option<gtk::Widget>>,
+        pub lyrics: RefCell<Option<gtk::Widget>>,
+        pub with_lyrics: Cell<bool>,
+    }
+
+    #[glib::object_subclass]
+    impl ObjectSubclass for PlayLayout {
+        const NAME: &'static str = "FluyerPlayLayout";
+        type Type = super::PlayLayout;
+        type ParentType = gtk::LayoutManager;
+    }
+
+    impl ObjectImpl for PlayLayout {}
+
+    impl LayoutManagerImpl for PlayLayout {
+        fn measure(
+            &self,
+            _widget: &gtk::Widget,
+            orientation: gtk::Orientation,
+            _for_size: i32,
+        ) -> (i32, i32, i32, i32) {
+            let min = if orientation == gtk::Orientation::Horizontal {
+                MIN_COVER_SIDE + COLUMN_GUTTER + 240
+            } else {
+                360
+            };
+            (min, min, -1, -1)
+        }
+
+        fn allocate(&self, widget: &gtk::Widget, width: i32, height: i32, baseline: i32) {
+            let (Some(left), Some(lyrics)) = (self.left.borrow().clone(), self.lyrics.borrow().clone())
+            else {
+                return;
+            };
+
+            let with_lyrics = self.with_lyrics.get();
+            let ratio = if with_lyrics { COVER_COLUMN_RATIO } else { CENTERED_COLUMN_RATIO };
+            // Ratios apply to the usable width, so the fixed gaps cannot push the
+            // children's minimum past the window (that made the window grow itself).
+            let usable = (width - COLUMN_GUTTER - TRAILING_PADDING).max(0);
+            // Only the cover side is capped (macOS maxCoverSide); the column keeps its
+            // percentage so `dx` can stay large and keep the cover right-aligned.
+            let column = ((usable as f64 * ratio) as i32).clamp(0, usable);
+            let body_h = (height - TOP_PADDING).max(0);
+            let at = |x: i32| {
+                Some(gtk::gsk::Transform::new().translate(&gtk::graphene::Point::new(
+                    x as f32,
+                    TOP_PADDING as f32,
+                )))
+            };
+
+            // The cover/card get the cover side, not the whole column (macOS
+            // `side = clamp(columnWidth - gutter)`, `dx = columnWidth - gutter - side`).
+            // Allocating the column width made their natural size, not the cover's,
+            // decide the alignment, which is why it never lined up exactly.
+            let side = (column - COLUMN_GUTTER).clamp(MIN_COVER_SIDE, MAX_COVER_SIDE).min(usable);
+            let left_x = if with_lyrics {
+                (column - COLUMN_GUTTER - side).max(0)
+            } else {
+                ((usable - side) / 2).max(0)
+            };
+            left.allocate(side.max(0), body_h, baseline, at(left_x));
+
+            let lyrics_width = ((usable as f64 * LYRICS_COLUMN_RATIO) as i32).clamp(0, usable);
+            if with_lyrics && lyrics.is_visible() {
+                let x = (width - TRAILING_PADDING - lyrics_width).max(0);
+                lyrics.allocate(lyrics_width, body_h, baseline, at(x));
+            }
+            let _ = (widget, height);
+        }
+    }
+}
+
+glib::wrapper! {
+    /// Two-column play layout: cover/controls beside the lyrics column.
+    pub struct PlayLayout(ObjectSubclass<layout_imp::PlayLayout>) @extends gtk::LayoutManager;
+}
+
+impl PlayLayout {
+    fn new() -> Self {
+        glib::Object::new()
+    }
+
+    fn set_children(&self, left: &gtk::Widget, lyrics: &gtk::Widget) {
+        *self.imp().left.borrow_mut() = Some(left.clone());
+        *self.imp().lyrics.borrow_mut() = Some(lyrics.clone());
+    }
+
+    fn set_with_lyrics(&self, with_lyrics: bool) {
+        if self.imp().with_lyrics.replace(with_lyrics) != with_lyrics {
+            self.layout_changed();
+        }
+    }
+}
+
+// MARK: - View
 
 pub struct PlayView {
     pub container: gtk::Overlay,
@@ -35,31 +146,41 @@ impl PlayView {
         container.set_vexpand(true);
         container.set_hexpand(true);
 
-        let body = gtk::Box::new(gtk::Orientation::Horizontal, 0);
-        body.set_margin_top(TOP_PADDING);
-        body.set_margin_end(TRAILING_PADDING);
-        body.set_vexpand(true);
-
         let left_col = gtk::Box::new(gtk::Orientation::Vertical, COVER_TO_CONTROLS);
         left_col.set_valign(gtk::Align::Center);
-        left_col.set_halign(gtk::Align::Start);
+        left_col.set_halign(gtk::Align::Fill);
 
-        // gtk::Image, not Picture: a Picture's natural size is its texture's, so the
-        // 2x cover would decide the column width. pixel_size pins the square exactly.
-        // ponytail: Image fits (contain), macOS fills; square covers look the same.
-        let cover = gtk::Image::new();
-        cover.set_halign(gtk::Align::Center);
-        cover.set_valign(gtk::Align::Center);
+        // Picture with can_shrink: it takes whatever the layout gives it instead of its
+        // texture's natural size, and the AspectFrame keeps it square.
+        let cover = gtk::Picture::new();
+        cover.set_can_shrink(true);
+        cover.set_content_fit(gtk::ContentFit::Cover);
         cover.add_css_class("play-cover");
+        let square = gtk::AspectFrame::new(0.5, 0.5, 1.0, false);
+        square.set_halign(gtk::Align::Fill);
+        square.set_valign(gtk::Align::Start);
+        square.set_child(Some(&cover));
 
         let controls = PlayControlsView::new(app_state.clone());
         let lyrics = LyricsView::new(app_state.clone());
 
-        left_col.append(&cover);
+        left_col.append(&square);
         left_col.append(&controls.container);
-        body.append(&left_col);
-        body.append(&lyrics.container);
-        container.set_child(Some(&body));
+
+        // A plain widget hosts the split: GtkOverlay insists on providing layout
+        // children for its own children, so it must stay the outermost container.
+        let stage = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+        stage.set_hexpand(true);
+        stage.set_vexpand(true);
+        stage.set_halign(gtk::Align::Fill);
+        stage.set_valign(gtk::Align::Fill);
+        let layout = PlayLayout::new();
+        layout.set_children(left_col.upcast_ref(), lyrics.container.upcast_ref());
+        stage.set_layout_manager(Some(layout.clone()));
+        // The custom manager owns the children, so parent them by hand.
+        left_col.set_parent(&stage);
+        lyrics.container.set_parent(&stage);
+        container.set_child(Some(&stage));
 
         let back = gtk::Button::from_icon_name("go-previous-symbolic");
         back.add_css_class("flat");
@@ -109,169 +230,30 @@ impl PlayView {
         }
         arm();
 
-        // Column widths are fractions of the window (macOS GeometryReader); GTK4 has no
-        // resize signal, so poll on the frame clock and only act on real changes.
-        let has_lyrics = Rc::new(Cell::new(false));
+        // Lyrics decide the column split; the layout manager re-allocates on change.
         {
-            let flag = has_lyrics.clone();
+            let layout = layout.clone();
+            let lyrics = lyrics.container.clone();
             let store = app_state.playback.lyrics_store();
-            let update = move |s: &gtk::gio::ListStore| flag.set(s.n_items() > 1);
+            let update = move |s: &gtk::gio::ListStore| {
+                let with_lyrics = s.n_items() > 1;
+                lyrics.set_visible(with_lyrics);
+                layout.set_with_lyrics(with_lyrics);
+            };
             update(&store);
             store.connect_items_changed(move |s, _, _, _| update(s));
         }
 
-        // Sizing is applied by a tick callback, but the callback removes itself as soon
-        // as the width settles: a live tick keeps the frame clock running and repaints
-        // the whole window every frame, which reads as constant flicker/resizing.
-        let side_now = Rc::new(Cell::new(MIN_COVER_SIDE));
-        let apply: Rc<dyn Fn(i32, bool)> = {
-            let app = app_state.clone();
-            let left_col = left_col.clone();
-            let cover = cover.clone();
-            let lyrics = lyrics.container.clone();
-            let controls_box = controls.container.clone();
-            let center_label = controls.center_label.clone();
-            let side_now = side_now.clone();
-            Rc::new(move |width: i32, with_lyrics: bool| {
-                // Fixed gaps come out of the width before the ratios are applied. Sizing
-                // children from the raw width (40% + 55% + 60px) made their minimums
-                // exceed the window, so GTK kept enlarging it to fit -> runaway resize.
-                let budget = (COLUMN_GUTTER + TRAILING_PADDING).max(0);
-                let usable = (width - budget).max(MIN_COVER_SIDE);
-                let ratio = if with_lyrics { COVER_COLUMN_RATIO } else { CENTERED_COLUMN_RATIO };
-                let column = (usable as f64 * ratio) as i32;
-                let side = (column - COLUMN_GUTTER).clamp(MIN_COVER_SIDE, MAX_COVER_SIDE);
-                side_now.set(side);
-
-                left_col.set_size_request(column, -1);
-                cover.set_pixel_size(side);
-                cover.set_size_request(side, side);
-                // The card shares the cover's edge: same alignment, same width request,
-                // and a capped title so its natural width cannot stretch past `side`.
-                let align = if with_lyrics { gtk::Align::End } else { gtk::Align::Center };
-                controls_box.set_size_request(side, -1);
-                controls_box.set_halign(align);
-                center_label.set_max_width_chars(((side - 116) / 8).max(6));
-                cover.set_halign(align);
-                // The gutter belongs to the column, not the cover, so both share the edge.
-                left_col.set_margin_end(if with_lyrics { COLUMN_GUTTER } else { 0 });
-
-                lyrics.set_visible(with_lyrics);
-                lyrics.set_size_request((usable as f64 * LYRICS_COLUMN_RATIO) as i32, -1);
-                app.covers.current_image(&app.engine, (side * 2) as u32, &cover);
-            })
-        };
-
-        // Sizing runs from a tick callback because GTK4 has no resize signal. The callback
-        // stops as soon as width and layout mode are unchanged, so the frame clock does
-        // not keep repainting the window (`gen` cancels stale callbacks).
-        let gen = Rc::new(Cell::new(0u32));
-        let applied = Rc::new(Cell::new((-1i32, false)));
-        let arm: Rc<dyn Fn()> = Rc::new({
-            let container = container.clone();
-            let apply = apply.clone();
-            let gen = gen.clone();
-            let has_lyrics = has_lyrics.clone();
-            let applied = applied.clone();
-            move || {
-                let my = gen.get() + 1;
-                gen.set(my);
-                let apply = apply.clone();
-                let gen = gen.clone();
-                let has_lyrics = has_lyrics.clone();
-                let applied = applied.clone();
-
-                container.add_tick_callback(move |view, _| {
-                    if gen.get() != my {
-                        return glib::ControlFlow::Break;
-                    }
-                    // During the stack's crossfade the allocation is still the old one,
-                    // so require the same width twice before deciding we are settled.
-                    let width = view.width();
-                    let mode = has_lyrics.get();
-                    let last = applied.get();
-                    if width > 0 && (last.0 != width || last.1 != mode) {
-                        applied.set((width, mode));
-                        apply(width, mode);
-                    } else if last.0 == width {
-                        return glib::ControlFlow::Break;
-                    }
-                    glib::ControlFlow::Continue
-                });
-            }
-        });
-
-        // The sizes above are minimums: leaving them set after the play view is hidden
-        // makes the window's minimum width stick at the play layout, so the home view
-        // stops responding to resizes. Clear them when the view unmaps.
-        {
-            let gen = gen.clone();
-            let left_col = left_col.clone();
-            let cover = cover.clone();
-            let lyrics = lyrics.container.clone();
-            let controls_box = controls.container.clone();
-            let center_label = controls.center_label.clone();
-            container.connect_unmap(move |_| {
-                gen.set(gen.get() + 1); // cancel a pending arm
-                left_col.set_size_request(-1, -1);
-                cover.set_size_request(-1, -1);
-                lyrics.set_size_request(-1, -1);
-                controls_box.set_size_request(-1, -1);
-                center_label.set_max_width_chars(-1);
-            });
-        }
-        {
-            let arm = arm.clone();
-            let arm_after_transition = arm.clone();
-            container.connect_map(move |c| {
-                arm();
-                // Re-arm once the Play/Home crossfade has finished: the first tick can
-                // run while the view is still being allocated at the old width.
-                gtk::glib::timeout_add_local_once(std::time::Duration::from_millis(350), {
-                    let arm = arm_after_transition.clone();
-                    move || arm()
-                });
-                // Window resizes have no dedicated signal in GTK4; these cover the
-                // interactive cases. Everything else re-arms on lyrics changes.
-                if let Some(win) = c.root().and_downcast::<gtk::Window>() {
-                    let a1 = arm.clone();
-                    win.connect_notify_local(Some("default-width"), move |_, _| a1());
-                    let a2 = arm.clone();
-                    win.connect_notify_local(Some("maximized"), move |_, _| a2());
-                }
-            });
-        }
-        // Re-arm whenever the play view is shown: `map` fires before the crossfade gives
-        // the view its real width, but this notify runs after the stack switch starts.
-        {
-            let arm = arm.clone();
-            app_state.playback.connect_show_play_view_notify(move |ps| {
-                if ps.show_play_view() {
-                    arm();
-                }
-            });
-        }
-        {
-            let arm = arm.clone();
-            let flag = has_lyrics.clone();
-            let store = app_state.playback.lyrics_store();
-            store.connect_items_changed(move |s, _, _, _| {
-                let had = flag.get();
-                flag.set(s.n_items() > 1);
-                if had != flag.get() {
-                    arm();
-                }
-            });
-        }
-
-        // Track changes invalidate the `current:*` cache; reload at the current side.
+        // Cover texture is fixed at the largest size the layout shows; the widget scales.
         {
             let app = app_state.clone();
-            let cover = cover.clone();
-            let side_now = side_now.clone();
+            let pic = cover.clone();
+            app_state
+                .covers
+                .current_into(&app.engine, COVER_TEXTURE, &pic);
+            let app2 = app_state.clone();
             app_state.playback.connect_cover_tick_notify(move |_| {
-                let side = side_now.get().max(MIN_COVER_SIDE);
-                app.covers.current_image(&app.engine, (side * 2) as u32, &cover);
+                app2.covers.current_into(&app2.engine, COVER_TEXTURE, &pic);
             });
         }
 
