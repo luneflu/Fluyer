@@ -17,8 +17,6 @@ use std::rc::Rc;
 // Layout.Play (points = GTK px).
 const TOP_PADDING: i32 = 24;
 const TRAILING_PADDING: i32 = 20;
-const COVER_COLUMN_RATIO: f64 = 0.40;
-const CENTERED_COLUMN_RATIO: f64 = 0.50;
 const LYRICS_COLUMN_RATIO: f64 = 0.55;
 const COLUMN_GUTTER: i32 = 40;
 const MIN_COVER_SIDE: i32 = 200;
@@ -74,13 +72,7 @@ mod layout_imp {
             };
 
             let with_lyrics = self.with_lyrics.get();
-            let ratio = if with_lyrics { COVER_COLUMN_RATIO } else { CENTERED_COLUMN_RATIO };
-            // Ratios apply to the usable width, so the fixed gaps cannot push the
-            // children's minimum past the window (that made the window grow itself).
             let usable = (width - COLUMN_GUTTER - TRAILING_PADDING).max(0);
-            // Only the cover side is capped (macOS maxCoverSide); the column keeps its
-            // percentage so `dx` can stay large and keep the cover right-aligned.
-            let column = ((usable as f64 * ratio) as i32).clamp(0, usable);
             let body_h = (height - TOP_PADDING).max(0);
             let at = |x: i32| {
                 Some(gtk::gsk::Transform::new().translate(&gtk::graphene::Point::new(
@@ -89,22 +81,23 @@ mod layout_imp {
                 )))
             };
 
-            // The cover/card get the cover side, not the whole column (macOS
-            // `side = clamp(columnWidth - gutter)`, `dx = columnWidth - gutter - side`).
-            // Allocating the column width made their natural size, not the cover's,
-            // decide the alignment, which is why it never lined up exactly.
-            let side = (column - COLUMN_GUTTER).clamp(MIN_COVER_SIDE, MAX_COVER_SIDE).min(usable);
+            let lyrics_width = ((usable as f64 * LYRICS_COLUMN_RATIO) as i32).clamp(0, usable);
+            let lyrics_x = (width - TRAILING_PADDING - lyrics_width).max(0);
+
+            // Right-aligned against the lyrics column: the cover's right edge sits one
+            // gutter left of the lyrics, so it tracks window width instead of a fixed
+            // `column × ratio` offset. The side itself stays clamped like macOS.
+            let right_edge = if with_lyrics { lyrics_x - COLUMN_GUTTER } else { usable };
+            let side = right_edge.clamp(0, MAX_COVER_SIDE).min(right_edge).max(0);
             let left_x = if with_lyrics {
-                (column - COLUMN_GUTTER - side).max(0)
+                (right_edge - side).max(0)
             } else {
                 ((usable - side) / 2).max(0)
             };
-            left.allocate(side.max(0), body_h, baseline, at(left_x));
+            left.allocate(side, body_h, baseline, at(left_x));
 
-            let lyrics_width = ((usable as f64 * LYRICS_COLUMN_RATIO) as i32).clamp(0, usable);
             if with_lyrics && lyrics.is_visible() {
-                let x = (width - TRAILING_PADDING - lyrics_width).max(0);
-                lyrics.allocate(lyrics_width, body_h, baseline, at(x));
+                lyrics.allocate(lyrics_width, body_h, baseline, at(lyrics_x));
             }
             let _ = (widget, height);
         }

@@ -86,7 +86,7 @@ fn build_ui(app: &adw::Application) {
         .build();
     // Layout.Window on macOS: builder requests are hints, set_size_request is the
     // minimum GTK enforces when the user drags an edge.
-    window.set_size_request(920, 680);
+    window.set_size_request(1180, 760);
 
     let toast_overlay = adw::ToastOverlay::new();
     *app_state.toast_overlay.borrow_mut() = Some(toast_overlay.clone());
@@ -334,11 +334,11 @@ listview, gridview, .album-carousel, .album-grid, .music-grid {
 
 .lyrics-scroll, .lyrics-list { background: transparent; }
 .lyrics-list > row { margin-bottom: 28px; }
-.lyric-line { padding: 20px 0; }
-.lyric-line.lyric-inactive { font-size: 23px; font-weight: bold; color: rgba(255, 255, 255, 0.4); }
-.lyric-line.lyric-active { font-size: 26px; font-weight: bold; color: #ffffff; }
-.lyric-line.lyric-note { font-size: 30px; }
-.lyric-line.lyric-note.lyric-active { font-size: 36px; }
+.lyric-line { padding: 40px 0; }
+.lyric-line.lyric-inactive { font-size: 24px; font-weight: bold; color: rgba(255, 255, 255, 0.4); }
+.lyric-line.lyric-active { font-size: 27px; font-weight: bold; color: #ffffff; }
+.lyric-line.lyric-note { font-size: 35px; }
+.lyric-line.lyric-note.lyric-active { font-size: 40px; }
 
 .dim-label {
     opacity: 0.65;
