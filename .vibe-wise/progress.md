@@ -195,7 +195,49 @@ Implemented (BackdropRenderer.kt): highp, ditherNoise in PINCH_FS (time uniform)
 Verified: compile + unit tests OK; installed on Z2351N (Mali-G57, GLES 3.2), app runs, no Backdrop errors/fallback in logcat. Not verified: visual (screenshot black, Firefox was focused).
 Follow-up (learner: keep grey animated bg when empty; chose "Grey like Linux"): empty queue already gets Rust GREY_PALETTE blocks via backdropLoadBlockArtwork (unchanged); null-artwork placeholder now 1x1 rgb(51,51,54) like Linux (music note removed). Build + tests OK, installed. Not verified visually (phone on lock/notification shade).
 
+## Android UI folder split
+Status: Implemented (Implement this step).
+Requirement (learner): Android code "still messy compared to other platforms"; components like PlayerBar were not separated and the folder count was far below the other OSes.
+Learner decisions: mirror the macOS/Linux shape (Screen > Feature folders, one composable per file, shared views in components/, state in state/, pure helpers in support/); rename `MiniPlayer` -> `PlayerBar` to match the other OSes.
+Accepted additions: `LibraryScreen` -> `HomeScreen`, `TrackPane` -> `TrackList`, `CollectionHeader` -> `AlbumHeader`, `Controls` -> `PlayControls` (file/function names had to match the new folders); dropped the dead `Modifier.combinedClickableTap` (it only wrapped `clickable`); `ARCHITECTURE.md` got an Android section.
+Implemented: 22 -> 42 main Kotlin files. `screens/home/{HomeScreen,toolbar/{TopBar,SortMenu},albums/{AlbumCarousel,AlbumCard,AlbumGrid,AlbumHeader},musicgrid/{TrackList,TrackRow},playerbar/PlayerBar,queue/{QueueSheet,QueueRow}}`, `screens/play/{PlayScreen,controls/PlayControls,lyrics/Lyrics}`, `screens/settings/SettingsScreen`, `components/{Backdrop,Cover,Toast}` + `components/backdrop/`, `support/{TimeFormat,PlaybackIcons,ThumbnailKey,NaturalCompare,FloatClamped,Placeholders}` (split out of `state/Support.kt`), `state/` keeps 9 files. `StateTest` split: `state/StateTest` 9 + `support/SupportTest` 5.
+Verified: `gradlew compileDebugKotlin` OK, `gradlew testDebugUnitTest` 18 pass (9 + 5 + 4). Body diff vs the pre-move files shows renames and extraction only, no logic drift. Not verified: device run, no visual check.
+Open (not done): no `theme/Layout` file, so padding / sizes / colors are still inline literals; `AlbumSelection` still merges macOS `AlbumSelection` + `LibraryFilterState`.
+
 ## Android library mode toggle icons
 Status: Implemented (direct request: icons instead of Songs/Albums text, remove checkmark).
 AI choices (unreviewed): Icons.Rounded.MusicNote (Songs), Icons.Rounded.Album (Albums); contentDescription keeps labels for TalkBack; `icon = {}` hides the SegmentedButton checkmark.
 Verified: build OK, installed. Not checked visually.
+
+## Linux player bar (macOS PlayerBarView port)
+Status: Implemented (Implement this step). Learner request: "update the playerbar to be the same as swift".
+Learner decision: match macOS. AI-proposed + confirmed: restyle gtk::Scale via CSS (no custom widget), GTK symbolic icons at PlaybackIcons volume thresholds, drop time label.
+Implemented: player_bar_view.rs rewritten (seek line, capsule 52px, 190px side columns, 24px icon buttons, inactive = 50% white, cover click opens play view); main.rs CSS `.player-bar*`, `.bar-*`, `scale.bar-slider(.thin)`; removed `.player-bar-container/.player-seek-bar/.active-control` (now unused).
+Verified: build 0 warnings, 5 tests, screenshot matches layout. Not verified: hover thickness, drag seek/volume.
+Bugfix: bar cover grew 40px to 52px once a track loaded. Cause: gtk::Picture natural size = texture size (80px @2x thumb); set_size_request is only a minimum. Fix: bar cover is gtk::Image with pixel_size 40 (CoverState::current_image added). Verified via size log: 40x40 with cover loaded (was 52x52).
+
+## Player bar icon sharpness
+Status: Implemented.
+Learner decision: all player bar icons at 16px (was 15/17/13 from macOS pt sizes) — 16 matches GTK symbolic SVG grid and centres on a whole pixel in the 24px button.
+Hypothesis not yet visually confirmed by learner.
+
+## Play view (macOS port)
+Status: Implemented (learner: Implement this step).
+Changes: `screens/play/play_view.rs` overlay layout (left column 50% centred without lyrics / 40% + 40px gutter with lyrics, lyrics 55%, 20px trailing, 24px top), floating 28x28 back chevron at 12/24 that hides after 3s idle and returns on pointer motion; `controls/play_controls_view.rs` info row (elapsed | artist • title | duration, 48px time columns, 15px medium centre), knob-less seek, repeat/prev/play/next/shuffle with flex spacers and 0.9/0.4 active states, mute · thin volume · max-volume; `lyrics/lyrics_view.rs` bold 30 active / 25 inactive, note glyph, 28px row spacing, 260px end inset, click seeks, active class now refreshed via item notify (previously stale on reuse).
+Reused `icon_button`, `slider`, `set_active`, `volume_icon` from `player_bar_view` (now pub(crate)).
+Divergences (ponytail): cover is `gtk::Image` contain not fill; no lyrics gradient mask (no CSS mask in GTK); no 0.94 scale on inactive lines; inset only pads ends (no centre scroll anchor).
+Verified: 0 warnings, 5 tests, screenshots with/without lyrics column.
+
+## Lyrics flicker (advisor-guided)
+Status: Implemented.
+Advisor diagnosis: compounding — scroll_to vs set_value race, CssProvider reload invalidating cascade and re-emitting page-size (loop), fresh label per connect_bind (blank frame), row.set_opacity per scroll invalidating render nodes.
+Changes: new `screens/play/lyrics/fade_bin.rs` (gtk::Widget subclass, BinLayout, snapshot() uses gsk MaskMode::Alpha + linear gradient, 120px fade clamped to 25% height) replaces the per-row opacity walk entirely; factory split into setup (label once) / bind (text + classes + is_active notify) / unbind (disconnect only, keeps child); CSS padding reload guarded by rounded page size; centring unchanged (scroll_to + set_value, loop gone once CSS stops re-emitting).
+Learner chose: keep GtkListView, fix the 4 causes (not GtkListBox rewrite).
+Verified: 0 warnings, 5 tests. Flicker not visually confirmed by learner.
+
+## Play view runaway resize (fixed)
+Status: Implemented.
+Trace: window 1100 -> 1103 -> 1110 ... -> 1372 on every `apply` (temporary eprintln in play_view, `notify::default-width` hook).
+Cause: `left_col` min = width*0.40 and `lyrics` min = width*0.55 are GTK minimums, plus gutter 40 + trailing 20 -> child minimum 0.95*width+60 > width, so GTK enlarged the window to satisfy it, which re-ran `apply` with the larger width. Independent of the tick; the tick only made it iterate faster.
+Fix: fixed gaps are subtracted before ratios (`usable = width - (gutter + trailing)`, column/lyrics from `usable`), so children never demand more than the window gives.
+Verified: with 34 lyrics, window stays 1100x720 (logged over 14s), build 0 warnings, 5 tests.

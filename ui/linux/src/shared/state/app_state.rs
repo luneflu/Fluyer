@@ -48,11 +48,15 @@ impl AppState {
                 self.playback.apply_sync(&sync, &self.engine);
             }
             AppEvent::TrackChanged(_meta, _index) => {
+                // Drop the cached `current:*` textures first: the bar/play covers pick the
+                // new one up from the property re-bind below. Invalidating after
+                // `apply_bar` leaves them showing the previous track's cover.
+                self.covers.invalidate_current();
                 let bar = self.engine.player_get_bar();
                 self.playback.apply_bar(&bar);
                 self.playback.sync_lyrics(&self.engine);
                 self.queue.reload(&self.engine);
-                self.covers.invalidate_current();
+                self.playback.set_cover_tick(self.playback.cover_tick().wrapping_add(1));
                 if let Some(w) = self.backdrop_redraw_trigger.borrow().as_ref() {
                     w.queue_draw();
                 }

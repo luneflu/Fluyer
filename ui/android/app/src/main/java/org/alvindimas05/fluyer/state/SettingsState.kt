@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import org.json.JSONArray
 import org.json.JSONObject
+import org.alvindimas05.fluyer.support.clamped
 import java.io.File
 
 /** What the animated backdrop renders: the real cover, or Rust's palette-block square. */

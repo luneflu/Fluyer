@@ -27,6 +27,7 @@ fn main() -> glib::ExitCode {
 }
 
 fn build_ui(app: &adw::Application) {
+    adw::StyleManager::default().set_color_scheme(adw::ColorScheme::ForceDark);
     let data_dir = glib::user_data_dir().join("fluyer");
     let cache_dir = glib::user_cache_dir().join("fluyer");
 
@@ -83,6 +84,9 @@ fn build_ui(app: &adw::Application) {
         .default_width(1100)
         .default_height(720)
         .build();
+    // Layout.Window on macOS: builder requests are hints, set_size_request is the
+    // minimum GTK enforces when the user drags an edge.
+    window.set_size_request(1180, 760);
 
     let toast_overlay = adw::ToastOverlay::new();
     *app_state.toast_overlay.borrow_mut() = Some(toast_overlay.clone());
@@ -96,6 +100,10 @@ fn build_ui(app: &adw::Application) {
     // Foreground: Stack between Home and PlayView
     let main_stack = gtk::Stack::new();
     main_stack.set_transition_type(gtk::StackTransitionType::Crossfade);
+    // GtkStack is homogeneous by default: it then reports the widest child's minimum,
+    // so the play view's cover/columns kept the window wide after going back home.
+    main_stack.set_hhomogeneous(false);
+    main_stack.set_vhomogeneous(false);
     main_stack.set_vexpand(true);
     main_stack.set_hexpand(true);
 
@@ -179,23 +187,63 @@ fn load_css() {
 }
 
 const CSS: &str = r#"
+/* Pin the accent to the app's palette instead of the desktop theme's (Mint-Y-Purple). */
+@define-color accent_color #ffffff;
+@define-color accent_bg_color rgba(255, 255, 255, 0.18);
+@define-color accent_fg_color #ffffff;
+
 window {
     background-color: #121214;
 }
 
-.player-bar-container {
-    background: rgba(18, 18, 22, 0.85);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 6px 16px 12px 16px;
+/* Player bar: port of macOS PlayerBarView + Layout.PlayerBar + SliderTrack. */
+.player-bar { padding: 0 16px 10px 16px; }
+.player-bar-capsule {
+    min-height: 52px;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
 }
+.bar-icon {
+    min-width: 24px;
+    min-height: 24px;
+    padding: 0;
+    color: white;
+    background: none;
+    box-shadow: none;
+}
+.bar-icon.inactive { color: rgba(255, 255, 255, 0.5); }
+.bar-cover-button { padding: 0; background: none; box-shadow: none; }
+.bar-cover { border-radius: 6px; background: rgba(255, 255, 255, 0.1); }
+.bar-title { font-size: 13px; font-weight: 500; color: white; }
+.bar-artist { font-size: 11px; color: rgba(255, 255, 255, 0.6); }
 
-.player-bar-controls {
-    padding: 2px 0px;
+/* SliderTrack: knob-less track. Seek 3px (5 hovered), square; volume 4px (5 hovered), capsule. */
+scale.bar-slider { padding: 0; margin: 0; min-height: 6px; }
+scale.bar-slider trough {
+    min-height: 3px;
+    border-radius: 0;
+    background: rgba(255, 255, 255, 0.12);
+    outline: none;
 }
-
-.player-seek-bar highlight {
-    background-color: #3584e4;
+scale.bar-slider:hover trough { min-height: 5px; }
+scale.bar-slider highlight { min-height: 0; border-radius: 0; background: white; }
+scale.bar-slider slider {
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    opacity: 0;
 }
+scale.bar-slider.thin { min-height: 24px; }
+scale.bar-slider.thin trough { min-height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); }
+scale.bar-slider.thin:hover trough { min-height: 5px; }
+scale.bar-slider.thin highlight { border-radius: 999px; background: rgba(255, 255, 255, 0.9); }
+scale.bar-slider.thin:hover highlight { background: white; }
 
 .queue-panel {
     background: rgba(18, 18, 22, 0.88);
@@ -260,38 +308,37 @@ listview, gridview, .album-carousel, .album-grid, .music-grid {
 }
 .album-header-title { font-size: 13px; font-weight: 500; }
 
-.active-control {
-    color: #3584e4;
+.play-back {
+    padding: 0;
+    min-width: 28px;
+    min-height: 28px;
+    border-radius: 999px;
+    color: white;
+    opacity: 0.7;
+    transition: opacity 250ms ease;
+    background: none;
+    box-shadow: none;
 }
-
-.play-view-container {
-    padding: 24px;
-    background: rgba(0, 0, 0, 0.25);
-}
-
-.play-view-header {
-    margin-bottom: 16px;
-}
-
-.play-view-cover {
+.play-back.idle { opacity: 0; }
+.play-cover {
     border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
 }
+.play-time {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.75);
+    font-feature-settings: "tnum" 1;
+}
+.play-track-info { font-size: 15px; font-weight: 500; color: rgba(255, 255, 255, 0.9); }
+.play-controls .bar-icon.inactive { color: rgba(255, 255, 255, 0.4); }
 
-.lyric-line {
-    padding: 8px 12px;
-    border-radius: 6px;
-}
-
-.lyric-active {
-    font-size: 1.4em;
-    font-weight: bold;
-    color: #ffffff;
-}
-
-.lyric-inactive {
-    font-size: 1.1em;
-    color: rgba(255, 255, 255, 0.45);
-}
+.lyrics-scroll, .lyrics-list { background: transparent; }
+.lyrics-list > row { margin-bottom: 28px; }
+.lyric-line { padding: 40px 0; }
+.lyric-line.lyric-inactive { font-size: 24px; font-weight: bold; color: rgba(255, 255, 255, 0.4); }
+.lyric-line.lyric-active { font-size: 27px; font-weight: bold; color: #ffffff; }
+.lyric-line.lyric-note { font-size: 35px; }
+.lyric-line.lyric-note.lyric-active { font-size: 40px; }
 
 .dim-label {
     opacity: 0.65;

@@ -7,6 +7,9 @@ import kotlinx.coroutines.CoroutineScope
 import uniffi.fluyer_core.FluyerAppEngine
 import uniffi.fluyer_core.PlayViewModel
 import uniffi.fluyer_core.PlayerBarViewModel
+import org.alvindimas05.fluyer.support.NO_TRACK_BAR
+import org.alvindimas05.fluyer.support.EMPTY_PLAY_VIEW
+import org.alvindimas05.fluyer.support.clamped
 
 /**
  * Now-playing state: metadata, transport flags, the position clock and every command the

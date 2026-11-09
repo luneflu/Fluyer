@@ -1,8 +1,27 @@
+//! Port of macOS `PlayControlsView.swift` + `Layout.PlayControls`: elapsed | artist •
+//! title | duration, knob-less seek line, repeat / prev / play / next / shuffle with
+//! flexible spacers, then mute · thin volume slider · max-volume button.
+use crate::screens::home::player_bar::player_bar_view::{
+    icon_button, set_active, slider, volume_icon,
+};
 use crate::shared::AppState;
+use fluyer_core::view_models::format_time;
 use gtk::glib;
 use gtk::prelude::*;
 use std::cell::Cell;
 use std::rc::Rc;
+
+// Layout.PlayControls (points = GTK px).
+const INFO_TOP_PADDING: i32 = 4;
+const INFO_BOTTOM_PADDING: i32 = 12;
+const INFO_SPACING: i32 = 10;
+const TIME_LABEL_WIDTH: i32 = 48;
+const SEEK_HEIGHT: i32 = 8;
+const TRANSPORT_TOP_PADDING: i32 = 8;
+const TRANSPORT_BOTTOM_PADDING: i32 = 8;
+const TRANSPORT_SPACING: i32 = 16;
+const VOLUME_SPACING: i32 = 12;
+const VOLUME_ICON_WIDTH: i32 = 20;
 
 pub struct PlayControlsView {
     pub container: gtk::Box,
@@ -10,176 +29,244 @@ pub struct PlayControlsView {
 
 impl PlayControlsView {
     pub fn new(app_state: Rc<AppState>) -> Self {
-        let container = gtk::Box::new(gtk::Orientation::Vertical, 16);
-        container.add_css_class("play-controls-container");
+        let container = gtk::Box::new(gtk::Orientation::Vertical, 0);
+        container.add_css_class("play-controls");
         container.set_valign(gtk::Align::Center);
+        container.set_halign(gtk::Align::Fill);
 
-        // 1. Titles
-        let titles_box = gtk::Box::new(gtk::Orientation::Vertical, 4);
-        titles_box.set_halign(gtk::Align::Center);
+        // 1. Elapsed | artist • title | duration.
+        let info_row = gtk::Box::new(gtk::Orientation::Horizontal, INFO_SPACING);
+        info_row.set_margin_top(INFO_TOP_PADDING);
+        info_row.set_margin_bottom(INFO_BOTTOM_PADDING);
 
-        let title_lbl = gtk::Label::new(Some("No track playing"));
-        title_lbl.add_css_class("title-1");
-        title_lbl.set_ellipsize(gtk::pango::EllipsizeMode::End);
+        let elapsed_lbl = gtk::Label::new(Some("0:00"));
+        elapsed_lbl.add_css_class("play-time");
+        elapsed_lbl.set_size_request(TIME_LABEL_WIDTH, -1);
+        elapsed_lbl.set_halign(gtk::Align::Start);
+        elapsed_lbl.set_xalign(0.0);
 
-        let artist_lbl = gtk::Label::new(Some("Fluyer"));
-        artist_lbl.add_css_class("title-3");
-        artist_lbl.add_css_class("dim-label");
-        artist_lbl.set_ellipsize(gtk::pango::EllipsizeMode::End);
+        let center_lbl = gtk::Label::new(Some("Fluyer • No track playing"));
+        center_lbl.add_css_class("play-track-info");
+        center_lbl.set_hexpand(true);
+        center_lbl.set_ellipsize(gtk::pango::EllipsizeMode::End);
+        center_lbl.set_xalign(0.5);
 
-        titles_box.append(&title_lbl);
-        titles_box.append(&artist_lbl);
+        let duration_lbl = gtk::Label::new(Some("0:00"));
+        duration_lbl.add_css_class("play-time");
+        duration_lbl.set_size_request(TIME_LABEL_WIDTH, -1);
+        duration_lbl.set_halign(gtk::Align::End);
+        duration_lbl.set_xalign(1.0);
+
+        info_row.append(&elapsed_lbl);
+        info_row.append(&center_lbl);
+        info_row.append(&duration_lbl);
 
         {
-            let t_lbl = title_lbl.clone();
-            let a_lbl = artist_lbl.clone();
-            app_state.playback.connect_title_notify(move |ps| {
-                t_lbl.set_text(&ps.title());
-                a_lbl.set_text(&format!("{} • {}", ps.artist(), ps.album()));
-            });
+            let center = center_lbl.clone();
+            let elapsed = elapsed_lbl.clone();
+            let duration = duration_lbl.clone();
+            let update = move |ps: &crate::shared::state::PlaybackState| {
+                let artist = ps.artist();
+                let title = ps.title();
+                center.set_text(&format!(
+                    "{} • {}",
+                    if artist.is_empty() { "Fluyer" } else { &artist },
+                    if title.is_empty() { "No track playing" } else { &title },
+                ));
+                elapsed.set_text(&format_time(ps.position_ms()));
+                duration.set_text(&format_time(ps.duration_ms()));
+            };
+            update(&app_state.playback);
+            app_state.playback.connect_title_notify(update.clone());
+            app_state.playback.connect_position_ms_notify(update.clone());
+            app_state.playback.connect_duration_ms_notify(update);
         }
 
-        // 2. Seek Bar + Time Label
-        let seek_box = gtk::Box::new(gtk::Orientation::Vertical, 4);
-
-        let seek_scale = gtk::Scale::with_range(gtk::Orientation::Horizontal, 0.0, 1.0, 0.001);
-        seek_scale.set_draw_value(false);
-        seek_scale.set_hexpand(true);
-        seek_scale.add_css_class("play-seek-scale");
-
-        let is_user_seeking = Rc::new(Cell::new(false));
+        // 2. Seek line (SliderTrack, not thin).
+        let seek = slider(0.001);
+        seek.set_size_request(-1, SEEK_HEIGHT);
+        let seeking = Rc::new(Cell::new(false));
         {
             let app = app_state.clone();
-            let seeking = is_user_seeking.clone();
-            seek_scale.connect_change_value(move |scale, _, new_val| {
-                seeking.set(true);
-                app.playback.seek_pct(&app.engine, new_val as f32);
-                scale.set_value(new_val);
-                seeking.set(false);
+            let flag = seeking.clone();
+            seek.connect_change_value(move |scale, _, val| {
+                flag.set(true);
+                app.playback.seek_pct(&app.engine, val as f32);
+                scale.set_value(val);
+                flag.set(false);
                 glib::Propagation::Stop
             });
         }
-
         {
-            let scale = seek_scale.clone();
-            let seeking = is_user_seeking.clone();
+            let scale = seek.clone();
+            let flag = seeking.clone();
             app_state.playback.connect_progress_pct_notify(move |ps| {
-                if !seeking.get() {
+                if !flag.get() {
                     scale.set_value(ps.progress_pct() as f64);
                 }
             });
         }
 
-        let time_lbl = gtk::Label::new(Some("0:00 / 0:00"));
-        time_lbl.add_css_class("caption");
-        time_lbl.add_css_class("dim-label");
-        time_lbl.set_halign(gtk::Align::End);
-        {
-            let lbl = time_lbl.clone();
-            app_state.playback.connect_time_label_notify(move |ps| {
-                lbl.set_text(&ps.time_label());
-            });
-        }
+        // 3. repeat · prev · play · next · shuffle, with flexible spacers at both ends
+        // (macOS `grid-cols-[1fr_auto_auto_auto_1fr]`).
+        let transport = gtk::Box::new(gtk::Orientation::Horizontal, TRANSPORT_SPACING);
+        transport.set_margin_top(TRANSPORT_TOP_PADDING);
+        transport.set_margin_bottom(TRANSPORT_BOTTOM_PADDING);
 
-        seek_box.append(&seek_scale);
-        seek_box.append(&time_lbl);
+        let spacer = || {
+            let b = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+            b.set_hexpand(true);
+            b
+        };
 
-        // 3. Transport Buttons
-        let transport_box = gtk::Box::new(gtk::Orientation::Horizontal, 16);
-        transport_box.set_halign(gtk::Align::Center);
-
-        let shuffle_btn = gtk::Button::from_icon_name("media-playlist-shuffle-symbolic");
-        shuffle_btn.add_css_class("flat");
-        shuffle_btn.set_tooltip_text(Some("Shuffle"));
+        let (repeat_btn, repeat_icon) = icon_button("media-playlist-repeat-symbolic", 16, "Repeat");
         {
             let app = app_state.clone();
-            shuffle_btn.connect_clicked(move |_| {
-                app.playback.shuffle(&app.engine);
-            });
+            repeat_btn.connect_clicked(move |_| app.playback.cycle_repeat(&app.engine));
         }
-
-        let prev_btn = gtk::Button::from_icon_name("media-skip-backward-symbolic");
-        prev_btn.add_css_class("flat");
-        prev_btn.set_tooltip_text(Some("Previous"));
         {
-            let app = app_state.clone();
-            prev_btn.connect_clicked(move |_| {
-                app.playback.previous(&app.engine);
-            });
-        }
-
-        let play_btn = gtk::Button::from_icon_name("media-playback-start-symbolic");
-        play_btn.add_css_class("suggested-action");
-        play_btn.add_css_class("circular");
-        play_btn.set_size_request(54, 54);
-        play_btn.set_tooltip_text(Some("Play / Pause"));
-        {
-            let app = app_state.clone();
-            play_btn.connect_clicked(move |_| {
-                app.playback.toggle_play(&app.engine);
-            });
-        }
-
-        {
-            let btn = play_btn.clone();
-            app_state.playback.connect_is_playing_notify(move |ps| {
-                if ps.is_playing() {
-                    btn.set_icon_name("media-playback-pause-symbolic");
+            let icon = repeat_icon.clone();
+            let btn = repeat_btn.clone();
+            let update = move |ps: &crate::shared::state::PlaybackState| {
+                let mode = ps.repeat_mode();
+                icon.set_icon_name(Some(if mode == 2 {
+                    "media-playlist-repeat-song-symbolic"
                 } else {
-                    btn.set_icon_name("media-playback-start-symbolic");
-                }
-            });
+                    "media-playlist-repeat-symbolic"
+                }));
+                set_active(&btn, mode != 0);
+            };
+            update(&app_state.playback);
+            app_state.playback.connect_repeat_mode_notify(update);
         }
 
-        let next_btn = gtk::Button::from_icon_name("media-skip-forward-symbolic");
-        next_btn.add_css_class("flat");
-        next_btn.set_tooltip_text(Some("Next"));
+        let (prev_btn, _) = icon_button("media-skip-backward-symbolic", 16, "Previous");
         {
             let app = app_state.clone();
-            next_btn.connect_clicked(move |_| {
-                app.playback.next(&app.engine);
-            });
+            prev_btn.connect_clicked(move |_| app.playback.previous(&app.engine));
         }
 
-        let repeat_btn = gtk::Button::from_icon_name("media-playlist-repeat-symbolic");
-        repeat_btn.add_css_class("flat");
-        repeat_btn.set_tooltip_text(Some("Repeat"));
+        let (play_btn, play_icon) = icon_button("media-playback-start-symbolic", 16, "Play");
         {
             let app = app_state.clone();
-            repeat_btn.connect_clicked(move |_| {
-                app.playback.cycle_repeat(&app.engine);
-            });
+            play_btn.connect_clicked(move |_| app.playback.toggle_play(&app.engine));
+        }
+        {
+            let icon = play_icon.clone();
+            let btn = play_btn.clone();
+            let update = move |ps: &crate::shared::state::PlaybackState| {
+                let playing = ps.is_playing();
+                icon.set_icon_name(Some(if playing {
+                    "media-playback-pause-symbolic"
+                } else {
+                    "media-playback-start-symbolic"
+                }));
+                btn.set_tooltip_text(Some(if playing { "Pause" } else { "Play" }));
+            };
+            update(&app_state.playback);
+            app_state.playback.connect_is_playing_notify(update);
         }
 
-        transport_box.append(&shuffle_btn);
-        transport_box.append(&prev_btn);
-        transport_box.append(&play_btn);
-        transport_box.append(&next_btn);
-        transport_box.append(&repeat_btn);
-
-        // 4. Volume Slider
-        let vol_box = gtk::Box::new(gtk::Orientation::Horizontal, 8);
-        vol_box.set_halign(gtk::Align::Center);
-
-        let vol_icon = gtk::Image::from_icon_name("audio-volume-high-symbolic");
-        let vol_scale = gtk::Scale::with_range(gtk::Orientation::Horizontal, 0.0, 1.0, 0.01);
-        vol_scale.set_draw_value(false);
-        vol_scale.set_size_request(140, -1);
-        vol_scale.set_value(app_state.playback.volume() as f64);
+        let (next_btn, _) = icon_button("media-skip-forward-symbolic", 16, "Next");
         {
             let app = app_state.clone();
-            vol_scale.connect_value_changed(move |scale| {
-                app.playback.set_volume_val(&app.engine, scale.value() as f32);
-            });
+            next_btn.connect_clicked(move |_| app.playback.next(&app.engine));
         }
 
-        vol_box.append(&vol_icon);
-        vol_box.append(&vol_scale);
+        let (shuffle_btn, _) = icon_button("media-playlist-shuffle-symbolic", 16, "Shuffle");
+        {
+            let app = app_state.clone();
+            shuffle_btn.connect_clicked(move |_| app.playback.shuffle(&app.engine));
+        }
+        {
+            let btn = shuffle_btn.clone();
+            let update = move |ps: &crate::shared::state::PlaybackState| {
+                set_active(&btn, ps.is_shuffled());
+            };
+            update(&app_state.playback);
+            app_state.playback.connect_is_shuffled_notify(update);
+        }
 
-        container.append(&titles_box);
-        container.append(&seek_box);
-        container.append(&transport_box);
-        container.append(&vol_box);
+        transport.append(&spacer());
+        transport.append(&repeat_btn);
+        transport.append(&prev_btn);
+        transport.append(&play_btn);
+        transport.append(&next_btn);
+        transport.append(&shuffle_btn);
+        transport.append(&spacer());
+
+        // 4. Mute · thin volume slider · max volume.
+        let volume_row = gtk::Box::new(gtk::Orientation::Horizontal, VOLUME_SPACING);
+
+        let (mute_btn, mute_icon) = icon_button("audio-volume-muted-symbolic", 16, "Mute");
+        mute_btn.set_size_request(VOLUME_ICON_WIDTH, -1);
+        {
+            let app = app_state.clone();
+            mute_btn.connect_clicked(move |_| app.playback.toggle_mute(&app.engine));
+        }
+        {
+            let icon = mute_icon.clone();
+            let btn = mute_btn.clone();
+            let update = move |ps: &crate::shared::state::PlaybackState| {
+                let v = ps.volume();
+                icon.set_icon_name(Some(if v <= 0.001 {
+                    "audio-volume-muted-symbolic"
+                } else {
+                    "audio-volume-high-symbolic"
+                }));
+                btn.set_tooltip_text(Some(if v <= 0.001 { "Unmute" } else { "Mute" }));
+                set_active(&btn, v > 0.001);
+            };
+            update(&app_state.playback);
+            app_state.playback.connect_volume_notify(update);
+        }
+
+        let volume = slider(0.01);
+        volume.add_css_class("thin");
+        volume.set_hexpand(true);
+        {
+            let app = app_state.clone();
+            volume.connect_change_value(move |scale, _, val| {
+                app.playback.set_volume_val(&app.engine, val as f32);
+                scale.set_value(val);
+                glib::Propagation::Stop
+            });
+        }
+        {
+            let scale = volume.clone();
+            let update = move |ps: &crate::shared::state::PlaybackState| {
+                scale.set_value(ps.volume() as f64);
+            };
+            update(&app_state.playback);
+            app_state.playback.connect_volume_notify(update);
+        }
+
+        let (loud_btn, loud_icon) = icon_button("audio-volume-high-symbolic", 16, "Max volume");
+        loud_btn.set_size_request(VOLUME_ICON_WIDTH, -1);
+        {
+            let app = app_state.clone();
+            loud_btn.connect_clicked(move |_| app.playback.set_volume_val(&app.engine, 1.0));
+        }
+        {
+            let icon = loud_icon.clone();
+            let btn = loud_btn.clone();
+            let update = move |ps: &crate::shared::state::PlaybackState| {
+                let v = ps.volume();
+                icon.set_icon_name(Some(volume_icon(v)));
+                set_active(&btn, v > 0.001);
+            };
+            update(&app_state.playback);
+            app_state.playback.connect_volume_notify(update);
+        }
+
+        volume_row.append(&mute_btn);
+        volume_row.append(&volume);
+        volume_row.append(&loud_btn);
+
+        container.append(&info_row);
+        container.append(&seek);
+        container.append(&transport);
+        container.append(&volume_row);
 
         Self { container }
     }

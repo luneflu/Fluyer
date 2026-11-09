@@ -262,6 +262,53 @@ Steps:
 Verified: `dotnet build` (x64) OK, `dotnet test` 112 pass, app launches and renders the
 library (window capture). Not checked: queue/menu sidebars, play screen, settings dialog.
 
+## Android target (port of the Swift rules)
+
+Same rules as the Swift target: UI-word names, Screen > Feature folders, one composable
+per file, shared state under `state/`, shared helpers under `support/`, shared views under
+`components/`. Kotlin packages follow the folders.
+
+```
+ui/android/app/src/main/java/org/alvindimas05/fluyer/
+  FluyerApp.kt              root composable (backdrop + screens + sheet + toast), color scheme
+  MainActivity.kt           permissions, folder picker
+  PlaybackService.kt        MediaSession + notification + audio focus (macOS NowPlayingCoordinator)
+  FluyerApplication.kt      process-wide AppState owner
+  FolderPaths.kt            SAF tree URI -> filesystem path
+  screens/
+    home/
+      HomeScreen.kt         library screen (was LibraryScreen)
+      toolbar/              TopBar, SortMenu
+      albums/               AlbumCarousel, AlbumCard, AlbumGrid, AlbumHeader
+      musicgrid/            TrackList, TrackRow
+      playerbar/            PlayerBar (was MiniPlayer)
+      queue/                QueueSheet, QueueRow
+    play/
+      PlayScreen.kt
+      controls/             PlayControls
+      lyrics/               Lyrics
+    settings/               SettingsScreen
+  components/
+    Backdrop.kt             backdrop bitmap choice + static fallback
+    Cover.kt                Cover, CurrentCover
+    Toast.kt                ToastPill
+    backdrop/               AnimatedBackdrop, BackdropRenderer, BackdropMesh
+  state/                    AppState, LibraryState, PlaybackState, PlaybackClock,
+                            QueueState, SettingsState, ToastState, ThumbnailStore,
+                            AlbumSelection
+  support/                  TimeFormat, PlaybackIcons, ThumbnailKey, NaturalCompare,
+                            FloatClamped, Placeholders
+```
+
+Notes:
+- `AlbumSelection` still merges what macOS splits into `AlbumSelection` +
+  `LibraryFilterState` (mode, query, sort, selection). Open.
+- No `theme/Layout` file: padding / sizes / colors are still inline literals.
+  Open, same gap as the macOS `Layout.swift` fix.
+
+Verified: `gradlew compileDebugKotlin` OK, `gradlew testDebugUnitTest` 18 pass
+(`StateTest` 9, `SupportTest` 5, `BackdropMeshTest` 4). Not verified: device run.
+
 ## Open questions
 
 1. Later: split `audio/player.rs` (1102 lines).
@@ -300,3 +347,13 @@ library (window capture). Not checked: queue/menu sidebars, play screen, setting
 | Linux: settings dialog | `ui/linux/src/screens/settings/` |
 | Linux: GSK backdrop | `ui/linux/src/components/backdrop/` |
 | Linux: state & models | `ui/linux/src/shared/` |
+| Android: window shell, screen stack | `ui/android/app/src/main/java/org/alvindimas05/fluyer/FluyerApp.kt` |
+| Android: home screen, toolbar, sort | `ui/android/app/src/main/java/org/alvindimas05/fluyer/screens/home/` |
+| Android: song list / row | `ui/android/app/src/main/java/org/alvindimas05/fluyer/screens/home/musicgrid/` |
+| Android: album carousel / grid / header | `ui/android/app/src/main/java/org/alvindimas05/fluyer/screens/home/albums/` |
+| Android: bottom player bar | `ui/android/app/src/main/java/org/alvindimas05/fluyer/screens/home/playerbar/PlayerBar.kt` |
+| Android: queue sheet / row | `ui/android/app/src/main/java/org/alvindimas05/fluyer/screens/home/queue/` |
+| Android: play screen, controls, lyrics | `ui/android/app/src/main/java/org/alvindimas05/fluyer/screens/play/` |
+| Android: settings screen | `ui/android/app/src/main/java/org/alvindimas05/fluyer/screens/settings/SettingsScreen.kt` |
+| Android: shared views (cover, toast, backdrop) | `ui/android/app/src/main/java/org/alvindimas05/fluyer/components/` |
+| Android: state & helpers | `ui/android/app/src/main/java/org/alvindimas05/fluyer/state/` / `support/` |

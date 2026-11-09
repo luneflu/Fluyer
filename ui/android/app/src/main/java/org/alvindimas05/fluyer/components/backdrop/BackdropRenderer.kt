@@ -1,4 +1,4 @@
-package org.alvindimas05.fluyer.backdrop
+package org.alvindimas05.fluyer.components.backdrop
 
 import android.graphics.Bitmap
 import android.opengl.GLES30.*

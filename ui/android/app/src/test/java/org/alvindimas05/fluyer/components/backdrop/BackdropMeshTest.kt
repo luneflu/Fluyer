@@ -1,4 +1,4 @@
-package org.alvindimas05.fluyer.backdrop
+package org.alvindimas05.fluyer.components.backdrop
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals

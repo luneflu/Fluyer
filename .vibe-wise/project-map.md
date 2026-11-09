@@ -13,6 +13,8 @@ Desktop music player. Rust core (`fluyer_core`) manages playback, library scanni
 - `bindings/swift`: UniFFI-generated Swift bindings (`FluyerCore`).
 - `ui/macos`: macOS native SwiftUI app (`FluyerApp`).
 - `ui/windows`: Windows WinUI 3 native app (`Fluyer`).
+- `ui/linux`: Linux GTK 4 / libadwaita app (Rust, gtk-rs).
+- `ui/android`: Android Jetpack Compose app (`FluyerApp`); Kotlin, UniFFI bindings.
 - `libs/macos`, `libs/windows`: Prebuilt BASS dynamic libraries.
 
 ## Main Flow
