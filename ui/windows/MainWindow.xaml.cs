@@ -26,6 +26,7 @@ public sealed partial class MainWindow : Window
 
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
+        WindowChrome.ApplyDarkFrame(this);
         if (AppWindowTitleBar.IsCustomizationSupported() && AppWindow.TitleBar is not null)
         {
             AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
