@@ -67,12 +67,11 @@
                     </Button>
                     <StackPanel VerticalAlignment="Center" Spacing="{StaticResource PlayerBarTitleToArtist}">
                         <TextBlock
-                            FontSize="13"
-                            FontWeight="SemiBold"
+                            FontSize="14"
                             MaxLines="1"
                             Text="{x:Bind Playback.PlayerBar.Title, Mode=OneWay}" />
                         <TextBlock
-                            FontSize="11"
+                            FontSize="12"
                             MaxLines="1"
                             Opacity="0.6"
                             Text="{x:Bind Playback.PlayerBar.Artist, Mode=OneWay}" />
