@@ -130,6 +130,7 @@
         <ListView
             x:Name="Lyrics"
             Grid.Column="1"
+            Margin="{StaticResource PlayLyricsTopInset}"
             Padding="{StaticResource LyricsPadding}"
             IsItemClickEnabled="True"
             ItemClick="OnLyricClick"
@@ -175,6 +176,7 @@
         <Border
             x:Name="LyricsFadeHost"
             Grid.Column="1"
+            Margin="{StaticResource PlayLyricsTopInset}"
             IsHitTestVisible="False" />
 
         <!-- Back -->

@@ -110,6 +110,9 @@
     <x:Double x:Key="PlayCoverColumnRatio">0.40</x:Double>
     <x:Double x:Key="PlayCenteredColumnRatio">0.50</x:Double>
     <Thickness x:Key="PlayBackButtonMargin">12,24,0,0</Thickness>
+    <!-- Caption buttons live in the 48px title bar band (WindowTitleBarHeight).
+         Lyrics and their fade stay below it so text never runs under the buttons. -->
+    <Thickness x:Key="PlayLyricsTopInset">0,48,0,0</Thickness>
 
     <!-- Play screen controls card (PlayView control card) -->
     <Thickness x:Key="PlayControlsInfoMargin">0,4,0,12</Thickness>
