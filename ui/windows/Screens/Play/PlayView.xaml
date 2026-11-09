@@ -30,7 +30,6 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock
                         VerticalAlignment="Center"
-                        FontFamily="Consolas"
                         FontSize="12"
                         Opacity="0.75"
                         Text="{x:Bind TimeFormatElapsed(Playback.PlayerBar.PositionMs), Mode=OneWay}" />
@@ -47,7 +46,6 @@
                         Grid.Column="2"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center"
-                        FontFamily="Consolas"
                         FontSize="12"
                         Opacity="0.75"
                         Text="{x:Bind TimeFormatElapsed(Playback.PlayerBar.DurationMs), Mode=OneWay}" />

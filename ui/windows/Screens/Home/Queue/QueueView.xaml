@@ -131,7 +131,6 @@
                                 <TextBlock
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Center"
-                                    FontFamily="Consolas"
                                     FontSize="11"
                                     Opacity="0.4"
                                     Text="{x:Bind DurationFormatted}" />

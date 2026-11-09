@@ -12,6 +12,11 @@
                 <ResourceDictionary Source="ms-appx:///Shared/Theme/Layout.xaml" />
                 <ResourceDictionary Source="ms-appx:///Shared/Theme/Colors.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <!-- Default app font (WinUI would use Segoe UI Variable Text). -->
+            <FontFamily x:Key="ContentControlThemeFontFamily">Segoe UI Variable Text,Segoe UI</FontFamily>
+            <Style TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Segoe UI Variable Text,Segoe UI" />
+            </Style>
             <Style x:Key="IconButtonStyle" TargetType="Button">
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="BorderBrush" Value="Transparent" />
