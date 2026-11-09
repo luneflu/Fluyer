@@ -3,6 +3,7 @@ using Fluyer.Core.State;
 using Fluyer.Shared;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Layout = Fluyer.Shared.Layout;
 
 namespace Fluyer.Screens;
@@ -81,6 +82,48 @@ public sealed partial class AlbumGridView : UserControl
         {
             RefreshEmpty();
         }
+        if (e.PropertyName is nameof(LibraryFilterState.Index) or nameof(LibraryFilterState.DisplayedAlbums)
+            or nameof(LibraryFilterState.Mode))
+        {
+            RefreshChrome();
+        }
+    }
+
+    private bool _listHovered;
+
+    private void OnListPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        _listHovered = true;
+        RefreshChrome();
+    }
+
+    private void OnListPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        _listHovered = false;
+        RefreshChrome();
+    }
+
+    private void RefreshChrome()
+    {
+        foreach (var item in Cards.Items)
+        {
+            if (Cards.ContainerFromItem(item) is GridViewItem container && item is AlbumCardViewModel album)
+            {
+                ApplyChrome(container, album);
+            }
+        }
+    }
+
+    // AlbumCard.swift: 40% opacity for the rest while an album is open, lifted while the list is hovered.
+    private void ApplyChrome(GridViewItem container, AlbumCardViewModel album)
+    {
+        if (container.ContentTemplateRoot is not FrameworkElement card)
+        {
+            return;
+        }
+        var selected = Filter?.Index == (int)album.Index;
+        var dimmed = Filter?.IsActive == true && !selected && !_listHovered;
+        AlbumCardChrome.Apply(card, selected, dimmed);
     }
 
     private void RefreshEmpty()
@@ -109,13 +152,40 @@ public sealed partial class AlbumGridView : UserControl
 
     private void OnContainerChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
     {
-        if (args.Item is AlbumCardViewModel album
-            && Covers is { } covers
-            && CoverImages.FindChild<Image>(args.ItemContainer) is { } cover)
+        if (args.Item is AlbumCardViewModel album)
         {
-            // Fixed 2x like the carousel, quantized to 32px so both share cache keys.
-            var pixels = Math.Max(16, ((int)(CardCoverSize * 2) / 32) * 32);
-            _ = covers.LoadAlbum(cover, album.Index, pixels, album);
+            if (args.ItemContainer is GridViewItem container)
+            {
+                ApplyChrome(container, album);
+            }
+            if (Covers is { } covers
+                && CoverImages.FindChild<Image>(args.ItemContainer) is { } cover)
+            {
+                // Fixed 2x like the carousel, quantized to 32px so both share cache keys.
+                var pixels = Math.Max(16, ((int)(CardCoverSize * 2) / 32) * 32);
+                _ = LoadCoverAsync(covers, cover, album, pixels);
+            }
+        }
+    }
+
+    // Placeholder stays until art actually paints (transparent PNGs would show it through).
+    private static async Task LoadCoverAsync(CoverState covers, Image cover, AlbumCardViewModel album, int pixels)
+    {
+        AlbumCardChrome.ShowPlaceholder(cover, cover.Source is null);
+        await covers.LoadAlbum(cover, album.Index, pixels, album);
+        AlbumCardChrome.ShowPlaceholder(cover, cover.Source is null);
+    }
+
+    private void OnCardPointerEntered(object sender, PointerRoutedEventArgs e) => SetHover(sender, true);
+    private void OnCardPointerExited(object sender, PointerRoutedEventArgs e) => SetHover(sender, false);
+
+    private void SetHover(object sender, bool hovering)
+    {
+        if (sender is FrameworkElement card)
+        {
+            var selected = card.DataContext is AlbumCardViewModel album
+                && Filter?.Index == (int)album.Index;
+            AlbumCardChrome.Hover(card, hovering, selected);
         }
     }
 

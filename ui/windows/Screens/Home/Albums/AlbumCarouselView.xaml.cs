@@ -5,6 +5,7 @@ using Fluyer.Components;
 using Fluyer.Shared;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Layout = Fluyer.Shared.Layout;
 using Windows.Graphics.Display;
 
@@ -254,13 +255,39 @@ public sealed partial class AlbumCarouselView : UserControl
                 var label = FindTitle(container);
                 if (label is not null)
                 {
-                    var selected = filter.Index == (int)album.Index;
-                    label.FontWeight = selected
+                    label.FontWeight = filter.Index == (int)album.Index
                         ? Microsoft.UI.Text.FontWeights.SemiBold
                         : Microsoft.UI.Text.FontWeights.Medium;
                 }
+                ApplyChrome(container, album);
             }
         }
+    }
+
+    private bool _listHovered;
+
+    private void OnListPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        _listHovered = true;
+        RefreshSelectionEmphasis();
+    }
+
+    private void OnListPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        _listHovered = false;
+        RefreshSelectionEmphasis();
+    }
+
+    // AlbumCard.swift: 40% opacity for the rest while an album is open, lifted while the list is hovered.
+    private void ApplyChrome(ListViewItem container, AlbumCardViewModel album)
+    {
+        if (container.ContentTemplateRoot is not FrameworkElement card)
+        {
+            return;
+        }
+        var selected = Filter?.Index == (int)album.Index;
+        var dimmed = Filter?.IsActive == true && !selected && !_listHovered;
+        AlbumCardChrome.Apply(card, selected, dimmed);
     }
 
     private static TextBlock? FindTitle(DependencyObject container)
@@ -278,6 +305,7 @@ public sealed partial class AlbumCarouselView : UserControl
 
     private void PrepareContainer(ListViewItem container, AlbumCardViewModel album)
     {
+        ApplyChrome(container, album);
         var covers = Covers;
         if (covers is null)
         {
@@ -289,7 +317,7 @@ public sealed partial class AlbumCarouselView : UserControl
         var cover = CoverImages.FindChild<Image>(container);
         if (cover is not null)
         {
-            _ = covers.LoadAlbum(cover, album.Index, pixels, album);
+            _ = LoadCoverAsync(covers, cover, album, pixels);
         }
         var label = FindTitle(container);
         if (label is not null && Filter is { } filter)
@@ -297,6 +325,27 @@ public sealed partial class AlbumCarouselView : UserControl
             label.FontWeight = filter.Index == (int)album.Index
                 ? Microsoft.UI.Text.FontWeights.SemiBold
                 : Microsoft.UI.Text.FontWeights.Medium;
+        }
+    }
+
+    // Placeholder stays until art actually paints (transparent PNGs would show it through).
+    private static async Task LoadCoverAsync(CoverState covers, Image cover, AlbumCardViewModel album, int pixels)
+    {
+        AlbumCardChrome.ShowPlaceholder(cover, cover.Source is null);
+        await covers.LoadAlbum(cover, album.Index, pixels, album);
+        AlbumCardChrome.ShowPlaceholder(cover, cover.Source is null);
+    }
+
+    private void OnCardPointerEntered(object sender, PointerRoutedEventArgs e) => SetHover(sender, true);
+    private void OnCardPointerExited(object sender, PointerRoutedEventArgs e) => SetHover(sender, false);
+
+    private void SetHover(object sender, bool hovering)
+    {
+        if (sender is FrameworkElement card)
+        {
+            var selected = card.DataContext is AlbumCardViewModel album
+                && Filter?.Index == (int)album.Index;
+            AlbumCardChrome.Hover(card, hovering, selected);
         }
     }
 

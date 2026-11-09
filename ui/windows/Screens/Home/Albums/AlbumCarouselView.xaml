@@ -9,6 +9,9 @@
          responsive width rules transcribed from AlbumListCtrl. -->
     <UserControl.Resources>
         <StaticResource x:Key="ListViewItemCornerRadius" ResourceKey="AlbumsCardCornerRadius" />
+        <!-- SwiftUI AlbumCard draws its own hover chrome; no WinUI item fill. -->
+        <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="Transparent" />
+        <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="Transparent" />
     </UserControl.Resources>
     <ListView
         x:Name="Strip"
@@ -16,6 +19,9 @@
         IsItemClickEnabled="True"
         ItemClick="OnItemClick"
         ItemsSource="{x:Bind Filter.DisplayedAlbums, Mode=OneWay}"
+        PointerCanceled="OnListPointerExited"
+        PointerEntered="OnListPointerEntered"
+        PointerExited="OnListPointerExited"
         ScrollViewer.HorizontalScrollBarVisibility="Hidden"
         ScrollViewer.HorizontalScrollMode="Enabled"
         ScrollViewer.VerticalScrollBarVisibility="Disabled"
@@ -44,7 +50,13 @@
         </ListView.ItemContainerStyle>
         <ListView.ItemTemplate>
             <DataTemplate x:DataType="native:AlbumCardViewModel">
-                <StackPanel Width="{Binding CardCoverSize, ElementName=CarouselRoot}" Spacing="{StaticResource AlbumsCoverToLabels}">
+                <StackPanel
+                    Width="{Binding CardCoverSize, ElementName=CarouselRoot}"
+                    Background="Transparent"
+                    PointerCanceled="OnCardPointerExited"
+                    PointerEntered="OnCardPointerEntered"
+                    PointerExited="OnCardPointerExited"
+                    Spacing="{StaticResource AlbumsCoverToLabels}">
                     <Grid
                         Width="{Binding CardCoverSize, ElementName=CarouselRoot}"
                         Height="{Binding CardCoverSize, ElementName=CarouselRoot}">
@@ -55,16 +67,32 @@
                             Glyph="&#xEC4F;"
                             Tag="art" />
                         <Image x:Name="Cover" Stretch="UniformToFill" Opacity="0" />
+                        <!-- AlbumCard.swift: white wash + 2px border on hover,
+                             fading in over 0.5s and out over 0.75s. -->
+                        <Border
+                            x:Name="HoverChrome"
+                            Background="#33FFFFFF"
+                            BorderBrush="White"
+                            BorderThickness="2"
+                            IsHitTestVisible="False"
+                            Opacity="0" />
+                        <!-- AlbumCard.swift selection: solid 2px border, no wash. -->
+                        <Border
+                            x:Name="SelectedChrome"
+                            BorderBrush="White"
+                            BorderThickness="2"
+                            IsHitTestVisible="False"
+                            Opacity="0" />
                     </Grid>
                     <StackPanel Spacing="{StaticResource AlbumsNameToArtist}">
                         <TextBlock
-                            FontSize="14"
+                            FontSize="15"
                             MaxLines="1"
                             Tag="albumtitle"
                             Text="{x:Bind Name}"
                             TextTrimming="CharacterEllipsis" />
                         <TextBlock
-                            FontSize="12"
+                            FontSize="13"
                             MaxLines="1"
                             Opacity="0.6"
                             Text="{x:Bind Artist}"

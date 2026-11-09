@@ -9,6 +9,11 @@
          as the carousel, so switching modes keeps every cover the same size. -->
     <UserControl.Resources>
         <StaticResource x:Key="ListViewItemCornerRadius" ResourceKey="AlbumsCardCornerRadius" />
+        <!-- SwiftUI AlbumCard draws its own hover chrome; no WinUI item fill. -->
+        <SolidColorBrush x:Key="GridViewItemBackgroundPointerOver" Color="Transparent" />
+        <SolidColorBrush x:Key="GridViewItemBackgroundPressed" Color="Transparent" />
+        <!-- WinUI dims item text on hover (TextFillColorSecondaryBrush); keep labels white. -->
+        <SolidColorBrush x:Key="GridViewItemForegroundPointerOver" Color="White" />
     </UserControl.Resources>
     <Grid>
         <GridView
@@ -18,6 +23,9 @@
             ItemsSource="{x:Bind Filter.DisplayedAlbums, Mode=OneWay}"
             Margin="{StaticResource AlbumsGridMargin}"
             Padding="{StaticResource AlbumsGridPadding}"
+            PointerCanceled="OnListPointerExited"
+            PointerEntered="OnListPointerEntered"
+            PointerExited="OnListPointerExited"
             ScrollViewer.VerticalScrollBarVisibility="Hidden"
             SelectionMode="None">
             <GridView.ItemContainerTransitions>
@@ -33,7 +41,13 @@
             </GridView.ItemContainerStyle>
             <GridView.ItemTemplate>
                 <DataTemplate x:DataType="native:AlbumCardViewModel">
-                    <StackPanel Width="{Binding CardCoverSize, ElementName=AlbumGridRoot}" Spacing="{StaticResource AlbumsCoverToLabels}">
+                    <StackPanel
+                        Width="{Binding CardCoverSize, ElementName=AlbumGridRoot}"
+                        Background="Transparent"
+                        PointerCanceled="OnCardPointerExited"
+                        PointerEntered="OnCardPointerEntered"
+                        PointerExited="OnCardPointerExited"
+                        Spacing="{StaticResource AlbumsCoverToLabels}">
                         <StackPanel.ContextFlyout>
                             <MenuFlyout>
                                 <MenuFlyoutItem Click="OnPlayAlbum" Tag="{x:Bind Index}" Text="Play" />
@@ -50,15 +64,31 @@
                                 Foreground="#4DFFFFFF"
                                 Glyph="&#xEC4F;" />
                             <Image x:Name="Cover" Stretch="UniformToFill" Opacity="0" />
+                            <!-- AlbumCard.swift: white wash + 2px border on hover,
+                                 fading in over 0.5s and out over 0.75s. -->
+                            <Border
+                                x:Name="HoverChrome"
+                                Background="#33FFFFFF"
+                                BorderBrush="White"
+                                BorderThickness="2"
+                                IsHitTestVisible="False"
+                                Opacity="0" />
+                            <!-- AlbumCard.swift selection: solid 2px border, no wash. -->
+                            <Border
+                                x:Name="SelectedChrome"
+                                BorderBrush="White"
+                                BorderThickness="2"
+                                IsHitTestVisible="False"
+                                Opacity="0" />
                         </Grid>
                         <StackPanel Spacing="{StaticResource AlbumsNameToArtist}">
                             <TextBlock
-                                FontSize="16"
+                                FontSize="15"
                                 MaxLines="1"
                                 Text="{x:Bind Name}"
                                 TextTrimming="CharacterEllipsis" />
                             <TextBlock
-                                FontSize="13"
+                                FontSize="12"
                                 MaxLines="1"
                                 Opacity="0.6"
                                 Text="{x:Bind Artist}"

@@ -39,6 +39,10 @@
     <x:Double x:Key="AlbumsCoverToLabels">5</x:Double>
     <x:Double x:Key="AlbumsNameToArtist">2</x:Double>
     <x:Double x:Key="AlbumsLabelHeight">52</x:Double>
+    <!-- AlbumCard hover chrome fade and dim transition (seconds). -->
+    <x:Double x:Key="AlbumsHoverFadeIn">0.25</x:Double>
+    <x:Double x:Key="AlbumsHoverFadeOut">0.25</x:Double>
+    <x:Double x:Key="AlbumsDimFade">0.3</x:Double>
     <!-- Albums mode grid (AlbumGridView); side gutter comes from WindowPageGutter. -->
     <Thickness x:Key="AlbumsGridPadding">0,8</Thickness>
     <!-- Right = -(AlbumsGridItemMargin.Right): cancels the last column's gap. -->
