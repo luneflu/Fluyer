@@ -34,6 +34,11 @@ public sealed partial class MainWindow : Window
         AppWindow.SetIcon("Assets/AppIcon.ico");
         AppWindow.Resize(new SizeInt32(
             (int)Layout.Number("WindowInitialWidth"), (int)Layout.Number("WindowInitialHeight")));
+        if (AppWindow.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.PreferredMinimumWidth = (int)Layout.Number("WindowMinWidth");
+            presenter.PreferredMinimumHeight = (int)Layout.Number("WindowMinHeight");
+        }
 
         _mediaTransport = new MediaTransportCoordinator(this, state.Playback, covers);
         Closed += (_, _) => _mediaTransport.Dispose();
