@@ -241,3 +241,11 @@ Trace: window 1100 -> 1103 -> 1110 ... -> 1372 on every `apply` (temporary eprin
 Cause: `left_col` min = width*0.40 and `lyrics` min = width*0.55 are GTK minimums, plus gutter 40 + trailing 20 -> child minimum 0.95*width+60 > width, so GTK enlarged the window to satisfy it, which re-ran `apply` with the larger width. Independent of the tick; the tick only made it iterate faster.
 Fix: fixed gaps are subtracted before ratios (`usable = width - (gutter + trailing)`, column/lyrics from `usable`), so children never demand more than the window gives.
 Verified: with 34 lyrics, window stays 1100x720 (logged over 14s), build 0 warnings, 5 tests.
+
+## macOS album cards: hide default cover art once the real cover arrives
+Status: Implemented.
+Requirement (learner): in `AlbumGridView` / `AlbumCarouselView`, hide the default cover art after receiving the real one.
+Facts found: both views render `AlbumCard.swift`; the placeholder is the `Rectangle` + `music.note` in `cover`, always drawn underneath `thumbnail` (only the image was swapped in the `ZStack`). Covers arrive via `.task(id: cacheKey)` -> `CoverState.album`; refreshes via `AppState` `albumCoverLoaded` -> `CoverState.invalidateAlbum`. Core has no synthetic default artwork (`artwork_resolve_album` -> `Option`), so the placeholder is the only default art.
+Learner decision: keep the placeholder as the no-cover fallback, but hide it once `thumbnail != nil` (rejected deleting it outright).
+Implemented: `AlbumCard.cover` placeholder wrapped in `if thumbnail == nil { ... }`; real image + selection/hover border unchanged. `AlbumGridView` / `AlbumCarouselView` untouched (they only pass the card).
+Verified: `swift build` OK. Not verified: visual fade-in (placeholder now disappears 0.3s before the image finishes easing in).

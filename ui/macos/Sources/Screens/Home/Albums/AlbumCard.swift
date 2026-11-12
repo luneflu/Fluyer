@@ -59,13 +59,17 @@ struct AlbumCard: View {
     @ViewBuilder
     private var cover: some View {
         ZStack {
-            Rectangle()
-                .fill(Color.white.opacity(0.08))
-                .overlay(
-                    Image(systemName: "music.note")
-                        .font(.system(size: coverSize * 0.25))
-                        .foregroundColor(.white.opacity(0.3))
-                )
+            // No-cover / not-yet-loaded fallback. Hidden once the real cover is in,
+            // so it never sits behind the bitmap.
+            if thumbnail == nil {
+                Rectangle()
+                    .fill(Color.white.opacity(0.08))
+                    .overlay(
+                        Image(systemName: "music.note")
+                            .font(.system(size: coverSize * 0.25))
+                            .foregroundColor(.white.opacity(0.3))
+                    )
+            }
             if let thumbnail {
                 Image(nsImage: thumbnail)
                     .resizable()
