@@ -65,7 +65,7 @@ enum Layout {
     /// Queue panel ("Now Playing").
     enum Queue {
         /// Gap between the panel and the window's right and bottom edges.
-        static let outerInset: CGFloat = 12
+        static let outerInset: CGFloat = 16
         /// Gap between the panel and the toolbar.
         static let outerTop: CGFloat = 6
         static let panelPadding: CGFloat = 12

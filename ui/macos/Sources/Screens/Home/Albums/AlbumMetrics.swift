@@ -69,6 +69,6 @@ struct AlbumMetrics: Equatable {
     /// padding on each side (`Sidebar.svelte`: `sidebarStore.width - 24`, where
     /// `sidebarStore.width = itemWidth * 2` in `useAlbumList`).
     static func sidebarWidth(forWidth width: CGFloat) -> CGFloat {
-        max(1, itemWidth(width: width, dpr: screenScale) * 2 - Layout.Queue.outerInset * 2)
+        max(1, itemWidth(width: width, dpr: screenScale) * 2 - Layout.Queue.outerInset)
     }
 }
