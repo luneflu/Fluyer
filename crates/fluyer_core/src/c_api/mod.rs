@@ -16,6 +16,7 @@ mod lyrics;
 mod memory;
 mod player;
 mod queue;
+mod settings;
 
 pub use events::{FluyerCallbacks, FluyerPlayerState, FluyerRepeatMode};
 

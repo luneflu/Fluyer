@@ -14,6 +14,7 @@ mod library;
 mod lyrics;
 mod player;
 mod queue;
+mod settings;
 
 pub use error::FluyerError;
 pub use events::{FluyerEvent, FluyerEventListener};

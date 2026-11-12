@@ -1,47 +1,28 @@
 import XCTest
 @testable import FluyerApp
 
+/// The file, the JSON shape, folder normalization and the volume clamp all live in
+/// the core (`crates/fluyer_core/src/services/settings.rs` and its tests). These
+/// cover what is left in Swift: the defaults a view sees before the core answers,
+/// remembering folders while no engine is attached, and the enum mapping.
 @MainActor
 final class SettingsStateTests: XCTestCase {
-    private var dir: URL!
-    private var url: URL { dir.appendingPathComponent(SettingsState.fileName) }
-
-    override func setUp() async throws {
-        dir = FileManager.default.temporaryDirectory.appendingPathComponent("fluyer-settings-\(UUID().uuidString)")
-    }
-
-    override func tearDown() async throws {
-        try? FileManager.default.removeItem(at: dir)
-    }
-
-    func testRoundTripsEveryField() {
-        let s = SettingsState(url: url)
-        s.addFolders(["/Music/", "/Other"])
-        s.animatedBackground = false
-        s.backdropSource = .blocks
-        s.discordRpc = false
-        s.volume = 0.4
-
-        let reloaded = SettingsState(url: url)
-        XCTAssertEqual(reloaded.musicFolders, ["/Music", "/Other"])
-        XCTAssertFalse(reloaded.animatedBackground)
-        XCTAssertEqual(reloaded.backdropSource, .blocks)
-        XCTAssertFalse(reloaded.discordRpc)
-        XCTAssertEqual(reloaded.volume, 0.4, accuracy: 0.0001)
-    }
-
-    func testAddFoldersDedupesIgnoringTrailingSlash() {
+    func testDefaultsMatchTheCoreDefaults() {
         let s = SettingsState()
-        XCTAssertEqual(s.addFolders(["/Music", "/Music/", " "]), ["/Music"])
-        XCTAssertEqual(s.addFolders(["/Music//"]), [])
-        XCTAssertEqual(s.musicFolders, ["/Music"])
+        XCTAssertTrue(s.musicFolders.isEmpty)
+        XCTAssertTrue(s.animatedBackground)
+        XCTAssertEqual(s.backdropSource, .artwork)
+        XCTAssertTrue(s.discordRpc)
+        XCTAssertEqual(s.volume, 1.0)
     }
 
-    func testRootStaysRoot() {
-        XCTAssertEqual(SettingsState.normalize("/"), "/")
+    func testAddFoldersRemembersPathsWithoutAnEngineAndReturnsTheNewOnes() {
+        let s = SettingsState()
+        XCTAssertEqual(s.addFolders(["/Music/", "/Other"]), ["/Music/", "/Other"])
+        XCTAssertEqual(s.musicFolders, ["/Music/", "/Other"])
     }
 
-    func testRemoveReturnsStoredSpellingOrNil() {
+    func testRemoveFolderMatchesTrailingSlashAndReturnsTheStoredSpelling() {
         let s = SettingsState()
         s.addFolders(["/Music"])
         XCTAssertEqual(s.removeFolder("/Music/"), "/Music")
@@ -49,33 +30,16 @@ final class SettingsStateTests: XCTestCase {
         XCTAssertTrue(s.musicFolders.isEmpty)
     }
 
-    func testCorruptFileIsKeptAsBadAndDefaultsUsed() throws {
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        try Data("{not json".utf8).write(to: url)
-
-        let s = SettingsState(url: url)
-        XCTAssertTrue(s.animatedBackground)
-        XCTAssertTrue(s.musicFolders.isEmpty)
-        let bad = url.appendingPathExtension("bad")
-        XCTAssertEqual(try String(contentsOf: bad, encoding: .utf8), "{not json")
+    func testRemoveFolderKeepsTheRoot() {
+        let s = SettingsState()
+        s.addFolders(["/"])
+        XCTAssertEqual(s.removeFolder("/"), "/")
     }
 
-    func testPartialFileKeepsDefaultsAndClampsVolume() throws {
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        try Data(#"{"volume": 7}"#.utf8).write(to: url)
-
-        let s = SettingsState(url: url)
-        XCTAssertEqual(s.volume, 1.0)
-        XCTAssertTrue(s.discordRpc)
-        XCTAssertEqual(s.backdropSource, .artwork)
-    }
-
-    func testUnknownBackdropSourceFallsBackWithoutResettingOthers() throws {
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        try Data(#"{"backdropSource": "shader", "discordRpc": false}"#.utf8).write(to: url)
-
-        let s = SettingsState(url: url)
-        XCTAssertEqual(s.backdropSource, .artwork)
-        XCTAssertFalse(s.discordRpc)
+    func testBackdropSourceRoundTripsThroughItsRawValue() {
+        for source in BackdropSource.allCases {
+            XCTAssertEqual(BackdropSource(rawValue: source.rawValue), source)
+        }
+        XCTAssertNil(BackdropSource(rawValue: "shader"))
     }
 }

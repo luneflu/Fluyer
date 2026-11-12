@@ -6,6 +6,7 @@ pub mod images;
 pub mod play_view;
 pub mod player_bar;
 pub mod scan_status;
+pub mod settings;
 pub mod track_item;
 
 pub use album_card::AlbumCardViewModel;
@@ -19,6 +20,7 @@ pub use images::thumbnail_jpeg;
 pub use play_view::PlayViewModel;
 pub use player_bar::PlayerBarViewModel;
 pub use scan_status::ScanStatusViewModel;
+pub use settings::SettingsViewModel;
 pub use track_item::TrackItemViewModel;
 
 // Compatibility aliases for C FFI and existing bindings

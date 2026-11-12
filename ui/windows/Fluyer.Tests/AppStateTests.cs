@@ -111,13 +111,11 @@ public sealed class AppStateTests
     [Fact]
     public void Attach_RestoresSettings_AndRescansSavedFolders()
     {
-        var settings = new SettingsState();
-        settings.AddFolders(["C:\\A", "D:\\B"]);
-        settings.DiscordRpc = false;
-        settings.Volume = 0.25f;
         var engine = new FakeEngine();
+        // The core owns the file: hand the fake the values it "loaded".
+        engine.SetSettings(new SettingsViewModel(["C:\\A", "D:\\B"], true, "artwork", false, 0.25f));
 
-        var app = new AppState(engine, settings: settings);
+        var app = new AppState(engine);
 
         Assert.Equal(new[] { "C:\\A", "D:\\B" }, Assert.Single(engine.Scanned));
         Assert.Contains("discord:False", engine.Calls);

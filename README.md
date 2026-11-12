@@ -133,7 +133,8 @@ core reads files directly, which `READ_MEDIA_AUDIO` allows for audio. Discord Ri
 Presence is disabled on Android.
 
 Runtime state: database + `settings.json` in the app's `filesDir`, cover + lyrics cache
-in `cacheDir` (both wiped on uninstall).
+in `cacheDir` (both wiped on uninstall). `settings.json` is written by the core
+(`services/settings.rs`), not by the Kotlin layer.
 
 ### Prerequisites
 

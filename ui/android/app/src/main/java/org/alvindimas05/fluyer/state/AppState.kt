@@ -33,7 +33,7 @@ class AppState(dataDir: File, cacheDir: File, createEngine: Boolean = true) : Fl
     val selection = AlbumSelection(library)
     val toast = ToastState(scope)
     val queue = QueueState()
-    val settings = SettingsState(File(dataDir, SettingsState.FILE_NAME))
+    val settings = SettingsState()
     val thumbnails = ThumbnailStore()
 
     var engine: FluyerAppEngine? = null
@@ -57,6 +57,8 @@ class AppState(dataDir: File, cacheDir: File, createEngine: Boolean = true) : Fl
      */
     fun attach(engine: FluyerAppEngine?) {
         this.engine = engine
+        settings.engine = engine
+        settings.load()
         playback.engine = engine
         library.engine = engine
         selection.engine = engine
@@ -86,8 +88,8 @@ class AppState(dataDir: File, cacheDir: File, createEngine: Boolean = true) : Fl
 
     fun scanFolders(paths: List<String>) {
         if (paths.isEmpty()) return
-        settings.addFolders(paths)
-        engine?.libraryScan(paths.map(SettingsState::normalize))
+        val added = settings.addFolders(paths)
+        engine?.libraryScan(if (added.isEmpty()) paths else added)
     }
 
     /** Re-scan every saved folder. */

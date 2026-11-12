@@ -1,38 +1,25 @@
-using System.Text.Json;
+using Fluyer.Core.Native;
 
 namespace Fluyer.Core.State;
 
 /// <summary>
-/// User settings persisted as JSON (legacy used <c>tauri-plugin-store</c>).
-/// <c>null</c> path = in-memory only (tests, headless).
+/// User settings for the window. The core owns the file
+/// (<c>%AppData%/org.alvindimas05.fluyer/settings.json</c>) and every rule that used
+/// to live here: JSON shape, folder normalization, dedupe, volume clamp, unknown
+/// backdrop value. This type is the observable mirror views bind to; it never touches
+/// disk. A null engine keeps everything in memory (tests, headless).
 /// </summary>
 public sealed class SettingsState : Support.ObservableObject
 {
-    public const string FileName = "settings.json";
-
-    private sealed record Snapshot(
-        List<string> MusicFolders,
-        bool AnimatedBackground = true,
-        bool DiscordRpc = true,
-        float Volume = 1.0f,
-        // Stored as text and parsed leniently: an unknown value (newer build wrote it)
-        // degrades to Artwork instead of failing the whole file.
-        string? BackdropSource = null);
-
-    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
-
-    private readonly string? _path;
     private readonly List<string> _folders = new();
     private bool _animatedBackground = true;
     private bool _discordRpc = true;
     private float _volume = 1.0f;
     private BackdropSource _backdropSource = BackdropSource.Artwork;
+    private bool _applying;
 
-    public SettingsState(string? path = null)
-    {
-        _path = path;
-        Load();
-    }
+    /// <summary>Set once by <see cref="AppState"/> right after the core starts.</summary>
+    public IFluyerEngine? Engine { get; set; }
 
     public IReadOnlyList<string> MusicFolders => _folders.ToList();
 
@@ -78,38 +65,38 @@ public sealed class SettingsState : Support.ObservableObject
         get => _volume;
         set
         {
-            if (SetProperty(ref _volume, Math.Clamp(value, 0.0f, 1.0f)))
+            if (SetProperty(ref _volume, value))
             {
                 Save();
             }
         }
     }
 
-    /// <summary>Adds folders not already present (case-insensitive, trailing separator ignored). Returns the ones added.</summary>
+    /// <summary>Reads the stored settings; a null engine keeps the defaults.</summary>
+    public void Load()
+    {
+        if (Engine is null)
+        {
+            return;
+        }
+        Apply(Engine.GetSettings());
+    }
+
+    /// <summary>Adds folders not already present. The core normalizes and dedupes; the result is what got stored.</summary>
     public IReadOnlyList<string> AddFolders(IEnumerable<string> paths)
     {
-        var added = new List<string>();
-        foreach (var raw in paths)
-        {
-            var path = Normalize(raw);
-            if (path.Length > 0 && !_folders.Any(f => SamePath(f, path)))
-            {
-                _folders.Add(path);
-                added.Add(path);
-            }
-        }
-        if (added.Count > 0)
-        {
-            OnPropertyChanged(nameof(MusicFolders));
-            Save();
-        }
-        return added;
+        var before = new List<string>(_folders);
+        _folders.AddRange(paths);
+        OnPropertyChanged(nameof(MusicFolders));
+        Save();
+        return _folders.Where(f => !before.Contains(f)).ToList();
     }
 
     /// <summary>Forgets a folder; returns the stored spelling (what scans used), or null if unknown.</summary>
     public string? RemoveFolder(string path)
     {
-        var stored = _folders.FirstOrDefault(f => SamePath(f, Normalize(path)));
+        var key = MatchingForm(path);
+        var stored = _folders.FirstOrDefault(f => MatchingForm(f) == key);
         if (stored is null)
         {
             return null;
@@ -120,60 +107,62 @@ public sealed class SettingsState : Support.ObservableObject
         return stored;
     }
 
-    private static string Normalize(string path)
+    /// <summary>Compares a picked path with a stored one: the same trailing-separator trim the core uses.</summary>
+    private static string MatchingForm(string path)
     {
         var trimmed = path.Trim();
-        // Keep drive roots ("C:\") intact; strip the separator elsewhere.
-        return trimmed.Length > 3 ? trimmed.TrimEnd('\\', '/') : trimmed;
-    }
-
-    private static bool SamePath(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
-
-    private void Load()
-    {
-        if (_path is null || !File.Exists(_path))
+        if (trimmed.Length <= 1)
         {
-            return;
+            return trimmed;
         }
-        try
+        var stripped = trimmed.TrimEnd('\\', '/');
+        if (stripped.Length == 2 && stripped[1] == ':')
         {
-            var snap = JsonSerializer.Deserialize<Snapshot>(File.ReadAllText(_path));
-            if (snap is null)
-            {
-                return;
-            }
-            _folders.AddRange(snap.MusicFolders?.Select(Normalize).Where(p => p.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase) ?? []);
-            _animatedBackground = snap.AnimatedBackground;
-            _discordRpc = snap.DiscordRpc;
-            _volume = Math.Clamp(snap.Volume, 0.0f, 1.0f);
-            _backdropSource = Enum.TryParse<BackdropSource>(snap.BackdropSource, ignoreCase: true, out var source)
-                && Enum.IsDefined(source) ? source : BackdropSource.Artwork;
+            return stripped + "\\";
         }
-        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
-        {
-            // Unreadable file: keep a copy so the next save doesn't destroy it.
-            System.Diagnostics.Debug.WriteLine($"Settings unreadable, using defaults: {ex.Message}");
-            try { File.Copy(_path, _path + ".bad", overwrite: true); } catch (IOException) { }
-        }
+        return stripped.Length == 0 ? "/" : stripped;
     }
 
     private void Save()
     {
-        if (_path is null)
+        if (_applying || Engine is null)
         {
             return;
         }
+        var stored = Engine.SetSettings(new SettingsViewModel(
+            _folders.ToList(),
+            _animatedBackground,
+            _backdropSource.ToString().ToLowerInvariant(),
+            _discordRpc,
+            _volume));
+        if (stored is not null)
+        {
+            Apply(stored);
+        }
+    }
+
+    /// <summary>Mirrors the core's canonical values back into the observable properties.</summary>
+    private void Apply(SettingsViewModel stored)
+    {
+        _applying = true;
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            var tmp = _path + ".tmp";
-            File.WriteAllText(tmp, JsonSerializer.Serialize(
-                new Snapshot(_folders.ToList(), _animatedBackground, _discordRpc, _volume, _backdropSource.ToString()), JsonOptions));
-            File.Move(tmp, _path, overwrite: true);
+            _folders.Clear();
+            _folders.AddRange(stored.MusicFolders);
+            _animatedBackground = stored.AnimatedBackground;
+            _backdropSource = Enum.TryParse<BackdropSource>(stored.BackdropSource, ignoreCase: true, out var source)
+                && Enum.IsDefined(source) ? source : BackdropSource.Artwork;
+            _discordRpc = stored.DiscordRpc;
+            _volume = Math.Clamp(stored.Volume, 0.0f, 1.0f);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        finally
         {
-            System.Diagnostics.Debug.WriteLine($"Settings save failed: {ex.Message}");
+            _applying = false;
         }
+        OnPropertyChanged(nameof(MusicFolders));
+        OnPropertyChanged(nameof(AnimatedBackground));
+        OnPropertyChanged(nameof(BackdropSource));
+        OnPropertyChanged(nameof(DiscordRpc));
+        OnPropertyChanged(nameof(Volume));
     }
 }

@@ -249,3 +249,30 @@ Facts found: both views render `AlbumCard.swift`; the placeholder is the `Rectan
 Learner decision: keep the placeholder as the no-cover fallback, but hide it once `thumbnail != nil` (rejected deleting it outright).
 Implemented: `AlbumCard.cover` placeholder wrapped in `if thumbnail == nil { ... }`; real image + selection/hover border unchanged. `AlbumGridView` / `AlbumCarouselView` untouched (they only pass the card).
 Verified: `swift build` OK. Not verified: visual fade-in (placeholder now disappears 0.3s before the image finishes easing in).
+
+## Cross-platform dedup: push shared logic into Rust
+Status: Build checkpoint open (criterion + how much state Rust owns).
+Requirement (learner): less per-platform code; suggested process = scan per feature, decide if it can be Rust-only, update the md, repeat. Asked for an analysis first.
+Evidence gathered:
+- Per-platform state layers: macOS 994 LOC, Windows 1451, Linux 1203, Android 840. Views: 3854 / 10062 / 4614 / 2985.
+- Already Rust: playback/queue commands, scan + DB, metadata, cover fetch/dedup + JPEG thumbnails, LRC parse, backdrop palette/blocks, view-model snapshots, event stream.
+- Duplicated 4x: sort/filter/search (mac `range(of:options:)`, Linux `glib::FilenameCollationKey`, Windows hand-written `NaturalCompare`, Android `Normalizer` NFD fold); `settings.json` reader/writer (mac/linux/windows/android each hand-rolled); 250ms playback clock + time labels (4 copies; core emits only on discrete actions); queue drop-offset math; album column/cover-size formulas.
+- Correctly per-platform: decoded bitmap caches (NSImage/BitmapImage/Texture), shaders (GPU API per platform), layout constants (DPI/fonts), view code.
+- Intersects an open pending decision: "Backdrop color tuning" (which layer owns the look) still open.
+Learner decision (partial): settings persistence moves to Rust only, all platforms consistent — implemented, see "Settings owned by the core" below.
+Pending decision: the general rule for "forceable to Rust", whether Rust keeps filter/sort state (stateful `library_list`) or exposes pure functions, and migration order for the remaining duplicated logic (sort/filter/search, playback clock, album metrics formulas).
+
+## Settings owned by the core (all platforms)
+Status: Implemented. Learner: "migrate it to Rust only and make all platforms consistent".
+Requirement: settings were 4 hand-rolled `settings.json` readers/writers that had drifted (Linux only wrote `backdrop_source`/`animated_background`, Android had no `discordRpc`, key casing differed).
+Learner decision: the core owns the file and the rules; UIs keep an observable mirror only.
+Implemented:
+- Rust: `services/settings.rs` (load/save, atomic tmp+rename, camelCase with snake_case aliases, `.bad` copy on unreadable file, folder trim/dedupe, volume clamp, unknown backdrop -> `artwork`), `view_models/settings.rs` (`SettingsViewModel`), `engine/settings.rs` (`settings_get`/`settings_set`), `uniffi_api/settings.rs`, `c_api/settings.rs` (`fluyer_settings_get`/`fluyer_settings_set`, JSON).
+- macOS: `SettingsState` is a mirror (no disk I/O); `AppState.attach` sets `settings.engine` + `load()`; `scanFolders` scans the folders the core actually stored.
+- Windows: same shape via `IFluyerEngine.GetSettings/SetSettings` + `fluyer_settings_*` P/Invoke; `AppState.AttachEngine` loads; `App.xaml.cs` no longer builds a path.
+- Android: `SettingsState` mirror over `FluyerAppEngineInterface`; `AppState.attach` loads.
+- Linux: `settings_state.rs` mirrors the core directly; fields with no Linux switch (folders, volume, Discord) are carried through unchanged; `AppState::init` loads.
+Tests moved with the logic: file/JSON/normalization coverage is now Rust (`services::settings::tests`, 5 tests); platform tests kept only mirror behavior + path matching.
+Verified: `cargo test -p fluyer_core` 31 + 2 integration pass; `swift build` + `swift test` 65 pass; `gradlew compileDebugKotlin` + `testDebugUnitTest` 18 pass; Swift/Kotlin bindings regenerated; `nm` shows both `fluyer_settings_*` exports.
+Not verified: `dotnet build`/`dotnet test` (this machine's dotnet is broken: `[/usr/local/share/dotnet/host/fxr] does not contain any version-numbered child folders`); Linux crate cannot be built on macOS (no GTK dev, so the Rust-core dependency is compiled there only).
+Note: `cargo test` needs an absolute `DYLD_LIBRARY_PATH=$PWD/libs/macos` — a relative one resolves against the crate dir and the test binary silently fails to load BASS.

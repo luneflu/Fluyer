@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -34,7 +35,14 @@ internal fun PlayerBar(state: AppState) {
     val bar = state.playback.bar
     if (bar.trackIndex < 0) return
     val clock = state.playback.clock
-    Column(Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.55f)).clickable { state.playback.openPlayView(true) }) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(Color.White.copy(alpha = 0.15f))
+            .clickable { state.playback.openPlayView(true) }
+            .navigationBarsPadding(),
+    ) {
+        LinearProgressIndicator({ clock.progressPct.coerceIn(0f, 1f) }, Modifier.fillMaxWidth().height(2.dp), color = Color.White, trackColor = Color.White.copy(alpha = 0.2f))
         Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             CurrentCover(state, 96, Modifier.size(44.dp))
             Column(Modifier.weight(1f)) {
@@ -47,6 +55,5 @@ internal fun PlayerBar(state: AppState) {
             }
             IconButton({ state.playback.next() }) { Icon(Icons.Rounded.SkipNext, "Next") }
         }
-        LinearProgressIndicator({ clock.progressPct.coerceIn(0f, 1f) }, Modifier.fillMaxWidth().height(2.dp), color = Color.White, trackColor = Color.White.copy(alpha = 0.2f))
     }
 }

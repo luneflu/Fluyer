@@ -812,6 +812,10 @@ internal open class UniffiVTableCallbackInterfaceFluyerEventListener(
 
 
 
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -906,6 +910,10 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_fluyer_core_fn_method_fluyerappengine_queue_remove(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_settings_get(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_settings_set(`ptr`: Pointer,`settings`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_fluyer_core_fn_init_callback_vtable_fluyereventlistener(`vtable`: UniffiVTableCallbackInterfaceFluyerEventListener,
     ): Unit
     fun ffi_fluyer_core_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -1088,6 +1096,10 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_fluyer_core_checksum_method_fluyerappengine_queue_remove(
     ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_settings_get(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_settings_set(
+    ): Short
     fun uniffi_fluyer_core_checksum_constructor_fluyerappengine_new(
     ): Short
     fun uniffi_fluyer_core_checksum_method_fluyereventlistener_on_event(
@@ -1209,6 +1221,12 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_queue_remove() != 11064.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_settings_get() != 53881.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_settings_set() != 4865.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_fluyer_core_checksum_constructor_fluyerappengine_new() != 38275.toShort()) {
@@ -1798,6 +1816,13 @@ public interface FluyerAppEngineInterface {
     
     fun `queueRemove`(`index`: kotlin.ULong)
     
+    fun `settingsGet`(): SettingsViewModel
+    
+    /**
+     * Persists and returns what was stored (normalized folders, clamped volume).
+     */
+    fun `settingsSet`(`settings`: SettingsViewModel): SettingsViewModel
+    
     companion object
 }
 
@@ -2335,6 +2360,33 @@ open class FluyerAppEngine: Disposable, AutoCloseable, FluyerAppEngineInterface 
     
     
 
+    override fun `settingsGet`(): SettingsViewModel {
+            return FfiConverterTypeSettingsViewModel.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_settings_get(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Persists and returns what was stored (normalized folders, clamped volume).
+     */override fun `settingsSet`(`settings`: SettingsViewModel): SettingsViewModel {
+            return FfiConverterTypeSettingsViewModel.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_settings_set(
+        it, FfiConverterTypeSettingsViewModel.lower(`settings`),_status)
+}
+    }
+    )
+    }
+    
+
     
 
     
@@ -2724,6 +2776,60 @@ public object FfiConverterTypeScanStatusViewModel: FfiConverterRustBuffer<ScanSt
             FfiConverterULong.write(value.`total`, buf)
             FfiConverterFloat.write(value.`progressPct`, buf)
             FfiConverterString.write(value.`statusLabel`, buf)
+    }
+}
+
+
+
+/**
+ * Persisted user settings, owned by the core so every UI reads and writes the same
+ * file with the same normalization (`services/settings.rs`).
+ *
+ * The defaults are the ones every platform shipped with: no folders, animated
+ * backdrop on, artwork as the backdrop input, Discord presence on, full volume.
+ */
+data class SettingsViewModel (
+    var `musicFolders`: List<kotlin.String>, 
+    var `animatedBackground`: kotlin.Boolean, 
+    /**
+     * `"artwork"` or `"blocks"`.
+     */
+    var `backdropSource`: kotlin.String, 
+    var `discordRpc`: kotlin.Boolean, 
+    var `volume`: kotlin.Float
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSettingsViewModel: FfiConverterRustBuffer<SettingsViewModel> {
+    override fun read(buf: ByteBuffer): SettingsViewModel {
+        return SettingsViewModel(
+            FfiConverterSequenceString.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterFloat.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SettingsViewModel) = (
+            FfiConverterSequenceString.allocationSize(value.`musicFolders`) +
+            FfiConverterBoolean.allocationSize(value.`animatedBackground`) +
+            FfiConverterString.allocationSize(value.`backdropSource`) +
+            FfiConverterBoolean.allocationSize(value.`discordRpc`) +
+            FfiConverterFloat.allocationSize(value.`volume`)
+    )
+
+    override fun write(value: SettingsViewModel, buf: ByteBuffer) {
+            FfiConverterSequenceString.write(value.`musicFolders`, buf)
+            FfiConverterBoolean.write(value.`animatedBackground`, buf)
+            FfiConverterString.write(value.`backdropSource`, buf)
+            FfiConverterBoolean.write(value.`discordRpc`, buf)
+            FfiConverterFloat.write(value.`volume`, buf)
     }
 }
 

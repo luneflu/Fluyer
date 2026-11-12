@@ -673,6 +673,13 @@ public protocol FluyerAppEngineProtocol : AnyObject {
     
     func queueRemove(index: UInt64) 
     
+    func settingsGet()  -> SettingsViewModel
+    
+    /**
+     * Persists and returns what was stored (normalized folders, clamped volume).
+     */
+    func settingsSet(settings: SettingsViewModel)  -> SettingsViewModel
+    
 }
 
 open class FluyerAppEngine:
@@ -1040,6 +1047,24 @@ open func queueRemove(index: UInt64) {try! rustCall() {
         FfiConverterUInt64.lower(index),$0
     )
 }
+}
+    
+open func settingsGet() -> SettingsViewModel {
+    return try!  FfiConverterTypeSettingsViewModel.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_settings_get(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * Persists and returns what was stored (normalized folders, clamped volume).
+     */
+open func settingsSet(settings: SettingsViewModel) -> SettingsViewModel {
+    return try!  FfiConverterTypeSettingsViewModel.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_settings_set(self.uniffiClonePointer(),
+        FfiConverterTypeSettingsViewModel.lower(settings),$0
+    )
+})
 }
     
 
@@ -1818,6 +1843,109 @@ public func FfiConverterTypeScanStatusViewModel_lift(_ buf: RustBuffer) throws -
 #endif
 public func FfiConverterTypeScanStatusViewModel_lower(_ value: ScanStatusViewModel) -> RustBuffer {
     return FfiConverterTypeScanStatusViewModel.lower(value)
+}
+
+
+/**
+ * Persisted user settings, owned by the core so every UI reads and writes the same
+ * file with the same normalization (`services/settings.rs`).
+ *
+ * The defaults are the ones every platform shipped with: no folders, animated
+ * backdrop on, artwork as the backdrop input, Discord presence on, full volume.
+ */
+public struct SettingsViewModel {
+    public var musicFolders: [String]
+    public var animatedBackground: Bool
+    /**
+     * `"artwork"` or `"blocks"`.
+     */
+    public var backdropSource: String
+    public var discordRpc: Bool
+    public var volume: Float
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(musicFolders: [String], animatedBackground: Bool, 
+        /**
+         * `"artwork"` or `"blocks"`.
+         */backdropSource: String, discordRpc: Bool, volume: Float) {
+        self.musicFolders = musicFolders
+        self.animatedBackground = animatedBackground
+        self.backdropSource = backdropSource
+        self.discordRpc = discordRpc
+        self.volume = volume
+    }
+}
+
+
+
+extension SettingsViewModel: Equatable, Hashable {
+    public static func ==(lhs: SettingsViewModel, rhs: SettingsViewModel) -> Bool {
+        if lhs.musicFolders != rhs.musicFolders {
+            return false
+        }
+        if lhs.animatedBackground != rhs.animatedBackground {
+            return false
+        }
+        if lhs.backdropSource != rhs.backdropSource {
+            return false
+        }
+        if lhs.discordRpc != rhs.discordRpc {
+            return false
+        }
+        if lhs.volume != rhs.volume {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(musicFolders)
+        hasher.combine(animatedBackground)
+        hasher.combine(backdropSource)
+        hasher.combine(discordRpc)
+        hasher.combine(volume)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSettingsViewModel: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SettingsViewModel {
+        return
+            try SettingsViewModel(
+                musicFolders: FfiConverterSequenceString.read(from: &buf), 
+                animatedBackground: FfiConverterBool.read(from: &buf), 
+                backdropSource: FfiConverterString.read(from: &buf), 
+                discordRpc: FfiConverterBool.read(from: &buf), 
+                volume: FfiConverterFloat.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: SettingsViewModel, into buf: inout [UInt8]) {
+        FfiConverterSequenceString.write(value.musicFolders, into: &buf)
+        FfiConverterBool.write(value.animatedBackground, into: &buf)
+        FfiConverterString.write(value.backdropSource, into: &buf)
+        FfiConverterBool.write(value.discordRpc, into: &buf)
+        FfiConverterFloat.write(value.volume, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSettingsViewModel_lift(_ buf: RustBuffer) throws -> SettingsViewModel {
+    return try FfiConverterTypeSettingsViewModel.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSettingsViewModel_lower(_ value: SettingsViewModel) -> RustBuffer {
+    return FfiConverterTypeSettingsViewModel.lower(value)
 }
 
 
@@ -2709,6 +2837,12 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_queue_remove() != 11064) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_settings_get() != 53881) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_settings_set() != 4865) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_constructor_fluyerappengine_new() != 38275) {

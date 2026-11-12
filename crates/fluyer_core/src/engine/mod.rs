@@ -8,13 +8,14 @@ mod library;
 mod lyrics;
 mod player;
 mod queue;
+mod settings;
 mod thumbnail_cache;
 
 use crate::audio::MusicPlayer;
 use crate::db::{self, Database};
 use crate::events::EventSink;
 use crate::library::LibraryState;
-use crate::services::{CoverArtService, DiscordRpc, LyricService};
+use crate::services::{CoverArtService, DiscordRpc, LyricService, SettingsService};
 use crate::{logger, view_models};
 use std::path::Path;
 use std::sync::{Arc, RwLock};
@@ -26,6 +27,7 @@ pub struct FluyerEngine {
     pub library: Arc<RwLock<LibraryState>>,
     pub lyrics: Arc<LyricService>,
     pub cover_art: Arc<CoverArtService>,
+    pub settings: Arc<SettingsService>,
     pub runtime: tokio::runtime::Runtime,
     pub event_sink: Option<Arc<dyn EventSink>>,
     // ponytail: caches parsed LRC per track path; the UI polls this every 250ms
@@ -52,6 +54,7 @@ impl FluyerEngine {
 
         let lyrics = Arc::new(LyricService::new(cache_dir));
         let cover_art = Arc::new(CoverArtService::new(cache_dir));
+        let settings = Arc::new(SettingsService::new(data_dir));
 
         let player = Arc::new(MusicPlayer::new(event_sink.clone()));
         let library = Arc::new(RwLock::new(LibraryState::default()));
@@ -73,6 +76,7 @@ impl FluyerEngine {
             library,
             lyrics,
             cover_art,
+            settings,
             runtime,
             event_sink,
             lyrics_cache: Arc::new(RwLock::new(None)),

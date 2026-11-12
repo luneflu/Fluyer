@@ -30,7 +30,7 @@ final class AppState: FluyerEventListener {
 
     private(set) var engine: FluyerAppEngine?
 
-    /// - Parameter settings: defaults to `settings.json` next to the core's data.
+    /// - Parameter settings: defaults to a fresh mirror; the core loads the values.
     init(settings: SettingsState? = nil) {
         let library = LibraryState()
         let playback = PlaybackState()
@@ -40,8 +40,7 @@ final class AppState: FluyerEventListener {
         self.selection = selection
         self.toast = ToastState()
         self.queue = QueueState()
-        self.settings = settings ?? SettingsState(
-            url: EngineHandle.dataDirectory.appendingPathComponent(SettingsState.fileName))
+        self.settings = settings ?? SettingsState()
 
         // Every stored property is initialized, so `self` can be handed to the core
         // as its event listener without risking a callback into a half-built state.
@@ -60,6 +59,8 @@ final class AppState: FluyerEventListener {
         selection.engine = engine
         queue.engine = engine
         covers.engine = engine
+        settings.engine = engine
+        settings.load()
 
         refresh()
         guard let engine else { return }
@@ -84,8 +85,8 @@ final class AppState: FluyerEventListener {
 
     func scanFolders(_ paths: [String]) {
         guard !paths.isEmpty else { return }
-        settings.addFolders(paths)
-        engine?.libraryScan(directories: paths.map(SettingsState.normalize))
+        let added = settings.addFolders(paths)
+        engine?.libraryScan(directories: added.isEmpty ? paths : added)
     }
 
     /// Re-scan every saved folder.

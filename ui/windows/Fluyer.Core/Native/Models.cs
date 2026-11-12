@@ -128,3 +128,18 @@ public sealed record AnimatedBackgroundFrame(
     [property: JsonPropertyName("rgba")] byte[] Rgba,
     [property: JsonPropertyName("width")] uint Width,
     [property: JsonPropertyName("height")] uint Height);
+
+/// <summary>
+/// Persisted user settings, mirroring <c>SettingsViewModel</c>
+/// (<c>crates/fluyer_core/src/view_models/settings.rs</c>). The core owns the file;
+/// this shape is only what crosses the C ABI as camelCase JSON.
+/// </summary>
+public sealed record SettingsViewModel(
+    [property: JsonPropertyName("musicFolders")] List<string> MusicFolders,
+    [property: JsonPropertyName("animatedBackground")] bool AnimatedBackground,
+    [property: JsonPropertyName("backdropSource")] string BackdropSource,
+    [property: JsonPropertyName("discordRpc")] bool DiscordRpc,
+    [property: JsonPropertyName("volume")] float Volume)
+{
+    public static SettingsViewModel Default { get; } = new([], true, "artwork", true, 1.0f);
+}
