@@ -34,7 +34,7 @@ public partial class App : Application
             }
         }
 
-        var settings = new SettingsState(Path.Combine(EngineHandle.DataDirectory, SettingsState.FileName));
+        var settings = new SettingsState();
         State = new AppState(null, Covers, settings);
         var engine = EngineHandle.Attach(State);
         Covers.Engine = engine;

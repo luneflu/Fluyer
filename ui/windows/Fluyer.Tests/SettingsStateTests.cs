@@ -2,87 +2,51 @@ using Fluyer.Core.State;
 
 namespace Fluyer.Tests;
 
-public sealed class SettingsStateTests : IDisposable
+/// <summary>
+/// The file, the JSON shape, folder normalization and the volume clamp all live in
+/// the core (<c>crates/fluyer_core/src/services/settings.rs</c> and its tests). These
+/// cover what is left in C#: the defaults a view sees before the core answers,
+/// remembering folders while no engine is attached, and matching a picked path.
+/// </summary>
+public sealed class SettingsStateTests
 {
-    private readonly string _dir = Path.Combine(Path.GetTempPath(), "fluyer-settings-" + Guid.NewGuid().ToString("N"));
-    private string FilePath => Path.Combine(_dir, SettingsState.FileName);
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_dir))
-        {
-            Directory.Delete(_dir, recursive: true);
-        }
-    }
-
     [Fact]
-    public void RoundTrips_AllFields()
-    {
-        var a = new SettingsState(FilePath);
-        a.AddFolders(["C:\\Music", "D:\\Songs\\"]);
-        a.AnimatedBackground = false;
-        a.DiscordRpc = false;
-        a.Volume = 0.3f;
-        a.BackdropSource = BackdropSource.Blocks;
-
-        var b = new SettingsState(FilePath);
-        Assert.Equal(new[] { "C:\\Music", "D:\\Songs" }, b.MusicFolders);
-        Assert.False(b.AnimatedBackground);
-        Assert.False(b.DiscordRpc);
-        Assert.Equal(0.3f, b.Volume);
-        Assert.Equal(BackdropSource.Blocks, b.BackdropSource);
-    }
-
-    [Fact]
-    public void AddFolders_DedupesCaseAndTrailingSeparator_KeepsDriveRoot()
+    public void Defaults_MatchTheCoreDefaults()
     {
         var s = new SettingsState();
-        var added = s.AddFolders(["C:\\Music", "c:\\music\\", "E:\\", "  "]);
-        Assert.Equal(new[] { "C:\\Music", "E:\\" }, added);
-        Assert.Empty(s.AddFolders(["C:\\MUSIC"]));
-        Assert.Equal("C:\\Music", s.RemoveFolder("c:\\music\\"));
-        Assert.Null(s.RemoveFolder("C:\\Music"));
-        Assert.Equal(new[] { "E:\\" }, s.MusicFolders);
-    }
-
-    [Fact]
-    public void CorruptFile_UsesDefaults_AndKeepsBackup()
-    {
-        Directory.CreateDirectory(_dir);
-        File.WriteAllText(FilePath, "{ not json");
-
-        var s = new SettingsState(FilePath);
         Assert.Empty(s.MusicFolders);
         Assert.True(s.AnimatedBackground);
         Assert.True(s.DiscordRpc);
         Assert.Equal(1.0f, s.Volume);
-        Assert.Equal("{ not json", File.ReadAllText(FilePath + ".bad"));
+        Assert.Equal(BackdropSource.Artwork, s.BackdropSource);
     }
 
     [Fact]
-    public void MissingFields_FallBackToDefaults()
+    public void AddFolders_WithoutAnEngine_RemembersAndReturnsTheNewOnes()
     {
-        Directory.CreateDirectory(_dir);
-        File.WriteAllText(FilePath, "{\"MusicFolders\":[\"C:\\\\M\"]}");
-
-        var s = new SettingsState(FilePath);
-        Assert.Equal(new[] { "C:\\M" }, s.MusicFolders);
-        Assert.True(s.AnimatedBackground);
-        Assert.True(s.DiscordRpc);
-        Assert.Equal(1.0f, s.Volume);
-        Assert.Equal(BackdropSource.Artwork, s.BackdropSource);
+        var s = new SettingsState();
+        Assert.Equal(new[] { "C:\\Music", "D:\\Songs\\" }, s.AddFolders(["C:\\Music", "D:\\Songs\\"]));
+        Assert.Equal(new[] { "C:\\Music", "D:\\Songs\\" }, s.MusicFolders);
+        Assert.Empty(s.AddFolders(["C:\\Music"]));
     }
 
-    [Theory]
-    [InlineData("\"Sparkles\"")]
-    [InlineData("\"7\"")]
-    public void UnknownBackdropSource_DegradesToArtwork_KeepsOtherSettings(string value)
+    [Fact]
+    public void RemoveFolder_MatchesTrailingSeparatorAndDriveRoot_ReturnsStoredSpelling()
     {
-        Directory.CreateDirectory(_dir);
-        File.WriteAllText(FilePath, $"{{\"MusicFolders\":[],\"DiscordRpc\":false,\"BackdropSource\":{value}}}");
+        var s = new SettingsState();
+        s.AddFolders(["C:\\Music", "E:\\"]);
+        Assert.Equal("C:\\Music", s.RemoveFolder("C:\\Music\\"));
+        Assert.Null(s.RemoveFolder("C:\\Music"));
+        Assert.Equal("E:\\", s.RemoveFolder("E:"));
+        Assert.Empty(s.MusicFolders);
+    }
 
-        var s = new SettingsState(FilePath);
-        Assert.Equal(BackdropSource.Artwork, s.BackdropSource);
-        Assert.False(s.DiscordRpc);
+    [Fact]
+    public void Load_WithoutAnEngine_KeepsTheDefaults()
+    {
+        var s = new SettingsState();
+        s.Load();
+        Assert.Empty(s.MusicFolders);
+        Assert.True(s.AnimatedBackground);
     }
 }

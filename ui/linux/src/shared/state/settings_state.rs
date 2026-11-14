@@ -1,16 +1,16 @@
+use fluyer_core::view_models::SettingsViewModel;
+use fluyer_core::FluyerEngine;
 use gtk::glib;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
-use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::path::PathBuf;
+use std::sync::Arc;
 
-#[derive(Serialize, Deserialize, Default)]
-struct SettingsFile {
-    backdrop_source: Option<String>,
-    animated_background: Option<bool>,
-}
-
+/// User settings for the window. The core owns the file (`<data dir>/settings.json`)
+/// and every rule that used to live here: JSON shape, folder normalization, dedupe,
+/// volume clamp, unknown backdrop value. This type is the observable mirror views bind
+/// to; it never touches disk. Fields without a Linux switch yet (music folders, volume,
+/// Discord) are carried through unchanged so the shared file stays consistent.
 mod imp {
     use super::*;
 
@@ -21,12 +21,15 @@ mod imp {
         pub backdrop_source: RefCell<String>,
         #[property(get, set)]
         pub animated_background: std::cell::Cell<bool>,
-        pub config_path: RefCell<PathBuf>,
+        pub engine: RefCell<Option<Arc<FluyerEngine>>>,
+        /// Fields the Linux UI does not expose; preserved on every save.
+        pub carried: RefCell<SettingsViewModel>,
+        pub applying: std::cell::Cell<bool>,
     }
 
     #[glib::object_subclass]
     impl ObjectSubclass for SettingsState {
-        const NAME: &'static str = "FluyerSettingsState";
+        const NAME: &str = "FluyerSettingsState";
         type Type = super::SettingsState;
     }
 
@@ -34,17 +37,8 @@ mod imp {
     impl ObjectImpl for SettingsState {
         fn constructed(&self) {
             self.parent_constructed();
-            let config_dir = glib::user_config_dir().join("fluyer");
-            let _ = std::fs::create_dir_all(&config_dir);
-            let path = config_dir.join("settings.json");
-            *self.config_path.borrow_mut() = path.clone();
-
-            let file = std::fs::read_to_string(&path)
-                .ok()
-                .and_then(|data| serde_json::from_str::<SettingsFile>(&data).ok())
-                .unwrap_or_default();
-            *self.backdrop_source.borrow_mut() = file.backdrop_source.unwrap_or_else(|| "artwork".into());
-            self.animated_background.set(file.animated_background.unwrap_or(true));
+            self.backdrop_source.borrow_mut().push_str("artwork");
+            self.animated_background.set(true);
         }
     }
 }
@@ -64,20 +58,44 @@ impl SettingsState {
         glib::Object::new()
     }
 
+    /// Reads the stored settings; called once by `AppState` after the engine exists.
+    pub fn load(&self, engine: &Arc<FluyerEngine>) {
+        let imp = self.imp();
+        *imp.engine.borrow_mut() = Some(Arc::clone(engine));
+        self.apply(engine.settings_get());
+    }
+
+    /// Normalizes + writes through the core and mirrors back the canonical values.
     pub fn save(&self) {
         let imp = self.imp();
-        let path = imp.config_path.borrow().clone();
-        let file = SettingsFile {
-            backdrop_source: Some(self.backdrop_source()),
-            animated_background: Some(self.animated_background()),
+        let Some(engine) = imp.engine.borrow().clone() else {
+            return;
         };
-        if let Ok(json) = serde_json::to_string_pretty(&file) {
-            let _ = std::fs::write(path, json);
+        if imp.applying.get() {
+            return;
         }
+        let carried = imp.carried.borrow().clone();
+        let stored = engine.settings_set(&SettingsViewModel {
+            music_folders: carried.music_folders,
+            animated_background: self.animated_background(),
+            backdrop_source: self.backdrop_source(),
+            discord_rpc: carried.discord_rpc,
+            volume: carried.volume,
+        });
+        self.apply(stored);
     }
 
     pub fn set_source_and_save(&self, source: &str) {
         self.set_backdrop_source(source);
         self.save();
+    }
+
+    fn apply(&self, stored: SettingsViewModel) {
+        let imp = self.imp();
+        imp.applying.set(true);
+        self.set_backdrop_source(&stored.backdrop_source);
+        self.set_animated_background(stored.animated_background);
+        *imp.carried.borrow_mut() = stored;
+        imp.applying.set(false);
     }
 }

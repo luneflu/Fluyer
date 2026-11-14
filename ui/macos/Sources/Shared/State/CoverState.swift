@@ -29,6 +29,15 @@ final class CoverState {
         }
     }
 
+    /// Cover for one queue position. Provider tracks have no library index, so the
+    /// engine resolves it from the queue entry itself.
+    func queue(_ position: UInt64, px: Int, path: String) async -> NSImage? {
+        guard let engine else { return nil }
+        return await store.image(key: ThumbnailKey.queue(px: px, path: path)) {
+            await engine.artworkLoadQueueThumbnail(index: position, maxSize: UInt32(px))
+        }
+    }
+
     /// Playing track's cover. `path` is part of the key so a track change never
     /// serves the previous song's bitmap.
     func current(px: Int, path: String) async -> NSImage? {
@@ -53,6 +62,11 @@ final class CoverState {
             return cover
         }
         return Self.image(from: await engine.backdropLoadBlockArtwork())
+    }
+
+    /// Called when the tab switches: the other catalogue needs the memory more.
+    func clear() {
+        store.removeAll()
     }
 
     func invalidateTrack(_ index: UInt64) {

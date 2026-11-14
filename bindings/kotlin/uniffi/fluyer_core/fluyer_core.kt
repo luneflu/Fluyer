@@ -812,6 +812,36 @@ internal open class UniffiVTableCallbackInterfaceFluyerEventListener(
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -896,6 +926,32 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_fluyer_core_fn_method_fluyerappengine_player_toggle_play(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_provider_album(`ptr`: Pointer,`browseId`: RustBuffer.ByValue,
+    ): Long
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_provider_apply_profile(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_provider_begin_login(`ptr`: Pointer,
+    ): Long
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_provider_check_profile(`ptr`: Pointer,
+    ): Long
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_provider_dismiss_profile(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_provider_is_logged_in(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_provider_logout(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_provider_lyrics(`ptr`: Pointer,`videoId`: RustBuffer.ByValue,
+    ): Long
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_provider_play_track(`ptr`: Pointer,`videoId`: RustBuffer.ByValue,`title`: RustBuffer.ByValue,`artist`: RustBuffer.ByValue,`album`: RustBuffer.ByValue,`durationMs`: Long,
+    ): Long
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_provider_poll_login(`ptr`: Pointer,`deviceCode`: RustBuffer.ByValue,
+    ): Long
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_provider_profile_version(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Int
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_provider_search(`ptr`: Pointer,`query`: RustBuffer.ByValue,
+    ): Long
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_provider_stream_formats(`ptr`: Pointer,`videoId`: RustBuffer.ByValue,
+    ): Long
     fun uniffi_fluyer_core_fn_method_fluyerappengine_queue_clear(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_fluyer_core_fn_method_fluyerappengine_queue_get(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
@@ -906,6 +962,10 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_fluyer_core_fn_method_fluyerappengine_queue_remove(`ptr`: Pointer,`index`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_settings_get(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_fluyer_core_fn_method_fluyerappengine_settings_set(`ptr`: Pointer,`settings`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_fluyer_core_fn_init_callback_vtable_fluyereventlistener(`vtable`: UniffiVTableCallbackInterfaceFluyerEventListener,
     ): Unit
     fun ffi_fluyer_core_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -1078,6 +1138,32 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_fluyer_core_checksum_method_fluyerappengine_player_toggle_play(
     ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_provider_album(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_provider_apply_profile(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_provider_begin_login(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_provider_check_profile(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_provider_dismiss_profile(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_provider_is_logged_in(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_provider_logout(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_provider_lyrics(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_provider_play_track(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_provider_poll_login(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_provider_profile_version(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_provider_search(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_provider_stream_formats(
+    ): Short
     fun uniffi_fluyer_core_checksum_method_fluyerappengine_queue_clear(
     ): Short
     fun uniffi_fluyer_core_checksum_method_fluyerappengine_queue_get(
@@ -1087,6 +1173,10 @@ internal interface UniffiLib : Library {
     fun uniffi_fluyer_core_checksum_method_fluyerappengine_queue_move(
     ): Short
     fun uniffi_fluyer_core_checksum_method_fluyerappengine_queue_remove(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_settings_get(
+    ): Short
+    fun uniffi_fluyer_core_checksum_method_fluyerappengine_settings_set(
     ): Short
     fun uniffi_fluyer_core_checksum_constructor_fluyerappengine_new(
     ): Short
@@ -1196,6 +1286,45 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_player_toggle_play() != 34310.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_provider_album() != 57674.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_provider_apply_profile() != 7544.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_provider_begin_login() != 58874.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_provider_check_profile() != 10232.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_provider_dismiss_profile() != 62664.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_provider_is_logged_in() != 49001.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_provider_logout() != 29381.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_provider_lyrics() != 52684.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_provider_play_track() != 65401.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_provider_poll_login() != 57948.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_provider_profile_version() != 5532.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_provider_search() != 11689.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_provider_stream_formats() != 1874.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_queue_clear() != 53786.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1209,6 +1338,12 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_queue_remove() != 11064.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_settings_get() != 53881.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_fluyer_core_checksum_method_fluyerappengine_settings_set() != 4865.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_fluyer_core_checksum_constructor_fluyerappengine_new() != 38275.toShort()) {
@@ -1785,6 +1920,44 @@ public interface FluyerAppEngineInterface {
     
     fun `playerTogglePlay`()
     
+    suspend fun `providerAlbum`(`browseId`: kotlin.String): AlbumDetail
+    
+    fun `providerApplyProfile`(): kotlin.Boolean
+    
+    suspend fun `providerBeginLogin`(): DeviceLogin
+    
+    /**
+     * Returns a newer profile without applying it; the UI asks the user first.
+     */
+    suspend fun `providerCheckProfile`(): ProfileUpdate?
+    
+    /**
+     * Remembers "not now": that version is not offered again.
+     */
+    fun `providerDismissProfile`(): kotlin.Boolean
+    
+    fun `providerIsLoggedIn`(): kotlin.Boolean
+    
+    fun `providerLogout`()
+    
+    suspend fun `providerLyrics`(`videoId`: kotlin.String): kotlin.String
+    
+    /**
+     * Plays a track by video id; the core resolves + caches the audio and feeds BASS.
+     */
+    suspend fun `providerPlayTrack`(`videoId`: kotlin.String, `title`: kotlin.String, `artist`: kotlin.String, `album`: kotlin.String, `durationMs`: kotlin.ULong)
+    
+    suspend fun `providerPollLogin`(`deviceCode`: kotlin.String): TokenStatus
+    
+    fun `providerProfileVersion`(): kotlin.UInt
+    
+    suspend fun `providerSearch`(`query`: kotlin.String): List<SearchItem>
+    
+    /**
+     * Formats may still be throttle-protected; the core solves `n` before returning.
+     */
+    suspend fun `providerStreamFormats`(`videoId`: kotlin.String): StreamInfo
+    
     fun `queueClear`()
     
     /**
@@ -1797,6 +1970,13 @@ public interface FluyerAppEngineInterface {
     fun `queueMove`(`from`: kotlin.ULong, `to`: kotlin.ULong)
     
     fun `queueRemove`(`index`: kotlin.ULong)
+    
+    fun `settingsGet`(): SettingsViewModel
+    
+    /**
+     * Persists and returns what was stored (normalized folders, clamped volume).
+     */
+    fun `settingsSet`(`settings`: SettingsViewModel): SettingsViewModel
     
     companion object
 }
@@ -2276,6 +2456,246 @@ open class FluyerAppEngine: Disposable, AutoCloseable, FluyerAppEngineInterface 
     
     
 
+    
+    @Throws(FluyerException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `providerAlbum`(`browseId`: kotlin.String) : AlbumDetail {
+        return uniffiRustCallAsync(
+        callWithPointer { thisPtr ->
+            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_provider_album(
+                thisPtr,
+                FfiConverterString.lower(`browseId`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterTypeAlbumDetail.lift(it) },
+        // Error FFI converter
+        FluyerException.ErrorHandler,
+    )
+    }
+
+    override fun `providerApplyProfile`(): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_provider_apply_profile(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(FluyerException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `providerBeginLogin`() : DeviceLogin {
+        return uniffiRustCallAsync(
+        callWithPointer { thisPtr ->
+            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_provider_begin_login(
+                thisPtr,
+                
+            )
+        },
+        { future, callback, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterTypeDeviceLogin.lift(it) },
+        // Error FFI converter
+        FluyerException.ErrorHandler,
+    )
+    }
+
+    
+    /**
+     * Returns a newer profile without applying it; the UI asks the user first.
+     */
+    @Throws(FluyerException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `providerCheckProfile`() : ProfileUpdate? {
+        return uniffiRustCallAsync(
+        callWithPointer { thisPtr ->
+            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_provider_check_profile(
+                thisPtr,
+                
+            )
+        },
+        { future, callback, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterOptionalTypeProfileUpdate.lift(it) },
+        // Error FFI converter
+        FluyerException.ErrorHandler,
+    )
+    }
+
+    
+    /**
+     * Remembers "not now": that version is not offered again.
+     */override fun `providerDismissProfile`(): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_provider_dismiss_profile(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    override fun `providerIsLoggedIn`(): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_provider_is_logged_in(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    override fun `providerLogout`()
+        = 
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_provider_logout(
+        it, _status)
+}
+    }
+    
+    
+
+    
+    @Throws(FluyerException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `providerLyrics`(`videoId`: kotlin.String) : kotlin.String {
+        return uniffiRustCallAsync(
+        callWithPointer { thisPtr ->
+            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_provider_lyrics(
+                thisPtr,
+                FfiConverterString.lower(`videoId`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterString.lift(it) },
+        // Error FFI converter
+        FluyerException.ErrorHandler,
+    )
+    }
+
+    
+    /**
+     * Plays a track by video id; the core resolves + caches the audio and feeds BASS.
+     */
+    @Throws(FluyerException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `providerPlayTrack`(`videoId`: kotlin.String, `title`: kotlin.String, `artist`: kotlin.String, `album`: kotlin.String, `durationMs`: kotlin.ULong) {
+        return uniffiRustCallAsync(
+        callWithPointer { thisPtr ->
+            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_provider_play_track(
+                thisPtr,
+                FfiConverterString.lower(`videoId`),FfiConverterString.lower(`title`),FfiConverterString.lower(`artist`),FfiConverterString.lower(`album`),FfiConverterULong.lower(`durationMs`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_poll_void(future, callback, continuation) },
+        { future, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_complete_void(future, continuation) },
+        { future -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_free_void(future) },
+        // lift function
+        { Unit },
+        
+        // Error FFI converter
+        FluyerException.ErrorHandler,
+    )
+    }
+
+    
+    @Throws(FluyerException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `providerPollLogin`(`deviceCode`: kotlin.String) : TokenStatus {
+        return uniffiRustCallAsync(
+        callWithPointer { thisPtr ->
+            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_provider_poll_login(
+                thisPtr,
+                FfiConverterString.lower(`deviceCode`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterTypeTokenStatus.lift(it) },
+        // Error FFI converter
+        FluyerException.ErrorHandler,
+    )
+    }
+
+    override fun `providerProfileVersion`(): kotlin.UInt {
+            return FfiConverterUInt.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_provider_profile_version(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(FluyerException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `providerSearch`(`query`: kotlin.String) : List<SearchItem> {
+        return uniffiRustCallAsync(
+        callWithPointer { thisPtr ->
+            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_provider_search(
+                thisPtr,
+                FfiConverterString.lower(`query`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterSequenceTypeSearchItem.lift(it) },
+        // Error FFI converter
+        FluyerException.ErrorHandler,
+    )
+    }
+
+    
+    /**
+     * Formats may still be throttle-protected; the core solves `n` before returning.
+     */
+    @Throws(FluyerException::class)
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+    override suspend fun `providerStreamFormats`(`videoId`: kotlin.String) : StreamInfo {
+        return uniffiRustCallAsync(
+        callWithPointer { thisPtr ->
+            UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_provider_stream_formats(
+                thisPtr,
+                FfiConverterString.lower(`videoId`),
+            )
+        },
+        { future, callback, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_poll_rust_buffer(future, callback, continuation) },
+        { future, continuation -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_complete_rust_buffer(future, continuation) },
+        { future -> UniffiLib.INSTANCE.ffi_fluyer_core_rust_future_free_rust_buffer(future) },
+        // lift function
+        { FfiConverterTypeStreamInfo.lift(it) },
+        // Error FFI converter
+        FluyerException.ErrorHandler,
+    )
+    }
+
     override fun `queueClear`()
         = 
     callWithPointer {
@@ -2333,6 +2753,33 @@ open class FluyerAppEngine: Disposable, AutoCloseable, FluyerAppEngineInterface 
 }
     }
     
+    
+
+    override fun `settingsGet`(): SettingsViewModel {
+            return FfiConverterTypeSettingsViewModel.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_settings_get(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Persists and returns what was stored (normalized folders, clamped volume).
+     */override fun `settingsSet`(`settings`: SettingsViewModel): SettingsViewModel {
+            return FfiConverterTypeSettingsViewModel.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_fluyer_core_fn_method_fluyerappengine_settings_set(
+        it, FfiConverterTypeSettingsViewModel.lower(`settings`),_status)
+}
+    }
+    )
+    }
     
 
     
@@ -2421,6 +2868,54 @@ public object FfiConverterTypeAlbumCardViewModel: FfiConverterRustBuffer<AlbumCa
 
 
 
+data class AlbumDetail (
+    var `browseId`: kotlin.String, 
+    var `name`: kotlin.String, 
+    var `artist`: kotlin.String?, 
+    var `year`: kotlin.String?, 
+    var `thumbnail`: kotlin.String?, 
+    var `tracks`: List<TrackRef>
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeAlbumDetail: FfiConverterRustBuffer<AlbumDetail> {
+    override fun read(buf: ByteBuffer): AlbumDetail {
+        return AlbumDetail(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterSequenceTypeTrackRef.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: AlbumDetail) = (
+            FfiConverterString.allocationSize(value.`browseId`) +
+            FfiConverterString.allocationSize(value.`name`) +
+            FfiConverterOptionalString.allocationSize(value.`artist`) +
+            FfiConverterOptionalString.allocationSize(value.`year`) +
+            FfiConverterOptionalString.allocationSize(value.`thumbnail`) +
+            FfiConverterSequenceTypeTrackRef.allocationSize(value.`tracks`)
+    )
+
+    override fun write(value: AlbumDetail, buf: ByteBuffer) {
+            FfiConverterString.write(value.`browseId`, buf)
+            FfiConverterString.write(value.`name`, buf)
+            FfiConverterOptionalString.write(value.`artist`, buf)
+            FfiConverterOptionalString.write(value.`year`, buf)
+            FfiConverterOptionalString.write(value.`thumbnail`, buf)
+            FfiConverterSequenceTypeTrackRef.write(value.`tracks`, buf)
+    }
+}
+
+
+
 data class AlbumDetailViewModel (
     var `header`: AlbumCardViewModel, 
     var `durationMs`: kotlin.ULong, 
@@ -2460,6 +2955,38 @@ public object FfiConverterTypeAlbumDetailViewModel: FfiConverterRustBuffer<Album
             FfiConverterString.write(value.`totalDurationFormatted`, buf)
             FfiConverterString.write(value.`subtitle`, buf)
             FfiConverterSequenceTypeTrackItemViewModel.write(value.`tracks`, buf)
+    }
+}
+
+
+
+data class AlbumRef (
+    var `browseId`: kotlin.String, 
+    var `name`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeAlbumRef: FfiConverterRustBuffer<AlbumRef> {
+    override fun read(buf: ByteBuffer): AlbumRef {
+        return AlbumRef(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: AlbumRef) = (
+            FfiConverterString.allocationSize(value.`browseId`) +
+            FfiConverterString.allocationSize(value.`name`)
+    )
+
+    override fun write(value: AlbumRef, buf: ByteBuffer) {
+            FfiConverterString.write(value.`browseId`, buf)
+            FfiConverterString.write(value.`name`, buf)
     }
 }
 
@@ -2536,6 +3063,53 @@ public object FfiConverterTypeColorRgb: FfiConverterRustBuffer<ColorRgb> {
             FfiConverterUByte.write(value.`r`, buf)
             FfiConverterUByte.write(value.`g`, buf)
             FfiConverterUByte.write(value.`b`, buf)
+    }
+}
+
+
+
+data class DeviceLogin (
+    /**
+     * Short code the user types on the verification page.
+     */
+    var `userCode`: kotlin.String, 
+    var `verificationUrl`: kotlin.String, 
+    var `deviceCode`: kotlin.String, 
+    var `intervalSeconds`: kotlin.ULong, 
+    var `expiresInSeconds`: kotlin.ULong
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeDeviceLogin: FfiConverterRustBuffer<DeviceLogin> {
+    override fun read(buf: ByteBuffer): DeviceLogin {
+        return DeviceLogin(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterULong.read(buf),
+            FfiConverterULong.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: DeviceLogin) = (
+            FfiConverterString.allocationSize(value.`userCode`) +
+            FfiConverterString.allocationSize(value.`verificationUrl`) +
+            FfiConverterString.allocationSize(value.`deviceCode`) +
+            FfiConverterULong.allocationSize(value.`intervalSeconds`) +
+            FfiConverterULong.allocationSize(value.`expiresInSeconds`)
+    )
+
+    override fun write(value: DeviceLogin, buf: ByteBuffer) {
+            FfiConverterString.write(value.`userCode`, buf)
+            FfiConverterString.write(value.`verificationUrl`, buf)
+            FfiConverterString.write(value.`deviceCode`, buf)
+            FfiConverterULong.write(value.`intervalSeconds`, buf)
+            FfiConverterULong.write(value.`expiresInSeconds`, buf)
     }
 }
 
@@ -2685,6 +3259,42 @@ public object FfiConverterTypePlayerBarViewModel: FfiConverterRustBuffer<PlayerB
 
 
 
+/**
+ * What the confirmation dialog needs: a new profile exists. The payload itself is
+ * opaque to the UI and only the core reads it.
+ */
+data class ProfileUpdate (
+    var `version`: kotlin.UInt, 
+    var `clientVersion`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeProfileUpdate: FfiConverterRustBuffer<ProfileUpdate> {
+    override fun read(buf: ByteBuffer): ProfileUpdate {
+        return ProfileUpdate(
+            FfiConverterUInt.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ProfileUpdate) = (
+            FfiConverterUInt.allocationSize(value.`version`) +
+            FfiConverterString.allocationSize(value.`clientVersion`)
+    )
+
+    override fun write(value: ProfileUpdate, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`version`, buf)
+            FfiConverterString.write(value.`clientVersion`, buf)
+    }
+}
+
+
+
 data class ScanStatusViewModel (
     var `isScanning`: kotlin.Boolean, 
     var `current`: kotlin.ULong, 
@@ -2724,6 +3334,194 @@ public object FfiConverterTypeScanStatusViewModel: FfiConverterRustBuffer<ScanSt
             FfiConverterULong.write(value.`total`, buf)
             FfiConverterFloat.write(value.`progressPct`, buf)
             FfiConverterString.write(value.`statusLabel`, buf)
+    }
+}
+
+
+
+data class SearchItem (
+    var `title`: kotlin.String, 
+    var `subtitle`: kotlin.String?, 
+    var `kind`: SearchItemKind, 
+    var `browseId`: kotlin.String?, 
+    var `videoId`: kotlin.String?, 
+    var `thumbnail`: kotlin.String?
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSearchItem: FfiConverterRustBuffer<SearchItem> {
+    override fun read(buf: ByteBuffer): SearchItem {
+        return SearchItem(
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterTypeSearchItemKind.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SearchItem) = (
+            FfiConverterString.allocationSize(value.`title`) +
+            FfiConverterOptionalString.allocationSize(value.`subtitle`) +
+            FfiConverterTypeSearchItemKind.allocationSize(value.`kind`) +
+            FfiConverterOptionalString.allocationSize(value.`browseId`) +
+            FfiConverterOptionalString.allocationSize(value.`videoId`) +
+            FfiConverterOptionalString.allocationSize(value.`thumbnail`)
+    )
+
+    override fun write(value: SearchItem, buf: ByteBuffer) {
+            FfiConverterString.write(value.`title`, buf)
+            FfiConverterOptionalString.write(value.`subtitle`, buf)
+            FfiConverterTypeSearchItemKind.write(value.`kind`, buf)
+            FfiConverterOptionalString.write(value.`browseId`, buf)
+            FfiConverterOptionalString.write(value.`videoId`, buf)
+            FfiConverterOptionalString.write(value.`thumbnail`, buf)
+    }
+}
+
+
+
+/**
+ * Persisted user settings, owned by the core so every UI reads and writes the same
+ * file with the same normalization (`services/settings.rs`).
+ *
+ * The defaults are the ones every platform shipped with: no folders, animated
+ * backdrop on, artwork as the backdrop input, Discord presence on, full volume.
+ */
+data class SettingsViewModel (
+    var `musicFolders`: List<kotlin.String>, 
+    var `animatedBackground`: kotlin.Boolean, 
+    /**
+     * `"artwork"` or `"blocks"`.
+     */
+    var `backdropSource`: kotlin.String, 
+    var `discordRpc`: kotlin.Boolean, 
+    var `volume`: kotlin.Float
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSettingsViewModel: FfiConverterRustBuffer<SettingsViewModel> {
+    override fun read(buf: ByteBuffer): SettingsViewModel {
+        return SettingsViewModel(
+            FfiConverterSequenceString.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterFloat.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SettingsViewModel) = (
+            FfiConverterSequenceString.allocationSize(value.`musicFolders`) +
+            FfiConverterBoolean.allocationSize(value.`animatedBackground`) +
+            FfiConverterString.allocationSize(value.`backdropSource`) +
+            FfiConverterBoolean.allocationSize(value.`discordRpc`) +
+            FfiConverterFloat.allocationSize(value.`volume`)
+    )
+
+    override fun write(value: SettingsViewModel, buf: ByteBuffer) {
+            FfiConverterSequenceString.write(value.`musicFolders`, buf)
+            FfiConverterBoolean.write(value.`animatedBackground`, buf)
+            FfiConverterString.write(value.`backdropSource`, buf)
+            FfiConverterBoolean.write(value.`discordRpc`, buf)
+            FfiConverterFloat.write(value.`volume`, buf)
+    }
+}
+
+
+
+data class StreamFormat (
+    var `mimeType`: kotlin.String?, 
+    var `bitrate`: kotlin.ULong?, 
+    /**
+     * Direct URL when YouTube returned one (no cipher involved).
+     */
+    var `url`: kotlin.String?, 
+    /**
+     * `s=…&url=…` when the URL still needs the player's cipher; handed onward, not solved here.
+     */
+    var `signatureCipher`: kotlin.String?, 
+    var `expiresInSeconds`: kotlin.ULong?
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeStreamFormat: FfiConverterRustBuffer<StreamFormat> {
+    override fun read(buf: ByteBuffer): StreamFormat {
+        return StreamFormat(
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalULong.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalULong.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: StreamFormat) = (
+            FfiConverterOptionalString.allocationSize(value.`mimeType`) +
+            FfiConverterOptionalULong.allocationSize(value.`bitrate`) +
+            FfiConverterOptionalString.allocationSize(value.`url`) +
+            FfiConverterOptionalString.allocationSize(value.`signatureCipher`) +
+            FfiConverterOptionalULong.allocationSize(value.`expiresInSeconds`)
+    )
+
+    override fun write(value: StreamFormat, buf: ByteBuffer) {
+            FfiConverterOptionalString.write(value.`mimeType`, buf)
+            FfiConverterOptionalULong.write(value.`bitrate`, buf)
+            FfiConverterOptionalString.write(value.`url`, buf)
+            FfiConverterOptionalString.write(value.`signatureCipher`, buf)
+            FfiConverterOptionalULong.write(value.`expiresInSeconds`, buf)
+    }
+}
+
+
+
+data class StreamInfo (
+    var `formats`: List<StreamFormat>, 
+    var `playabilityStatus`: kotlin.String?, 
+    var `reason`: kotlin.String?
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeStreamInfo: FfiConverterRustBuffer<StreamInfo> {
+    override fun read(buf: ByteBuffer): StreamInfo {
+        return StreamInfo(
+            FfiConverterSequenceTypeStreamFormat.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: StreamInfo) = (
+            FfiConverterSequenceTypeStreamFormat.allocationSize(value.`formats`) +
+            FfiConverterOptionalString.allocationSize(value.`playabilityStatus`) +
+            FfiConverterOptionalString.allocationSize(value.`reason`)
+    )
+
+    override fun write(value: StreamInfo, buf: ByteBuffer) {
+            FfiConverterSequenceTypeStreamFormat.write(value.`formats`, buf)
+            FfiConverterOptionalString.write(value.`playabilityStatus`, buf)
+            FfiConverterOptionalString.write(value.`reason`, buf)
     }
 }
 
@@ -2785,11 +3583,55 @@ public object FfiConverterTypeTrackItemViewModel: FfiConverterRustBuffer<TrackIt
 
 
 
+data class TrackRef (
+    var `title`: kotlin.String, 
+    var `videoId`: kotlin.String?, 
+    var `duration`: kotlin.String?
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTrackRef: FfiConverterRustBuffer<TrackRef> {
+    override fun read(buf: ByteBuffer): TrackRef {
+        return TrackRef(
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TrackRef) = (
+            FfiConverterString.allocationSize(value.`title`) +
+            FfiConverterOptionalString.allocationSize(value.`videoId`) +
+            FfiConverterOptionalString.allocationSize(value.`duration`)
+    )
+
+    override fun write(value: TrackRef, buf: ByteBuffer) {
+            FfiConverterString.write(value.`title`, buf)
+            FfiConverterOptionalString.write(value.`videoId`, buf)
+            FfiConverterOptionalString.write(value.`duration`, buf)
+    }
+}
+
+
+
 
 
 sealed class FluyerException: kotlin.Exception() {
     
     class InitFailed(
+        
+        val `reason`: kotlin.String
+        ) : FluyerException() {
+        override val message
+            get() = "reason=${ `reason` }"
+    }
+    
+    class ProviderFailed(
         
         val `reason`: kotlin.String
         ) : FluyerException() {
@@ -2816,6 +3658,9 @@ public object FfiConverterTypeFluyerError : FfiConverterRustBuffer<FluyerExcepti
             1 -> FluyerException.InitFailed(
                 FfiConverterString.read(buf),
                 )
+            2 -> FluyerException.ProviderFailed(
+                FfiConverterString.read(buf),
+                )
             else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
         }
     }
@@ -2827,6 +3672,11 @@ public object FfiConverterTypeFluyerError : FfiConverterRustBuffer<FluyerExcepti
                 4UL
                 + FfiConverterString.allocationSize(value.`reason`)
             )
+            is FluyerException.ProviderFailed -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.`reason`)
+            )
         }
     }
 
@@ -2834,6 +3684,11 @@ public object FfiConverterTypeFluyerError : FfiConverterRustBuffer<FluyerExcepti
         when(value) {
             is FluyerException.InitFailed -> {
                 buf.putInt(1)
+                FfiConverterString.write(value.`reason`, buf)
+                Unit
+            }
+            is FluyerException.ProviderFailed -> {
+                buf.putInt(2)
                 FfiConverterString.write(value.`reason`, buf)
                 Unit
             }
@@ -3084,6 +3939,144 @@ public object FfiConverterTypeNativeRepeatMode: FfiConverterRustBuffer<NativeRep
 
 
 
+enum class SearchItemKind {
+    
+    TRACK,
+    ALBUM,
+    ARTIST,
+    PLAYLIST;
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSearchItemKind: FfiConverterRustBuffer<SearchItemKind> {
+    override fun read(buf: ByteBuffer) = try {
+        SearchItemKind.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: SearchItemKind) = 4UL
+
+    override fun write(value: SearchItemKind, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+sealed class TokenStatus {
+    
+    /**
+     * Authorisation accepted; stored in the secret store already.
+     */
+    data class Granted(
+        val `accessToken`: kotlin.String, 
+        val `refreshToken`: kotlin.String?, 
+        val `expiresIn`: kotlin.ULong) : TokenStatus() {
+        companion object
+    }
+    
+    /**
+     * User has not approved yet; poll again after `interval_seconds`.
+     */
+    object Pending : TokenStatus()
+    
+    
+    object Denied : TokenStatus()
+    
+    
+    object Expired : TokenStatus()
+    
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTokenStatus : FfiConverterRustBuffer<TokenStatus>{
+    override fun read(buf: ByteBuffer): TokenStatus {
+        return when(buf.getInt()) {
+            1 -> TokenStatus.Granted(
+                FfiConverterString.read(buf),
+                FfiConverterOptionalString.read(buf),
+                FfiConverterULong.read(buf),
+                )
+            2 -> TokenStatus.Pending
+            3 -> TokenStatus.Denied
+            4 -> TokenStatus.Expired
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: TokenStatus) = when(value) {
+        is TokenStatus.Granted -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterString.allocationSize(value.`accessToken`)
+                + FfiConverterOptionalString.allocationSize(value.`refreshToken`)
+                + FfiConverterULong.allocationSize(value.`expiresIn`)
+            )
+        }
+        is TokenStatus.Pending -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is TokenStatus.Denied -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is TokenStatus.Expired -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+    }
+
+    override fun write(value: TokenStatus, buf: ByteBuffer) {
+        when(value) {
+            is TokenStatus.Granted -> {
+                buf.putInt(1)
+                FfiConverterString.write(value.`accessToken`, buf)
+                FfiConverterOptionalString.write(value.`refreshToken`, buf)
+                FfiConverterULong.write(value.`expiresIn`, buf)
+                Unit
+            }
+            is TokenStatus.Pending -> {
+                buf.putInt(2)
+                Unit
+            }
+            is TokenStatus.Denied -> {
+                buf.putInt(3)
+                Unit
+            }
+            is TokenStatus.Expired -> {
+                buf.putInt(4)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+
 
 public interface FluyerEventListener {
     
@@ -3164,6 +4157,70 @@ internal object uniffiCallbackInterfaceFluyerEventListener {
  * @suppress
  */
 public object FfiConverterTypeFluyerEventListener: FfiConverterCallbackInterface<FluyerEventListener>()
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalULong: FfiConverterRustBuffer<kotlin.ULong?> {
+    override fun read(buf: ByteBuffer): kotlin.ULong? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterULong.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.ULong?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterULong.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.ULong?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterULong.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?> {
+    override fun read(buf: ByteBuffer): kotlin.String? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterString.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.String?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterString.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.String?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterString.write(value, buf)
+        }
+    }
+}
 
 
 
@@ -3257,6 +4314,38 @@ public object FfiConverterOptionalTypeAlbumDetailViewModel: FfiConverterRustBuff
         } else {
             buf.put(1)
             FfiConverterTypeAlbumDetailViewModel.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeProfileUpdate: FfiConverterRustBuffer<ProfileUpdate?> {
+    override fun read(buf: ByteBuffer): ProfileUpdate? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeProfileUpdate.read(buf)
+    }
+
+    override fun allocationSize(value: ProfileUpdate?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeProfileUpdate.allocationSize(value)
+        }
+    }
+
+    override fun write(value: ProfileUpdate?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeProfileUpdate.write(value, buf)
         }
     }
 }
@@ -3443,6 +4532,62 @@ public object FfiConverterSequenceTypeLyricLine: FfiConverterRustBuffer<List<Lyr
 /**
  * @suppress
  */
+public object FfiConverterSequenceTypeSearchItem: FfiConverterRustBuffer<List<SearchItem>> {
+    override fun read(buf: ByteBuffer): List<SearchItem> {
+        val len = buf.getInt()
+        return List<SearchItem>(len) {
+            FfiConverterTypeSearchItem.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<SearchItem>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeSearchItem.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<SearchItem>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeSearchItem.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeStreamFormat: FfiConverterRustBuffer<List<StreamFormat>> {
+    override fun read(buf: ByteBuffer): List<StreamFormat> {
+        val len = buf.getInt()
+        return List<StreamFormat>(len) {
+            FfiConverterTypeStreamFormat.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<StreamFormat>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeStreamFormat.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<StreamFormat>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeStreamFormat.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceTypeTrackItemViewModel: FfiConverterRustBuffer<List<TrackItemViewModel>> {
     override fun read(buf: ByteBuffer): List<TrackItemViewModel> {
         val len = buf.getInt()
@@ -3461,6 +4606,34 @@ public object FfiConverterSequenceTypeTrackItemViewModel: FfiConverterRustBuffer
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeTrackItemViewModel.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeTrackRef: FfiConverterRustBuffer<List<TrackRef>> {
+    override fun read(buf: ByteBuffer): List<TrackRef> {
+        val len = buf.getInt()
+        return List<TrackRef>(len) {
+            FfiConverterTypeTrackRef.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<TrackRef>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeTrackRef.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<TrackRef>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeTrackRef.write(it, buf)
         }
     }
 }

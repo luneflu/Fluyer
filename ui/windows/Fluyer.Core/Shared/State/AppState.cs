@@ -45,6 +45,8 @@ public sealed class AppState : Support.ObservableObject, IFluyerEventSink
     public void AttachEngine(IFluyerEngine? engine)
     {
         Engine = engine;
+        Settings.Engine = engine;
+        Settings.Load();
         Playback.Engine = engine;
         Library.Engine = engine;
         Selection.Engine = engine;

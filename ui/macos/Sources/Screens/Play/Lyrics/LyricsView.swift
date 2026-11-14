@@ -8,33 +8,37 @@ struct LyricsView: View {
     private var activeLyricIndex: Int { playback.clock.currentLyricIndex }
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView(.vertical) {
-                LazyVStack(alignment: .leading, spacing: Layout.Lyrics.lineSpacing) {
-                    ForEach(Array(playback.playView.lyrics.indices), id: \.self) { i in
-                        lyricLine(i)
+        GeometryReader { geo in
+            ScrollViewReader { proxy in
+                ScrollView(.vertical) {
+                    LazyVStack(alignment: .leading, spacing: Layout.Lyrics.lineSpacing) {
+                        ForEach(Array(playback.playView.lyrics.indices), id: \.self) { i in
+                            lyricLine(i)
+                        }
                     }
+                    // Half the scroll view height on each end, so the first and last
+                    // line can reach the centre (`scrollTo(anchor: .center)`).
+                    .padding(.vertical, geo.size.height / 2)
+                    .padding(.horizontal, Layout.Lyrics.horizontalPadding)
                 }
-                .padding(.vertical, Layout.Lyrics.verticalInset)
-                .padding(.horizontal, Layout.Lyrics.horizontalPadding)
-            }
-            .scrollIndicators(.hidden)
-            .mask(
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0),
-                        .init(color: .black, location: 0.4),
-                        .init(color: .black, location: 0.6),
-                        .init(color: .clear, location: 1),
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
+                .scrollIndicators(.hidden)
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: .black, location: 0.4),
+                            .init(color: .black, location: 0.6),
+                            .init(color: .clear, location: 1),
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
                 )
-            )
-            .onChange(of: activeLyricIndex) { _, newIndex in
-                guard newIndex >= 0, newIndex < playback.playView.lyrics.count else { return }
-                withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
-                    proxy.scrollTo(newIndex, anchor: .center)
+                .onChange(of: activeLyricIndex) { _, newIndex in
+                    guard newIndex >= 0, newIndex < playback.playView.lyrics.count else { return }
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+                        proxy.scrollTo(newIndex, anchor: .center)
+                    }
                 }
             }
         }

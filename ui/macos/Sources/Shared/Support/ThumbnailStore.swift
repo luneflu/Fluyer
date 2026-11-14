@@ -26,6 +26,12 @@ final class ThumbnailStore {
         cache.object(forKey: key as NSString)
     }
 
+    /// Drop every cached cover (tab switch).
+    func removeAll() {
+        insertedKeys.removeAll()
+        cache.removeAllObjects()
+    }
+
     /// Drop every cached size of one cover.
     func invalidate(prefix: String) {
         let doomed = insertedKeys.filter { $0.hasPrefix(prefix) }

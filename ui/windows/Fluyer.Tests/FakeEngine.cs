@@ -70,6 +70,17 @@ internal sealed class FakeEngine : IFluyerEngine
     }
     public void QueueClear() { Calls.Add("clear"); QueueList.Clear(); }
 
+    private SettingsViewModel _settings = SettingsViewModel.Default;
+
+    public SettingsViewModel GetSettings() => _settings;
+
+    public SettingsViewModel SetSettings(SettingsViewModel settings)
+    {
+        Calls.Add("settings");
+        _settings = settings with { BackdropSource = settings.BackdropSource.ToLowerInvariant() };
+        return _settings;
+    }
+
     public byte[]? GetTrackThumbnail(ulong index, uint maxSize) => null;
     public byte[]? GetAlbumThumbnail(ulong index, uint maxSize) => null;
     public byte[]? GetCurrentThumbnail(uint maxSize) => null;

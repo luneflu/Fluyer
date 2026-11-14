@@ -25,6 +25,21 @@ Rule: **search the word you see in the app, land on the file.**
 9. FFI naming: `<feature>_<verb>`, e.g. `queue_get`, `player_seek`.
 10. Windows keeps the hand-written C ABI (P/Invoke + JSON), renamed to the same convention.
 11. UniFFI wrapper stays separate, split into small named files.
+12. Settings are core-owned: one `settings.json` under the core's data dir, one
+    normalizer (folders, volume clamp, unknown backdrop) for every platform. UIs keep
+    an observable mirror only. Same reasoning applies to any future shared logic: pure
+    data goes to Rust, anything needing a platform object (image, GPU handle, timer,
+    window size) stays.
+13. YouTube Music provider lives in the core (`services/ytmusic`): browse, album,
+    lyrics, and playable stream URLs. Parsers are Rust. Rotating API data (client
+    version, key, endpoint paths, device-code client) is a **signed profile**
+    (`services/profile.rs`); a newer profile is downloaded, then applied only after the
+    user confirms.
+14. Playback uses the VISIONOS client at `www.youtube.com` (plain `url`s, no PO token,
+    needs `visitorData`). The player's `n`/`sig` transforms only exist as JS, so QuickJS
+    (`rquickjs`) runs yt-dlp's vendored EJS solver (`assets/ejs/`, Unlicense) over a
+    cached preprocessed player — no V8/Node/yt-dlp process. A solve failure costs speed,
+    not playback.
 
 ## Current problems (evidence)
 
@@ -322,8 +337,18 @@ Verified: `gradlew compileDebugKotlin` OK, `gradlew testDebugUnitTest` 18 pass
 | A Windows export, e.g. `fluyer_queue_get` | `crates/fluyer_core/src/c_api/queue.rs` + `ui/windows/Fluyer.Core/Native/FluyerNative.cs` |
 | Engine logic behind a call, e.g. queue | `crates/fluyer_core/src/engine/queue.rs` |
 | Events sent to the UI | `uniffi_api/events.rs` / `c_api/events.rs` |
+| Persisted settings (file, defaults, folder/volume rules) | `services/settings.rs`, shape in `view_models/settings.rs` |
+| A settings value a view binds to | `Shared/State/SettingsState.swift` (macOS mirror, no I/O) |
+| A YouTube Music request / parser | `services/ytmusic/` (`mod.rs` = envelope + calls, `parsers.rs` = JSON reads) |
+| Device-code login and token refresh | `services/ytmusic/auth.rs`; tokens in `services/secrets.rs` |
+| API constants that rotate (client version, key, endpoints, auth client) | profile update, not code: `services/profile.rs` + `assets/profile.json` |
+| Where provider tokens are stored | `services/secrets.rs` (OS keyring, else encrypted file) |
+| Manually probing the provider (no UI) | `cargo run -p fluyer_core --example ytmusic_probe -- --profile <file> search <q>` (also `album`, `lyrics`, `stream`, `player`, `solve <n>`, `login`, `parse <saved.json>`) |
+| Why a stream URL is slower / needs solving | `services/ytmusic/cipher.rs` (+ `assets/ejs/README.md` for rebuilding the solver) |
 | Any padding / spacing / size | `ui/macos/Sources/Shared/Theme/Layout.swift`, section named after the feature |
 | Cover loading (any view) | `Shared/State/CoverState.swift` |
+| YouTube Music tab (search field, result rows) | `ui/macos/Sources/Screens/Home/YoutubeMusic/` (`YoutubeMusicState.swift` = search/play, `YoutubeMusicView.swift` = rows) |
+| Library / YouTube Music switch | `HomeView.swift` toolbar (`BrowseSource` in `Shared/State/AppState.swift`) |
 | Queue panel look ("Now Playing") | `ui/macos/Sources/Screens/Home/Queue/QueueView.swift`, rows: `QueueRow.swift` |
 | Queue behavior | `Screens/Home/Queue/QueueState.swift` |
 | Song grid / one song row | `Screens/Home/MusicGrid/MusicGridView.swift` / `TrackCard.swift` |
@@ -336,6 +361,7 @@ Verified: `gradlew compileDebugKotlin` OK, `gradlew testDebugUnitTest` 18 pass
 | Windows: any padding / spacing / size | `ui/windows/Shared/Theme/Layout.xaml`, keys prefixed with the feature |
 | Windows: queue panel look / behavior | `ui/windows/Screens/Home/Queue/QueueView.xaml` / `Fluyer.Core/Screens/Home/Queue/QueueState.cs` |
 | Windows: cover loading | `ui/windows/Shared/State/CoverState.cs` |
+| Windows / Linux / Android: settings mirror | `Fluyer.Core/Shared/State/SettingsState.cs`, `ui/linux/src/shared/state/settings_state.rs`, `ui/android/.../state/SettingsState.kt` |
 | Windows: window shell, menu bar, queue sidebar | `ui/windows/MainWindow.xaml` |
 | Linux: window shell, main stack | `ui/linux/src/main.rs` |
 | Linux: home view & overlay split view | `ui/linux/src/screens/home/home_view.rs` |

@@ -72,6 +72,15 @@ extern "C" {
         length: u64,
         flags: u32,
     ) -> u32;
+    /// Remote stream (HTTP/HTTPS). `proc` is BASS's DOWNLOADPROC; null keeps the
+    /// default blocking download on a BASS thread.
+    pub fn BASS_StreamCreateURL(
+        url: *const std::ffi::c_char,
+        offset: u32,
+        flags: u32,
+        proc: *mut std::ffi::c_void,
+        user: *mut std::ffi::c_void,
+    ) -> u32;
     pub fn BASS_Mixer_StreamCreate(freq: u32, chans: u32, flags: u32) -> u32;
     pub fn BASS_Mixer_StreamAddChannel(handle: u32, channel: u32, flags: u32) -> i32;
     pub fn BASS_Mixer_ChannelRemove(handle: u32) -> u32;

@@ -31,6 +31,27 @@ once_cell = "1.21"
 log = "0.4"
 env_logger = "0.11"
 uniffi = { version = "0.28", features = ["cli"] }
+aes-gcm = "0.10"
+hkdf = "0.12"
+sha2 = "0.10"
+base64 = "0.22"
+ed25519-dalek = "2"
+# `bindgen` because quickjs-sys ships no aarch64-linux-android bindings; the Android
+# build script sets BINDGEN_EXTRA_CLANG_ARGS accordingly.
+rquickjs = { version = "0.14", features = ["bindgen"] }
+
+# Desktop credential stores only: Android has no keyring backend here, so it uses the
+# encrypted-file fallback in `services/secrets.rs`.
+# Headless/no-keyring fallback key. Android has no machine id, so it uses a random
+# key file next to the encrypted secrets (`services/secrets.rs`).
+[target.'cfg(not(target_os = "android"))'.dependencies]
+machine-uid = "0.6"
+
+[target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
+keyring = { version = "3", features = ["apple-native", "windows-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "3", features = ["sync-secret-service"] }
 
 [[bin]]
 name = "uniffi-bindgen"

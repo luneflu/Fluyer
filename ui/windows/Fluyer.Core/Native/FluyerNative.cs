@@ -199,6 +199,13 @@ internal static class FluyerNative
 
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr fluyer_settings_get(IntPtr engine);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr fluyer_settings_set(
+        IntPtr engine, [MarshalAs(UnmanagedType.LPUTF8Str)] string json);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     public static extern void fluyer_bytes_free(IntPtr ptr, ulong len);
 
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]

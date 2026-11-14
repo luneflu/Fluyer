@@ -35,6 +35,7 @@ impl AppState {
     }
 
     pub fn init(&self) {
+        self.settings.load(&self.engine);
         let bar = self.engine.player_get_bar();
         self.playback.apply_bar(&bar);
         self.playback.sync_lyrics(&self.engine);

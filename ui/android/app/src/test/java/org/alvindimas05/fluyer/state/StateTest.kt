@@ -57,42 +57,28 @@ class StateTest {
         assertFalse(AlbumSelection.matches(t, "zzz"))
     }
 
-    // SettingsState
-    @Test fun settingsRoundTrip() {
-        val f = File(tmp.root, "settings.json")
-        val s = SettingsState(f)
-        assertEquals(listOf("/a", "/b"), s.addFolders(listOf("/a/", "/b", "/a", " ")))
-        s.animatedBackground = false
-        s.backdropSource = BackdropSource.BLOCKS
-        s.volume = 0.4f
-        val r = SettingsState(f)
-        assertEquals(listOf("/a", "/b"), r.musicFolders)
-        assertFalse(r.animatedBackground)
-        assertEquals(BackdropSource.BLOCKS, r.backdropSource)
-        assertEquals(0.4f, r.volume, 0.001f)
-        assertEquals("/a", r.removeFolder("/a/"))
-        assertNull(r.removeFolder("/nope"))
-        assertEquals(listOf("/b"), SettingsState(f).musicFolders)
-    }
-
-    @Test fun settingsUnknownAndMissingKeys() {
-        val f = File(tmp.root, "settings.json")
-        f.writeText("""{"backdropSource":"hologram","volume":7,"extra":1}""")
-        val s = SettingsState(f)
+    // SettingsState: the core owns the file and normalization (services/settings.rs).
+    @Test fun settingsDefaults() {
+        val s = SettingsState()
+        assertTrue(s.musicFolders.isEmpty())
+        assertTrue(s.animatedBackground)
         assertEquals(BackdropSource.ARTWORK, s.backdropSource)
         assertEquals(1f, s.volume, 0f)
-        assertTrue(s.animatedBackground)
-        assertTrue(s.musicFolders.isEmpty())
     }
 
-    @Test fun settingsCorruptFileKeptAsBad() {
-        val f = File(tmp.root, "settings.json")
-        f.writeText("{not json")
-        val s = SettingsState(f)
-        assertTrue(s.animatedBackground)
-        assertEquals("{not json", File(tmp.root, "settings.json.bad").readText())
-        s.volume = 0.5f
-        assertEquals(0.5f, SettingsState(f).volume, 0.001f)
+    @Test fun settingsRemembersFoldersWithoutAnEngine() {
+        val s = SettingsState()
+        // Without an engine nothing canonicalizes: dedupe/trailing-slash rules live in the core.
+        assertEquals(listOf("/a/", "/b"), s.addFolders(listOf("/a/", "/b")))
+        assertEquals(listOf("/a/", "/b"), s.musicFolders)
+    }
+
+    @Test fun settingsRemoveFolderMatchesTrailingSeparator() {
+        val s = SettingsState()
+        s.addFolders(listOf("/a", "/b"))
+        assertEquals("/a", s.removeFolder("/a/"))
+        assertNull(s.removeFolder("/a"))
+        assertEquals("/", SettingsState().apply { addFolders(listOf("/")) }.removeFolder("//"))
     }
 
     // PlaybackClock math (engine-free)

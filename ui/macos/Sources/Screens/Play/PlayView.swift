@@ -38,10 +38,11 @@ struct PlayView: View {
                 }
                 .padding(.trailing, Layout.Play.trailingPadding)
                 .animation(.easeInOut(duration: 0.4), value: hasLyrics)
-
-                backButton
             }
             .frame(width: geo.size.width, height: geo.size.height)
+            // Fixed top-left: the overlay anchors to this full-size frame, so the
+            // button does not inherit the ZStack's column-sized bounds.
+            .overlay(alignment: .topLeading) { backButton }
             .onContinuousHover { phase in
                 if case .active = phase {
                     resetIdleTimer()

@@ -58,6 +58,12 @@ public interface IFluyerEngine : IDisposable
     void QueueMove(ulong from, ulong to);
     void QueueClear();
 
+    /// <summary>Persisted settings, read from the core's <c>settings.json</c>.</summary>
+    SettingsViewModel GetSettings();
+
+    /// <summary>Normalizes, persists and returns what the core stored (null when it rejected the payload).</summary>
+    SettingsViewModel? SetSettings(SettingsViewModel settings);
+
     public byte[]? GetTrackThumbnail(ulong index, uint maxSize);
     public byte[]? GetAlbumThumbnail(ulong index, uint maxSize);
     public byte[]? GetCurrentThumbnail(uint maxSize);
@@ -166,6 +172,14 @@ public sealed class FluyerEngine : IFluyerEngine
             () => TakeString(FluyerNative.fluyer_album_get_detail(_handle, index)));
 
     public ulong GetPosition() => Check(() => FluyerNative.fluyer_player_get_position(_handle));
+
+    public SettingsViewModel GetSettings()
+        => DeserializeOrDefault(() => TakeString(FluyerNative.fluyer_settings_get(_handle)), SettingsViewModel.Default);
+
+    public SettingsViewModel? SetSettings(SettingsViewModel settings)
+        => DeserializeNullable<SettingsViewModel>(() => TakeString(FluyerNative.fluyer_settings_set(
+            _handle,
+            JsonSerializer.Serialize(settings, JsonOptions))));
 
     public int GetActiveLyricIndex(ulong positionMs)
         => Check(() => FluyerNative.fluyer_lyrics_get_active_index(_handle, positionMs));

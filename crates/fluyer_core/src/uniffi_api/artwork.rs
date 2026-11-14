@@ -17,6 +17,12 @@ impl FluyerAppEngine {
             .map(|b| b.as_ref().clone())
     }
 
+    pub async fn artwork_load_queue_thumbnail(&self, index: u64, max_size: u32) -> Option<Vec<u8>> {
+        self.inner
+            .artwork_queue_thumbnail(index as usize, max_size)
+            .map(|b| b.as_ref().clone())
+    }
+
     pub async fn artwork_load_current_thumbnail(&self, max_size: u32) -> Option<Vec<u8>> {
         self.inner
             .artwork_current_thumbnail(max_size)
