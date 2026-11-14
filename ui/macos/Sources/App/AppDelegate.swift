@@ -25,6 +25,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.main.async {
             NSApp.windows.first?.makeKeyAndOrderFront(nil)
         }
+        // SwiftUI marks the library window `fullScreenNone`, so its green button
+        // only zooms ("+"). Take full screen back.
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main
+        ) { note in
+            guard let window = note.object as? NSWindow else { return }
+            window.collectionBehavior.remove(.fullScreenNone)
+            window.collectionBehavior.insert(.fullScreenPrimary)
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
