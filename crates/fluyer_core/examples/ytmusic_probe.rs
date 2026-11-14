@@ -72,6 +72,11 @@ fn play(args: &[String]) -> Result<(), String> {
         engine.provider_play_track_blocking(video_id.clone(), title, artist, String::new(), thumbnail, 0)?;
     }
     println!("playing {video_id} for {seconds}s (data dir {})", data_dir.display());
+    if let Some(seek) = flag(args, "--seek").and_then(|v| v.parse::<u64>().ok()) {
+        std::thread::sleep(std::time::Duration::from_secs(2));
+        engine.player_seek(seek * 1000);
+        println!("seeked to {seek}s");
+    }
     println!(
         "queue cover: {} bytes",
         engine.artwork_queue_thumbnail(0, 64).map(|b| b.len()).unwrap_or(0)

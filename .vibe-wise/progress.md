@@ -368,3 +368,15 @@ Implemented:
 - macOS: `ThumbnailKey.queue(px:path:)` + `CoverState.queue(position:px:path:)`; `QueueRow.loadCover` falls back to it when the track is not in the library; `YoutubeMusicState.credit(_:)` drops `plays`/`views` segments before taking artist/album; `play` passes `item.thumbnail`.
 - Probe: `--thumbnail <url>` and a `queue cover: N bytes` line.
 Verified: probe play with a real cover URL → cache file at `covers/track/Probe Artist - Probe Track.jpg`, `queue cover: 2021 bytes` (a real JPEG, no MusicBrainz call); `cargo test` 58 lib + 2 integration; `swift build`, `swift test` 65. Not verified in the running app (click-through).
+
+### Progressive streaming via a loopback proxy
+Status: Implemented (uncommitted; learner commits).
+Learner decision: "make it actually streaming instead of downloading the whole track", transport choice = loopback proxy (over `BASS_StreamCreateFileUser`).
+Constraint that forced it: macOS BASS has no TLS, so a `https://googlevideo…` URL in `BASS_StreamCreateURL` blocks forever; `http://127.0.0.1` plays.
+Implemented:
+- `services/stream_proxy.rs`: `StreamProxy` binds `127.0.0.1:0` once (`spawn` on the engine runtime), `link(id, url, expires_in)` registers a route and returns `http://127.0.0.1:<port>/<id>`. Handler parses the request head, resolves the id, forwards `Range` (default `bytes=0-`) over rustls, mirrors `content-type`/`content-length`/`content-range`, adds `accept-ranges: bytes`, answers `HEAD` without a body, then writes the body chunk-by-chunk (`connection: close`, one request per socket). Expired routes are purged on every link/resolve, with 60 s of headroom before the CDN expiry.
+- Engine: `stream_proxy` field constructed in `FluyerEngine::new` and spawned before use.
+- `engine/provider.rs`: both play paths take `pick_audio_url`'s URL + `expires_in_seconds` and hand the proxy link to `MusicMetadata.path`; `download_audio` and the `ytmusic` download cache are gone. `audio/player.rs` already routed `http://` paths to `BASS_StreamCreateURL`, so queue/bar/seek were untouched.
+- Probe: `--seek <seconds>` (calls `player_seek` mid-play) and `--thumbnail <url>`.
+Verified: probe `play` → `BASS_StreamCreateURL` on `http://127.0.0.1:60020/ju5cgtOJDuE`, bar advances 770→3770 ms of 247523 (no local `.m4a` written by the play path); `--seek 90` mid-play → bar jumps to 91460 ms and keeps advancing; `cargo test` 58 lib + 2 integration; `swift build`. Not verified: app click-through, expired-URL mid-track behaviour (needs refresh logic), Windows/Linux/Android.
+Known leftovers: stale `<cache>/ytmusic/*.m4a` files from the download era are still on disk (no cleanup yet).

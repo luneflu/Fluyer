@@ -17,7 +17,9 @@ use crate::db::{self, Database};
 use crate::events::EventSink;
 use crate::library::LibraryState;
 use crate::services::ytmusic::YouTubeMusic;
-use crate::services::{CoverArtService, DiscordRpc, LyricService, ProfileService, Secrets, SettingsService};
+use crate::services::{
+    CoverArtService, DiscordRpc, LyricService, ProfileService, Secrets, SettingsService, StreamProxy,
+};
 use crate::{logger, view_models};
 use std::path::Path;
 use std::sync::{Arc, RwLock};
@@ -32,6 +34,8 @@ pub struct FluyerEngine {
     pub settings: Arc<SettingsService>,
     pub secrets: Arc<Secrets>,
     pub profile: Arc<ProfileService>,
+    /// Loopback HTTP bridge for provider streams (BASS has no TLS).
+    pub stream_proxy: Arc<StreamProxy>,
     pub data_dir: std::path::PathBuf,
     pub cache_dir: std::path::PathBuf,
     // ponytail: one provider instance per applied profile version; rebuilt lazily so a
@@ -96,6 +100,9 @@ impl FluyerEngine {
             .build()
             .map_err(|e| format!("Failed to create async runtime: {}", e))?;
 
+        let stream_proxy = Arc::new(StreamProxy::new());
+        stream_proxy.spawn(runtime.handle())?;
+
         DiscordRpc::init();
 
         Ok(Self {
@@ -107,6 +114,7 @@ impl FluyerEngine {
             settings,
             secrets,
             profile,
+            stream_proxy,
             data_dir: data_dir.to_path_buf(),
             cache_dir: cache_dir.to_path_buf(),
             provider_cache: RwLock::new(None),

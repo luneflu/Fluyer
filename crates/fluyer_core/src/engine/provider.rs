@@ -64,12 +64,8 @@ impl super::FluyerEngine {
         duration_ms: u64,
     ) -> Result<(), String> {
         let info = self.provider_stream_formats(video_id.clone()).await?;
-        let url = pick_audio_url(&info).ok_or("no audio format in the player response")?;
-        let cache_dir = self.cache_dir.clone();
-        let (id, link) = (video_id.clone(), url);
-        let path = self
-            .on_runtime(async move { download_audio(&cache_dir, &id, &link).await })
-            .await?;
+        let (url, expires_in) = pick_audio_url(&info).ok_or("no audio format in the player response")?;
+        let path = self.stream_proxy.link(&video_id, &url, expires_in)?;
         if let Some(thumbnail) = thumbnail.as_deref() {
             let cover_art = std::sync::Arc::clone(&self.cover_art);
             let (link, artist, album, title, path) =
@@ -165,8 +161,8 @@ impl super::FluyerEngine {
         duration_ms: u64,
     ) -> Result<(), String> {
         let info = self.provider_stream_blocking(video_id.clone())?;
-        let url = pick_audio_url(&info).ok_or("no audio format in the player response")?;
-        let path = self.runtime.block_on(download_audio(&self.cache_dir, &video_id, &url))?;
+        let (url, expires_in) = pick_audio_url(&info).ok_or("no audio format in the player response")?;
+        let path = self.stream_proxy.link(&video_id, &url, expires_in)?;
         // The provider's own cover is authoritative: store it under the same key the
         // artwork resolver looks up, so no MusicBrainz lookup ever runs for it.
         if let Some(thumbnail) = thumbnail.as_deref() {
@@ -225,7 +221,7 @@ impl super::FluyerEngine {
 
 /// Highest-bitrate audio format, AAC/MP4 first: it needs no extra BASS plugin, and the
 /// WebM/Opus fallback only when AAC is missing.
-fn pick_audio_url(info: &StreamInfo) -> Option<String> {
+fn pick_audio_url(info: &StreamInfo) -> Option<(String, Option<u64>)> {
     let audio = |needle: &str| -> Option<&crate::services::ytmusic::StreamFormat> {
         info.formats
             .iter()
@@ -233,7 +229,9 @@ fn pick_audio_url(info: &StreamInfo) -> Option<String> {
             .filter(|format| format.url.is_some())
             .max_by_key(|format| format.bitrate.unwrap_or(0))
     };
-    audio("mp4").or_else(|| audio("webm")).and_then(|format| format.url.clone())
+    audio("mp4")
+        .or_else(|| audio("webm"))
+        .and_then(|format| format.url.clone().map(|url| (url, format.expires_in_seconds)))
 }
 
 #[cfg(test)]
@@ -264,13 +262,10 @@ mod tests {
             playability_status: Some("OK".into()),
             reason: None,
         };
-        assert_eq!(pick_audio_url(&info).as_deref(), Some("aac"));
+        assert_eq!(pick_audio_url(&info).map(|(url, _)| url).as_deref(), Some("aac"));
     }
 }
 
-/// Downloads a provider stream once into the cache; later plays reuse the file.
-/// BASS's URL streaming has no TLS on macOS, so the core fetches over rustls and hands
-/// BASS a local path.
 /// Downloads a provider cover into the artwork disk cache, keyed exactly like
 /// `artwork_resolve_track` looks it up (artist, album, title, audio path).
 async fn cache_remote_cover(
@@ -296,28 +291,3 @@ async fn cache_remote_cover(
         .map_err(|e| format!("cover cache write: {e}"))
 }
 
-async fn download_audio(cache_dir: &std::path::Path, video_id: &str, url: &str) -> Result<String, String> {
-    let dir = cache_dir.join("ytmusic");
-    std::fs::create_dir_all(&dir).map_err(|e| format!("cache dir: {e}"))?;
-    let path = dir.join(format!("{}.m4a", video_id.replace(['/', '\\'], "_")));
-    if std::fs::metadata(&path).map(|m| m.len() > 0).unwrap_or(false) {
-        return Ok(path.to_string_lossy().into_owned());
-    }
-    let request = reqwest::Client::new()
-        .get(url)
-        // The CDN truncates a plain GET (~1 MB); the range request returns 206 with
-        // the whole track.
-        .header("Range", "bytes=0-")
-        .timeout(std::time::Duration::from_secs(60))
-        .send()
-        .await
-        .map_err(|e| format!("stream download failed: {e}"))?;
-    if !request.status().is_success() {
-        return Err(format!("stream download returned {}", request.status()));
-    }
-    let bytes = request.bytes().await.map_err(|e| format!("stream body failed: {e}"))?;
-    let temp = path.with_extension("part");
-    std::fs::write(&temp, &bytes).map_err(|e| format!("cache write: {e}"))?;
-    std::fs::rename(&temp, &path).map_err(|e| format!("cache rename: {e}"))?;
-    Ok(path.to_string_lossy().into_owned())
-}
