@@ -1,21 +1,77 @@
 import SwiftUI
 import FluyerCore
 
-/// Remote cover images for feed items: in-memory only, keyed by URL.
+/// Remote cover images for feed items: decoded once per (URL, display size) pair.
+///
+/// The API hands out ~1600px art; decoding that per card costs ~9 MB of bitmap each, so
+/// the cache is size-keyed, downsampled on decode, and budgeted (cost = pixels×4).
 enum RemoteCover {
-    private static let cache = NSCache<NSString, NSImage>()
+    private static let cache: NSCache<NSString, NSImage> = {
+        let cache = NSCache<NSString, NSImage>()
+        cache.countLimit = 80
+        cache.totalCostLimit = 64 * 1024 * 1024
+        return cache
+    }()
 
-    static func cached(_ url: String) -> NSImage? {
-        cache.object(forKey: url as NSString)
+    /// Drops every decoded feed cover (tab switch, so the library's bitmaps get the room).
+    static func clear() {
+        cache.removeAllObjects()
     }
 
-    static func load(_ url: String) async -> NSImage? {
-        if let hit = cached(url) { return hit }
-        guard let target = URL(string: url),
+    static func cached(_ url: String, px: Int) -> NSImage? {
+        cache.object(forKey: key(url, px) as NSString)
+    }
+
+    static func load(_ url: String, px: Int) async -> NSImage? {
+        if let hit = cached(url, px: px) { return hit }
+        // Only the play view needs the full-size art the core hands out; cards ask the
+        // CDN for their own pixel size instead of downloading ~1600px.
+        guard let target = URL(string: sized(url, px: px)),
               let (data, _) = try? await URLSession.shared.data(from: target),
-              let image = NSImage(data: data) else { return nil }
-        cache.setObject(image, forKey: url as NSString)
+              let image = downsample(data, px: px) else { return nil }
+        cache.setObject(image, forKey: key(url, px) as NSString, cost: px * px * 4)
         return image
+    }
+
+    /// Rewrites the ggpht size token (`=w1600-h1600-l90-rj`, `=s576`) to `px`.
+    static func sized(_ url: String, px: Int) -> String {
+        guard let eq = url.lastIndex(of: "=") else { return url }
+        let suffix = url[url.index(after: eq)...]
+        let tail: Substring
+        if suffix.hasPrefix("s") {
+            // `=s576` (no tail) and `=s192-c-k-…` both work: the tail may be empty.
+            let body = suffix.dropFirst()
+            let end = body.firstIndex(where: { !$0.isNumber }) ?? body.endIndex
+            tail = body[end...]
+        } else if suffix.hasPrefix("w") {
+            guard var cursor = suffix.dropFirst().firstIndex(where: { !$0.isNumber }),
+                  suffix[cursor...].hasPrefix("-h") else { return url }
+            cursor = suffix.index(cursor, offsetBy: 2)
+            let body = suffix[cursor...]
+            let end = body.firstIndex(where: { !$0.isNumber }) ?? body.endIndex
+            tail = body[end...]
+        } else {
+            return url
+        }
+        let size = max(16, px)
+        return String(url[...eq]) + "w\(size)-h\(size)" + tail
+    }
+
+    private static func key(_ url: String, _ px: Int) -> String {
+        "\(url)@\(px)"
+    }
+
+    /// ImageIO thumbnailing: decodes straight to `px`, so the full-size bitmap never
+    /// exists in memory.
+    private static func downsample(_ data: Data, px: Int) -> NSImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: px,
+        ]
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        return NSImage(cgImage: cgImage, size: NSSize(width: px, height: px))
     }
 }
 
@@ -96,10 +152,10 @@ struct YoutubeShelfView: View {
             isSelected: isPlaying,
             actions: item.videoId == nil ? [] : [("Play", { onPlay(item) })],
             onTap: item.videoId == nil ? nil : { onPlay(item) },
-            cached: { _ in item.thumbnail.flatMap(RemoteCover.cached) },
-            load: { _ in
+            cached: { px in item.thumbnail.flatMap { RemoteCover.cached($0, px: px) } },
+            load: { px in
                 guard let url = item.thumbnail else { return nil }
-                return await RemoteCover.load(url)
+                return await RemoteCover.load(url, px: px)
             }
         )
     }

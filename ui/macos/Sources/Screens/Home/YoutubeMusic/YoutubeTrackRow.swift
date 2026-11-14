@@ -9,6 +9,10 @@ struct YoutubeTrackRow: View {
     let isPlaying: Bool
     let onPlay: () -> Void
 
+    @State private var cover: NSImage?
+
+    private static let coverPixels = Layout.TrackRow.coverPixels
+
     var body: some View {
         HStack(spacing: Layout.TrackRow.coverToText) {
             thumbnailView
@@ -48,19 +52,27 @@ struct YoutubeTrackRow: View {
             guard item.videoId != nil else { return }
             onPlay()
         }
+        .task(id: item.thumbnail) {
+            guard let url = item.thumbnail else { return }
+            cover = await RemoteCover.load(url, px: Self.coverPixels)
+        }
     }
 
     private var thumbnailView: some View {
-        AsyncImage(url: item.thumbnail.flatMap(URL.init(string:))) { image in
-            image.resizable().aspectRatio(contentMode: .fill)
-        } placeholder: {
-            Rectangle()
-                .fill(Color.white.opacity(0.08))
-                .overlay(
-                    Image(systemName: "music.note")
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.3))
-                )
+        ZStack {
+            if let cover {
+                Image(nsImage: cover)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                Rectangle()
+                    .fill(Color.white.opacity(0.08))
+                    .overlay(
+                        Image(systemName: "music.note")
+                            .font(.system(size: 16))
+                            .foregroundColor(.white.opacity(0.3))
+                    )
+            }
         }
         .frame(width: Layout.TrackRow.coverSide, height: Layout.TrackRow.coverSide)
     }

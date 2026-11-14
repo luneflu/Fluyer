@@ -396,3 +396,18 @@ Status: Implemented (uncommitted; learner commits). Learner: cover art used a lo
 Cause: `best_thumbnail` took the largest URL the API offers (usually `=s576`, sometimes `=w120-h120-l90-rj` for feed cards), which a 340pt card and the now-playing cover upscale.
 Fix: `upgrade_thumbnail` rewrites only the size part of the ggpht URL to `=s1600` / `=w1600-h1600`, keeping the crop/rounding suffix; applied to every parsed thumbnail, so the stream cover download (`cache_remote_cover`) also gets the large bytes.
 Verified: parsed home JSON now yields `=w1600-h1600-l90-rj`; that URL returns HTTP 200, 282 827 bytes, 1425×1425 (vs 120×120 before); `=s1600` returns 1000×1000. `cargo test` 60 lib + 2 integration (new thumbnail-upgrade test).
+
+### Feed cover memory (100 MB → 250 MB on opening YouTube Music)
+Status: Implemented (uncommitted; learner commits).
+Cause: `RemoteCover` cached full-resolution decoded `NSImage`s, and the thumbnails were just bumped to 1600px → ~9 MB of BGRA bitmap per card (1425² × 4), uncapped, keyed by URL only.
+Fix: `RemoteCover` now downsamples on decode with ImageIO (`CGImageSourceCreateThumbnailAtIndex`, max pixel = the size the card asks for) so the full-size bitmap never exists, keys the cache by `(URL, px)`, and budgets it (`countLimit` 80, `totalCostLimit` 64 MB, cost = px²×4).
+Measured (debug build, RSS): library tab 160 MB, YouTube Music tab 171 MB (+11 MB, was +~150 MB). Not verified: release build numbers, long-scroll growth.
+
+### Tab-scoped cover art: sized downloads, cache handover
+Status: Implemented (uncommitted; learner commits). Learner: full-resolution images were still being fetched — full size is only for the play view — and the local tab's image cache should be freed when YouTube Music opens.
+Implemented:
+- `RemoteCover.sized(url, px:)` rewrites the ggpht size token (`=w1600-h1600-l90-rj`, `=s576`, `=s192-c-k-…`) to the card's own pixel size; feed cards and track rows now download that instead of ~1600px art. The core still advertises the full-size URL because the stream cover download / play view / backdrop use it.
+- `YoutubeTrackRow` no longer uses `AsyncImage` (which decoded the original); it loads through `RemoteCover` at `Layout.TrackRow.coverPixels`, like `TrackCard`.
+- `RemoteCover.clear()`, `ThumbnailStore.removeAll()`, `CoverState.clear()`; `HomeView.onChange(browseSource)` clears both stores so the two catalogues hand memory over instead of stacking.
+- New `Tests/FluyerAppTests/RemoteCoverSizingTests.swift` locks the URL rewriting (`swift test` 66 passing).
+Measured (debug build, forced YouTube tab): 154–177 MB RSS across runs, vs 171 before this change and ~250 with the original full-res fetch. Not verified: release-build numbers, switching tabs by clicking.

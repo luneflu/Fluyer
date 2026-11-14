@@ -64,6 +64,11 @@ final class CoverState {
         return Self.image(from: await engine.backdropLoadBlockArtwork())
     }
 
+    /// Called when the tab switches: the other catalogue needs the memory more.
+    func clear() {
+        store.removeAll()
+    }
+
     func invalidateTrack(_ index: UInt64) {
         store.invalidate(prefix: ThumbnailKey.trackPrefix(index))
     }

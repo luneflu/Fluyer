@@ -78,6 +78,12 @@ struct HomeView: View {
             }
         }
         // Backdrop runs under the title bar; no toolbar material over it.
+        // Each catalogue keeps its own decoded bitmaps; handing the memory over on a
+        // switch keeps one tab's covers from paying for the other's.
+        .onChange(of: state.browseSource) { _, _ in
+            RemoteCover.clear()
+            state.covers.clear()
+        }
         .toolbarBackground(.hidden, for: .windowToolbar)
         // Empty title: the titled toolbar style keeps search + queue on the trailing
         // edge, but no "FluyerApp" text is drawn.
