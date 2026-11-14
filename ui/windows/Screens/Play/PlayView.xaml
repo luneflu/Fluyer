@@ -5,6 +5,12 @@
     xmlns:components="using:Fluyer.Components"
     xmlns:native="using:Fluyer.Core.Native"
     xmlns:screens="using:Fluyer.Screens">
+    <UserControl.Resources>
+        <!-- Lyrics are text, not buttons: no WinUI item hover fill or text dim. -->
+        <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="Transparent" />
+        <SolidColorBrush x:Key="ListViewItemBackgroundPressed" Color="Transparent" />
+        <SolidColorBrush x:Key="ListViewItemForegroundPointerOver" Color="White" />
+    </UserControl.Resources>
     <!-- Full-screen now-playing surface. Port of PlayView
          (ui/macos/Sources/Screens/Play/PlayView.swift): cover + control card on
          the left, lyrics scroller on the right when lyrics exist. -->
@@ -141,8 +147,8 @@
             <ListView.Footer>
                 <Border x:Name="LyricsBottomSpacer" />
             </ListView.Footer>
-            <!-- Line spacing on the container, not the template: the container paints
-                 the hover, so a template margin would grow the hover box too. -->
+            <!-- Line spacing on the container, not the template: the container holds
+                 the item box, so a template margin would grow it too. -->
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="Margin" Value="{StaticResource LyricsLineMargin}" />
