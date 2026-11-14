@@ -411,3 +411,18 @@ Implemented:
 - `RemoteCover.clear()`, `ThumbnailStore.removeAll()`, `CoverState.clear()`; `HomeView.onChange(browseSource)` clears both stores so the two catalogues hand memory over instead of stacking.
 - New `Tests/FluyerAppTests/RemoteCoverSizingTests.swift` locks the URL rewriting (`swift test` 66 passing).
 Measured (debug build, forced YouTube tab): 154–177 MB RSS across runs, vs 171 before this change and ~250 with the original full-res fetch. Not verified: release-build numbers, switching tabs by clicking.
+
+## macOS full screen: green button was disabled, toolbar material patched
+Status: Implemented (uncommitted; learner commits).
+Two separate causes, both native:
+1. The window could not enter full screen at all: logged `styleMask 32783` (resizable) but `collectionBehavior 66048` = `.primary | .fullScreenNone`, so AppKit turned the green button into zoom ("+"). Fix: `AppDelegate.applicationDidFinishLaunching` observes `NSWindow.didBecomeKeyNotification`, removes `.fullScreenNone` and inserts `.fullScreenPrimary`.
+2. The grey band is AppKit's own layer, not SwiftUI's: in full screen the toolbar lives in a separate `NSToolbarFullScreenWindow` (68pt, `NSToolbarFullScreenContentView` → `NSTitlebarContainerView`/`NSTitlebarView` → `NSVisualEffectView`), which `toolbarBackground(.hidden, for: .windowToolbar)` cannot reach (that only styles the windowed bar). Fix: `Sources/Shared/Support/FullScreenToolbarClearer.swift`, attached as a zero-size `.background` in `HomeView`; on `didEnterFullScreen`/`didExitFullScreen` it patches every window whose class name contains `ToolbarFullScreen` (`isOpaque = false`, `backgroundColor = .clear`) and every nested `NSVisualEffectView` (`state = .inactive`, `alphaValue = 0`), retried at 0/0.2/0.6 s because the layer appears mid-animation.
+Verified: entered full screen via a temporary `toggleFullScreen` hook and captured the screen: window 1440x900 full screen, toolbar strip transparent over the backdrop, toolbar items still visible. `swift build` OK. Debug hooks (env-gated toggle + hierarchy dump in `AppDelegate`/`FluyerApp`) removed.
+Caveat: matches a private AppKit window class by name, so a macOS update can break it; fallback is dropping toolbar items in full screen and drawing the controls in an overlay.
+
+## macOS full screen toolbar: reveal detection
+Status: Implemented (uncommitted; learner commits). Detection confirmed by learner run.
+Measured (temporary 10 Hz logger, patch on and off): `NSToolbarFullScreenWindow.frame` slides 832↔808→832 during the animation then settles identically in both states; `alphaValue` 1.0, `isVisible` true, `occlusionState` 8192/8194 unchanged; only the two nested `NSVisualEffectView` alphas flip 0.0→1.0 once per space animation and do not flip back on pointer leave. Conclusion: AppKit exposes no reveal/hide signal.
+Implemented: pointer polling in `FullScreenToolbarClearer` — 10 Hz timer while full screen sets `FullScreenToolbarReveal.shared.revealed = NSEvent.mouseLocation.y >= screen.frame.maxY - 4`, reset false on `didExitFullScreen`; `FullScreenToolbarReveal` is `@MainActor @Observable`.
+Verified: learner hovered the top edge and moved away → log recorded `revealed=true` then `revealed=false`. Material stays cleared either way (transparent strip); temporary log removed.
+Open: the grey-when-revealed look (native material vs. a painted band) is not implemented; the state is exposed for it.

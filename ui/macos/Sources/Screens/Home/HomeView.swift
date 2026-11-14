@@ -85,6 +85,7 @@ struct HomeView: View {
             state.covers.clear()
         }
         .toolbarBackground(.hidden, for: .windowToolbar)
+        .background(FullScreenToolbarClearer().frame(width: 0, height: 0))
         // Empty title: the titled toolbar style keeps search + queue on the trailing
         // edge, but no "FluyerApp" text is drawn.
         .navigationTitle("")
