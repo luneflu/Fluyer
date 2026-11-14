@@ -5,7 +5,7 @@
 //! makes YouTube Music schema changes survivable — see `services/profile.rs` for the
 //! part that *is* data (client version, keys, endpoint paths).
 
-use super::models::{AlbumDetail, AlbumRef, FeedShelf, SearchItem, SearchItemKind, StreamFormat, StreamInfo, TrackRef};
+use super::models::{AlbumDetail, AlbumRef, FeedShelf, HomeFeed, SearchItem, SearchItemKind, StreamFormat, StreamInfo, TrackRef};
 use serde_json::Value;
 
 /// Walks `path` through objects, then array indices given as digits.
@@ -52,7 +52,36 @@ fn best_thumbnail(value: &Value) -> Option<String> {
         .iter()
         .max_by_key(|t| nav(t, &["width"]).and_then(Value::as_u64).unwrap_or(0))
         .and_then(|t| nav(t, &["url"]).and_then(Value::as_str))
-        .map(str::to_string)
+        .map(upgrade_thumbnail)
+}
+
+/// The API only offers thumbnails up to ~576px (`=s192`, `=w120-h120-l90-rj`), but the
+/// CDN serves any size: ask for 1600 so cards and the now-playing cover never upscale a
+/// small bitmap. The crop/rounding suffix is kept as-is.
+fn upgrade_thumbnail(url: &str) -> String {
+    const HIGH_RES: u32 = 1600;
+
+    let Some(eq) = url.rfind('=') else { return url.to_string() };
+    let suffix = &url[eq + 1..];
+    let upgraded = if let Some(rest) = suffix.strip_prefix('s') {
+        strip_digits(rest).map(|tail| format!("s{HIGH_RES}{tail}"))
+    } else if let Some(rest) = suffix.strip_prefix('w') {
+        strip_digits(rest)
+            .and_then(|rest| rest.strip_prefix("-h"))
+            .and_then(|rest| strip_digits(rest).map(|tail| format!("w{HIGH_RES}-h{HIGH_RES}{tail}")))
+    } else {
+        None
+    };
+    match upgraded {
+        Some(suffix) => format!("{url_rest}={suffix}", url_rest = &url[..eq]),
+        None => url.to_string(),
+    }
+}
+
+/// Everything after the leading digits, e.g. `-c-k-c0x00ffffff-no-rj` for `576-c-k-…`.
+fn strip_digits(value: &str) -> Option<&str> {
+    let digits = value.find(|c: char| !c.is_ascii_digit()).unwrap_or(value.len());
+    (digits > 0).then(|| &value[digits..])
 }
 
 fn video_id(renderer: &Value) -> Option<String> {
@@ -168,12 +197,15 @@ pub fn parse_search(body: &Value) -> Vec<SearchItem> {
     shelf_items(body).into_iter().filter_map(item_of).collect()
 }
 
-/// Home feed: every carousel shelf in render order. Shelves with no usable item are
-/// dropped, since the UI would render an empty row.
-pub fn parse_home(body: &Value) -> Vec<FeedShelf> {
+/// Home feed page: every carousel shelf in render order plus the next-page token.
+/// Shelves with no usable item are dropped, since the UI would render an empty row.
+///
+/// The same shape covers the first page (`sectionListRenderer`) and every continuation
+/// (`continuationContents.sectionListContinuation`), so one parser serves both.
+pub fn parse_home(body: &Value) -> HomeFeed {
     let mut carousels = Vec::new();
     collect_named(body, "musicCarouselShelfRenderer", &mut carousels);
-    carousels
+    let shelves: Vec<FeedShelf> = carousels
         .into_iter()
         .filter_map(|carousel| {
             let title = nav(carousel, &["header", "musicCarouselShelfBasicHeaderRenderer", "title"])
@@ -187,7 +219,27 @@ pub fn parse_home(body: &Value) -> Vec<FeedShelf> {
             }
             Some(FeedShelf { title, items })
         })
-        .collect()
+        .collect();
+    HomeFeed { shelves, continuation: next_continuation(body) }
+}
+
+/// Token for the next home page: `sectionListRenderer`/`sectionListContinuation`
+/// continuations, else any continuation item appended to the end of the list.
+fn next_continuation(body: &Value) -> Option<String> {
+    let mut tokens = Vec::new();
+    collect_named(body, "nextContinuationData", &mut tokens);
+    tokens
+        .iter()
+        .find_map(|data| nav(data, &["continuation"]).and_then(Value::as_str))
+        .map(str::to_string)
+        .or_else(|| {
+            let mut commands = Vec::new();
+            collect_named(body, "continuationCommand", &mut commands);
+            commands
+                .iter()
+                .find_map(|command| nav(command, &["token"]).and_then(Value::as_str))
+                .map(str::to_string)
+        })
 }
 
 /// Album page: header (name/artist/year/cover) plus its tracks.
@@ -400,7 +452,8 @@ mod tests {
                 ]}
             }}}]}}
         });
-        let shelves = parse_home(&body);
+        let feed = parse_home(&body);
+        let shelves = &feed.shelves;
         assert_eq!(shelves.len(), 1);
         assert_eq!(shelves[0].title, "Quick picks");
         assert_eq!(shelves[0].items.len(), 3);
@@ -411,6 +464,43 @@ mod tests {
         assert_eq!(shelves[0].items[1].thumbnail.as_deref(), Some("row-big"));
         assert_eq!(shelves[0].items[2].title, "Song C");
         assert_eq!(shelves[0].items[2].video_id.as_deref(), Some("v3"));
+    }
+
+    #[test]
+    fn thumbnails_are_requested_at_high_resolution() {
+        assert_eq!(
+            upgrade_thumbnail("https://yt3.ggpht.com/abc=s576"),
+            "https://yt3.ggpht.com/abc=s1600"
+        );
+        // Size plus crop suffix: only the number is rewritten.
+        assert_eq!(
+            upgrade_thumbnail("https://yt3.ggpht.com/abc=s192-c-k-c0x00ffffff-no-rj"),
+            "https://yt3.ggpht.com/abc=s1600-c-k-c0x00ffffff-no-rj"
+        );
+        assert_eq!(
+            upgrade_thumbnail("https://yt3.googleusercontent.com/abc=w120-h120-l90-rj"),
+            "https://yt3.googleusercontent.com/abc=w1600-h1600-l90-rj"
+        );
+        assert_eq!(upgrade_thumbnail("https://example.com/cover.jpg"), "https://example.com/cover.jpg");
+    }
+
+    #[test]
+    fn home_carries_the_next_page_token_from_either_shape() {
+        let first_page = json!({"contents": {"x": {"sectionListRenderer": {
+            "contents": [],
+            "continuations": [{"nextContinuationData": {"continuation": "TOKEN-1"}}]
+        }}}});
+        assert_eq!(parse_home(&first_page).continuation.as_deref(), Some("TOKEN-1"));
+
+        // Continuation pages republish the token under `continuationContents`.
+        let next_page = json!({"continuationContents": {"sectionListContinuation": {
+            "contents": [],
+            "continuations": [{"nextContinuationData": {"continuation": "TOKEN-2"}}]
+        }}});
+        assert_eq!(parse_home(&next_page).continuation.as_deref(), Some("TOKEN-2"));
+
+        let last_page = json!({"continuationContents": {"sectionListContinuation": {"contents": []}}});
+        assert_eq!(parse_home(&last_page).continuation, None);
     }
 
     #[test]

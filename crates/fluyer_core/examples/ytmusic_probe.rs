@@ -117,11 +117,22 @@ async fn run(args: Vec<String>) -> Result<(), String> {
             println!("{}", serde_json::to_string_pretty(&items).unwrap_or_default());
         }
         "home" => {
-            let shelves = music.home().await?;
-            for shelf in &shelves {
-                println!("== {} ({} items)", shelf.title, shelf.items.len());
-                for item in shelf.items.iter().take(5) {
-                    println!("  [{}] {} | {}", item.kind as u8, item.title, item.subtitle.clone().unwrap_or_default());
+            let pages: usize = flag(&args, "--pages").and_then(|v| v.parse().ok()).unwrap_or(1);
+            let mut feed = music.home().await?;
+            for page in 0..pages {
+                println!("---- page {} ({} shelves)", page + 1, feed.shelves.len());
+                for shelf in &feed.shelves {
+                    println!("== {} ({} items)", shelf.title, shelf.items.len());
+                    for item in shelf.items.iter().take(3) {
+                        println!("  [{}] {} | {}", item.kind as u8, item.title, item.subtitle.clone().unwrap_or_default());
+                    }
+                }
+                match feed.continuation.clone() {
+                    Some(token) => feed = music.home_more(&token).await?,
+                    None => {
+                        println!("---- feed ended");
+                        break;
+                    }
                 }
             }
         }

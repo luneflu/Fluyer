@@ -86,8 +86,14 @@ impl YouTubeMusic {
     }
 
     /// Home feed: carousel shelves for the anonymous (or signed-in) account.
-    pub async fn home(&self) -> Result<Vec<FeedShelf>, String> {
+    pub async fn home(&self) -> Result<HomeFeed, String> {
         let response = self.request("browse", json!({ "browseId": "FEmusic_home" })).await?;
+        Ok(parsers::parse_home(&response))
+    }
+
+    /// Next home page. Each page carries its own token until the feed ends.
+    pub async fn home_more(&self, continuation: &str) -> Result<HomeFeed, String> {
+        let response = self.request("browse", json!({ "continuation": continuation })).await?;
         Ok(parsers::parse_home(&response))
     }
 
@@ -268,6 +274,17 @@ impl YouTubeMusic {
                 "user": { "lockedSafetyMode": false },
             }),
         );
+        // Home continuation tokens are bound to the visitor that minted them; without it
+        // the server answers an empty page.
+        if let Some(visitor) = self.visitor.lock().expect("visitor").clone() {
+            if let Some(client) = map
+                .get_mut("context")
+                .and_then(|context| context.get_mut("client"))
+                .and_then(Value::as_object_mut)
+            {
+                client.insert("visitorData".to_string(), Value::String(visitor));
+            }
+        }
         body
     }
 }

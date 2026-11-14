@@ -12,6 +12,9 @@ final class YoutubeMusicState {
     /// Home feed shelves, loaded once per app run.
     private(set) var shelves: [FeedShelf] = []
     private(set) var isLoadingHome = false
+    private(set) var isLoadingMore = false
+    /// Next-page token; `nil` means the feed is exhausted.
+    private(set) var continuation: String?
     private(set) var error: String?
     /// Track currently handed to the player, so its row can show a speaker icon.
     private(set) var playingVideoId: String?
@@ -23,11 +26,27 @@ final class YoutubeMusicState {
         isLoadingHome = true
         error = nil
         do {
-            shelves = try await engine.providerHome()
+            let feed = try await engine.providerHome()
+            shelves = feed.shelves
+            continuation = feed.continuation
         } catch {
             self.error = "YouTube Music: \(error.localizedDescription)"
         }
         isLoadingHome = false
+    }
+
+    /// Appends the next home page; called when the last shelf scrolls into view.
+    func loadMore() async {
+        guard let engine, let token = continuation, !isLoadingMore, !isLoadingHome else { return }
+        isLoadingMore = true
+        defer { isLoadingMore = false }
+        do {
+            let feed = try await engine.providerHomeMore(continuation: token)
+            shelves += feed.shelves
+            continuation = feed.continuation
+        } catch {
+            self.error = "YouTube Music: \(error.localizedDescription)"
+        }
     }
 
     /// Feed items are flat, so the row knows everything the player needs.

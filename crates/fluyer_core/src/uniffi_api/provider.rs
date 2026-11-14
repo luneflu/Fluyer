@@ -1,5 +1,5 @@
 use super::{FluyerAppEngine, FluyerError};
-use crate::services::ytmusic::{AlbumDetail, DeviceLogin, FeedShelf, SearchItem, StreamInfo, TokenStatus};
+use crate::services::ytmusic::{AlbumDetail, DeviceLogin, HomeFeed, SearchItem, StreamInfo, TokenStatus};
 
 /// What the confirmation dialog needs: a new profile exists. The payload itself is
 /// opaque to the UI and only the core reads it.
@@ -21,8 +21,13 @@ impl FluyerAppEngine {
     }
 
     /// Home feed shelves, for the anonymous account until a login lands.
-    pub async fn provider_home(&self) -> Result<Vec<FeedShelf>, FluyerError> {
+    pub async fn provider_home(&self) -> Result<HomeFeed, FluyerError> {
         self.inner.provider_home().await.map_err(failed)
+    }
+
+    /// Next home page; each page hands back its own continuation until the feed ends.
+    pub async fn provider_home_more(&self, continuation: String) -> Result<HomeFeed, FluyerError> {
+        self.inner.provider_home_more(continuation).await.map_err(failed)
     }
 
     pub async fn provider_album(&self, browse_id: String) -> Result<AlbumDetail, FluyerError> {

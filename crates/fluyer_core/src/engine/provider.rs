@@ -5,7 +5,7 @@
 
 use crate::services::profile::Profile;
 use crate::services::ytmusic::{
-    AlbumDetail, DeviceLogin, FeedShelf, SearchItem, StreamInfo, TokenStatus, YouTubeMusic,
+    AlbumDetail, DeviceLogin, HomeFeed, SearchItem, StreamInfo, TokenStatus, YouTubeMusic,
 };
 use std::sync::Arc;
 
@@ -34,9 +34,14 @@ impl super::FluyerEngine {
         self.on_runtime(async move { provider.search(&query).await }).await
     }
 
-    pub async fn provider_home(&self) -> Result<Vec<FeedShelf>, String> {
+    pub async fn provider_home(&self) -> Result<HomeFeed, String> {
         let provider = self.provider();
         self.on_runtime(async move { provider.home().await }).await
+    }
+
+    pub async fn provider_home_more(&self, continuation: String) -> Result<HomeFeed, String> {
+        let provider = self.provider();
+        self.on_runtime(async move { provider.home_more(&continuation).await }).await
     }
 
     pub async fn provider_album(&self, browse_id: String) -> Result<AlbumDetail, String> {
@@ -104,9 +109,14 @@ impl super::FluyerEngine {
         self.runtime.block_on(provider.search(&query))
     }
 
-    pub fn provider_home_blocking(&self) -> Result<Vec<FeedShelf>, String> {
+    pub fn provider_home_blocking(&self) -> Result<HomeFeed, String> {
         let provider = self.provider();
         self.runtime.block_on(provider.home())
+    }
+
+    pub fn provider_home_more_blocking(&self, continuation: String) -> Result<HomeFeed, String> {
+        let provider = self.provider();
+        self.runtime.block_on(provider.home_more(&continuation))
     }
 
     pub fn provider_album_blocking(&self, browse_id: String) -> Result<AlbumDetail, String> {

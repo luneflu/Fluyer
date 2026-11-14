@@ -27,6 +27,13 @@ struct YoutubeMusicView: View {
                             Task { await youtube.play(item) }
                         }
                     }
+                    // Sentinel: scrolling it into view pulls the next page.
+                    if youtube.continuation != nil {
+                        ProgressView()
+                            .controlSize(.small)
+                            .frame(maxWidth: .infinity)
+                            .task { await youtube.loadMore() }
+                    }
                 }
                 .padding(.vertical, Layout.YoutubeMusic.shelfVerticalPadding)
             }

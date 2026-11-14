@@ -681,7 +681,12 @@ public protocol FluyerAppEngineProtocol : AnyObject {
     /**
      * Home feed shelves, for the anonymous account until a login lands.
      */
-    func providerHome() async throws  -> [FeedShelf]
+    func providerHome() async throws  -> HomeFeed
+    
+    /**
+     * Next home page; each page hands back its own continuation until the feed ends.
+     */
+    func providerHomeMore(continuation: String) async throws  -> HomeFeed
     
     func providerIsLoggedIn()  -> Bool
     
@@ -1148,7 +1153,7 @@ open func providerDismissProfile() -> Bool {
     /**
      * Home feed shelves, for the anonymous account until a login lands.
      */
-open func providerHome()async throws  -> [FeedShelf] {
+open func providerHome()async throws  -> HomeFeed {
     return
         try  await uniffiRustCallAsync(
             rustFutureFunc: {
@@ -1160,7 +1165,27 @@ open func providerHome()async throws  -> [FeedShelf] {
             pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
             completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
             freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
-            liftFunc: FfiConverterSequenceTypeFeedShelf.lift,
+            liftFunc: FfiConverterTypeHomeFeed.lift,
+            errorHandler: FfiConverterTypeFluyerError.lift
+        )
+}
+    
+    /**
+     * Next home page; each page hands back its own continuation until the feed ends.
+     */
+open func providerHomeMore(continuation: String)async throws  -> HomeFeed {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_provider_home_more(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(continuation)
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeHomeFeed.lift,
             errorHandler: FfiConverterTypeFluyerError.lift
         )
 }
@@ -2053,6 +2078,75 @@ public func FfiConverterTypeFeedShelf_lift(_ buf: RustBuffer) throws -> FeedShel
 #endif
 public func FfiConverterTypeFeedShelf_lower(_ value: FeedShelf) -> RustBuffer {
     return FfiConverterTypeFeedShelf.lower(value)
+}
+
+
+/**
+ * One page of the home feed: shelves plus the token for the next page.
+ */
+public struct HomeFeed {
+    public var shelves: [FeedShelf]
+    public var continuation: String?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(shelves: [FeedShelf], continuation: String?) {
+        self.shelves = shelves
+        self.continuation = continuation
+    }
+}
+
+
+
+extension HomeFeed: Equatable, Hashable {
+    public static func ==(lhs: HomeFeed, rhs: HomeFeed) -> Bool {
+        if lhs.shelves != rhs.shelves {
+            return false
+        }
+        if lhs.continuation != rhs.continuation {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(shelves)
+        hasher.combine(continuation)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeHomeFeed: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> HomeFeed {
+        return
+            try HomeFeed(
+                shelves: FfiConverterSequenceTypeFeedShelf.read(from: &buf), 
+                continuation: FfiConverterOptionString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: HomeFeed, into buf: inout [UInt8]) {
+        FfiConverterSequenceTypeFeedShelf.write(value.shelves, into: &buf)
+        FfiConverterOptionString.write(value.continuation, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeHomeFeed_lift(_ buf: RustBuffer) throws -> HomeFeed {
+    return try FfiConverterTypeHomeFeed.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeHomeFeed_lower(_ value: HomeFeed) -> RustBuffer {
+    return FfiConverterTypeHomeFeed.lower(value)
 }
 
 
@@ -4203,7 +4297,10 @@ private var initializationResult: InitializationResult = {
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_dismiss_profile() != 62664) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_home() != 37606) {
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_home() != 41273) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_home_more() != 5136) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_is_logged_in() != 49001) {

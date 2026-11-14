@@ -21,6 +21,13 @@ pub struct SearchItem {
     pub thumbnail: Option<String>,
 }
 
+/// One page of the home feed: shelves plus the token for the next page.
+#[derive(uniffi::Record, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct HomeFeed {
+    pub shelves: Vec<FeedShelf>,
+    pub continuation: Option<String>,
+}
+
 /// One horizontally scrolling row of the home feed.
 #[derive(uniffi::Record, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FeedShelf {

@@ -380,3 +380,19 @@ Implemented:
 - Probe: `--seek <seconds>` (calls `player_seek` mid-play) and `--thumbnail <url>`.
 Verified: probe `play` → `BASS_StreamCreateURL` on `http://127.0.0.1:60020/ju5cgtOJDuE`, bar advances 770→3770 ms of 247523 (no local `.m4a` written by the play path); `--seek 90` mid-play → bar jumps to 91460 ms and keeps advancing; `cargo test` 58 lib + 2 integration; `swift build`. Not verified: app click-through, expired-URL mid-track behaviour (needs refresh logic), Windows/Linux/Android.
 Known leftovers: stale `<cache>/ytmusic/*.m4a` files from the download era are still on disk (no cleanup yet).
+
+### Home feed paging (recommendations beyond the first two shelves)
+Status: Implemented (uncommitted; learner commits). Learner supplied `music.youtube.com.har` and said "still missing home page recommendations".
+Cause found in the HAR: home is `FEmusic_home` (SSR first page) plus `browse` **continuation** pages, each adding ~3 shelves. Our anonymous `home` call also returns a continuation token, but the next page came back with empty `contents`. Reproduced outside the app: the same token works when the request's `context.client.visitorData` matches the visitor that minted it (header `X-Goog-Visitor-Id` is not needed). Our envelope carried no `visitorData`, so the server answered an empty page — that, not the client version, was the missing piece (`WEB_REMIX` 1.20241127 and 1.20261110 both return the same 2 first-page shelves).
+Implemented:
+- `services/ytmusic/mod.rs`: `envelope` now injects the cached `visitorData` into `context.client`.
+- `HomeFeed { shelves, continuation }`; `parse_home` returns it and reads the token from `nextContinuationData` or `continuationCommand` (works for `sectionListRenderer` and `continuationContents.sectionListContinuation`); `YouTubeMusic::home_more(continuation)` posts `{continuation}`.
+- Engine `provider_home_more` (+blocking), UniFFI export, Swift bindings regenerated; probe `home --pages N`.
+- macOS: `YoutubeMusicState.continuation` + `loadMore()` (appends, guards re-entry); `YoutubeMusicView` keeps a `ProgressView` sentinel whose `.task` pulls the next page.
+Verified: probe `--region ID --pages 3 home` → page 1 (2 shelves), page 2 (3: Today's Indonesian Hits, Rain + Feels 🌧️🎶, Trending songs for you), page 3 (3: Today's International hits, New releases, Today's Dangdut); `cargo test` 59 lib + 2 integration; `swift build`, `swift test` 65. Not verified: in-app scroll-through (app was not frontmost for screenshots).
+
+### Higher-resolution provider thumbnails
+Status: Implemented (uncommitted; learner commits). Learner: cover art used a low-resolution image.
+Cause: `best_thumbnail` took the largest URL the API offers (usually `=s576`, sometimes `=w120-h120-l90-rj` for feed cards), which a 340pt card and the now-playing cover upscale.
+Fix: `upgrade_thumbnail` rewrites only the size part of the ggpht URL to `=s1600` / `=w1600-h1600`, keeping the crop/rounding suffix; applied to every parsed thumbnail, so the stream cover download (`cache_remote_cover`) also gets the large bytes.
+Verified: parsed home JSON now yields `=w1600-h1600-l90-rj`; that URL returns HTTP 200, 282 827 bytes, 1425×1425 (vs 120×120 before); `=s1600` returns 1000×1000. `cargo test` 60 lib + 2 integration (new thumbnail-upgrade test).
