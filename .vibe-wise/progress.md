@@ -276,3 +276,95 @@ Tests moved with the logic: file/JSON/normalization coverage is now Rust (`servi
 Verified: `cargo test -p fluyer_core` 31 + 2 integration pass; `swift build` + `swift test` 65 pass; `gradlew compileDebugKotlin` + `testDebugUnitTest` 18 pass; Swift/Kotlin bindings regenerated; `nm` shows both `fluyer_settings_*` exports.
 Not verified: `dotnet build`/`dotnet test` (this machine's dotnet is broken: `[/usr/local/share/dotnet/host/fxr] does not contain any version-numbered child folders`); Linux crate cannot be built on macOS (no GTK dev, so the Rust-core dependency is compiled there only).
 Note: `cargo test` needs an absolute `DYLD_LIBRARY_PATH=$PWD/libs/macos` — a relative one resolves against the crate dir and the test binary silently fails to load BASS.
+
+## YouTube Music provider (core) + signed profile updates
+Status: Implemented (core + both FFI layers). No UI wired yet.
+Requirement (learner): browse music/albums/lyrics, pass streaming onward; cookie/OAuth auth via external browser (device code first); auto update of the unofficial API "with confirmation"; providers stay separate modules, sharing the profile fetcher; secrets in platform keystore; store builds skipped.
+Learner decisions: everything in Rust (parsers too, not JS); confirmation prompt before a profile update is applied; separate provider modules; shared profile/secret plumbing.
+Implemented:
+- `services/profile.rs`: `Profile` (version, clientVersion, apiKey, endpoints, authClientId/Secret), bundled placeholder via `include_str!`, cached file wins on restart, `check()` downloads + ed25519-verifies (`.sig` asset) and only parks it as pending, `apply()`/`dismiss()` (dismissed version not offered again), source URL from `FLUYER_PROFILE_URL` env (no baked release URL yet), `PROFILE_PUBKEY_HEX` empty so an unkeyed build applies nothing.
+- `services/secrets.rs`: `SecretStore` trait; `Secrets` = keyring (macOS/Windows/Linux via target-gated deps) then `EncryptedFile` (HKDF(machine id) -> AES-256-GCM; Android/no-machine-id uses a random `secrets.key` file); `Memory` for tests.
+- `services/ytmusic/`: `mod.rs` (WEB_REMIX envelope from the profile, search/album/lyrics/stream_formats), `parsers.rs` (tolerant `nav`/`text` walkers, search/album/lyrics/streaming), `models.rs` (records), `auth.rs` (device code begin/poll, refresh, token in secret store).
+- Engine: `engine/provider.rs` (`*_blocking` calls, provider cached per applied profile version, check/apply/dismiss). FFI: `uniffi_api/provider.rs` (async + `ProfileUpdate` confirm record), `c_api/provider.rs` (sync JSON, `fluyer_provider_*`).
+Tests: core 51 lib + 2 integration pass (parsers, profile signature/apply/dismiss, secrets round-trip/no-plaintext, token parsing, envelope/endpoint override).
+Verified: `cargo test -p fluyer_core`; `swift build` + `swift test` 65; `gradlew compileDebugKotlin` + `testDebugUnitTest` 18; Swift/Kotlin bindings regenerated.
+Not verified: no live network call was made, fixtures are hand-written samples (not captured responses), no UI, cipher solving not implemented (`signatureCipher` passed through), Windows build untestable on this machine.
+
+### Provider probing (no UI, before Swift work)
+Tool: `crates/fluyer_core/examples/ytmusic_probe.rs` — runs `services::ytmusic` directly (no engine, no BASS, no DB).
+- `--profile <file>` needs a real profile payload (`version>0`, `clientVersion`, `apiKey`), e.g. `/tmp/ytm-profile.json`.
+- Live: `search`, `album`, `lyrics`, `stream`, `login` (device code + poll). Offline: `parse <saved-response.json> search|album|lyrics|stream`.
+Live results (2026-11-13, WEB_REMIX clientVersion `1.20241127.01.00`, ytmusicapi's public api key):
+- `search` OK: real rows (album + songs) with browseId/videoId/thumbnails.
+- `album` OK: header name/artist/year/cover, track list with durations.
+- `lyrics` OK on a track that has lyrics; the first test track genuinely had none (browse returned `messageRenderer: "Lyrics not available"`).
+- `stream` initially failed (`WEB_REMIX` → UNPLAYABLE, `ANDROID_MUSIC` → LOGIN_REQUIRED). Cause was the client, not a PO-token wall: the VISIONOS recipe (ytm-rs) works, and the missing piece was `visitorData` + `www.youtube.com` + the client headers. Now implemented and verified end-to-end.
+Tested: URL builder double slash bug found by the live probe (`/v1//search` → 404), fixed, unit test added (`url_has_exactly_one_separator_and_carries_the_key`).
+
+### Streaming via VISIONOS + QuickJS n/sig solver
+Status: Implemented (core). Verified live.
+Learner: "update the Rust core. You can add QuickJS".
+Design (learned from `grapedjuice/ytm-rs`, GPL-3 → approach only, no code copied):
+- `player` goes to `www.youtube.com/youtubei/v1/player` with client `VISIONOS` 1.02, `X-YouTube-Client-Name: 101`, `X-Goog-Visitor-Id`, `Origin`. Returns plain `url`s, no PO token. `visitorData` is captured from any earlier response (`responseContext.visitorData`), else fetched with a `FEmusic_home` browse.
+- `services/ytmusic/cipher.rs`: yt-dlp **EJS 0.8.0** solver vendored as `assets/ejs/jsc.min.js` (Unlicense; bundles meriyah ISC + astring MIT; rebuilt with esbuild), run in `rquickjs` 0.14. Player is preprocessed once per player id (`jsc({type:"player"…})`), cached at `<data dir>/ejs/<id>.js` + `.sts`; each solve re-extracts functions from the cached preprocessed player (`jsc({type:"preprocessed"…})`). Worker thread owns the runtime (QuickJS is not `Send`), interrupt watchdog 60 s, exits after 20 s idle to return ~20 MB. Solver failure only costs speed (`n` = throttle), never playback.
+- `stream_formats` now rejects non-OK `playabilityStatus` with the reason, solves `n`/`sig` on the response (best effort), then parses.
+- Probe gained `player` (prepare solver, prints id/sts) and `solve <n>` commands.
+Verified live: `player d65a3158 signatureTimestamp 20769` in 5.2 s cold (cached after); `solve AbCdEfGhIjKlMn → SQKzz0hUiPk` (identical to node/esbuild run); `stream` → 23 formats, 5 audio (itag 140 aac 131k, 251 opus 134k), no `n` in VISIONOS URLs; `GET itag=140` → 206, `audio/mp4`, 200 000 bytes.
+Cross-compile: `rquickjs` needs `features=["bindgen"]` on Android (no prebuilt aarch64 bindings) and `BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android` pointing at the NDK sysroot/clang includes; `scripts/build_android.sh` now sets it.
+Verified: cargo test 56 lib + 2 integration; `swift build` + `swift test` 65; `gradlew compileDebugKotlin` + `testDebugUnitTest` 18; `build_android.sh` cross-build OK.
+Not verified: playback through BASS (`BASS_StreamCreateURL` not bound yet — URLs fetched with curl only), solve timing in-process on a warm runtime (only cold CLI runs measured), Windows.
+
+### macOS YouTube Music tab (anonymous)
+Status: Implemented. Learner: "implement the whole app. Create a new tab button at the left top which toggles between local and Youtube Music. Anonymous for now".
+Core:
+- `provider_play_track`: resolve formats, pick AAC over Opus (`pick_audio_url`), download once into `<cache>/ytmusic/<videoId>.m4a`, then hand BASS a local path. BASS's own URL streaming has **no TLS** on macOS (verified: local `http://127.0.0.1` stream plays, googlevideo `https://` hangs), so the core fetches over rustls. The CDN truncates a plain GET at ~1 MB; the request sends `Range: bytes=0-` (206, full file).
+- UniFFI `async` methods now hop onto the engine tokio runtime (`FluyerEngine::on_runtime`): UniFFI polls exported async methods on its own executor, so calling `reqwest` directly panicked with "there is no reactor running". Verified with `futures::executor::block_on(engine.provider_search(..))` → 30 results, no panic.
+- `assets/profile.json` now ships usable anonymous constants (version 1, WEB_REMIX client version, public api key) instead of the version-0 placeholder, so the tab works before any profile update lands.
+UI (macOS): `Screens/Home/YoutubeMusic/{YoutubeMusicState,YoutubeMusicView}.swift` (debounced search, rows with thumbnails, click → `providerPlayTrack`), `BrowseSource` enum + `AppState.youtube`, segmented toggle in the toolbar's leading slot, local-only toolbar controls hidden in YouTube mode, `Layout.YoutubeMusic` constants.
+Verified: cargo test 57 lib + 2 integration; swift build + swift test 65; build_android.sh; `swift run` launches, screenshot shows the new leading toggle; core path `play ju5cgtOJDuE` → BASS position advanced 0→6.3 s / 247 s.
+Not verified: clicking the toggle / playing from the app UI (no accessibility permission for UI automation here), Windows/Linux/Android UI (core only), queue/album/artist pages in the tab.
+
+## Play view: fixed back button + real 50% lyrics inset
+Status: Implemented.
+Requirement (learner): lyrics top/bottom padding is not really half the height, and the back button sits inside the controls container instead of a fixed top-left.
+Cause found: `PlayView.body` put `backButton` inside `ZStack(alignment: .topLeading)`, and the `ZStack` shrink-wraps the cover column (`0.5·width` + 20 trailing), so the outer `.frame(width:height:)` centred that box — chevron measured at ≈376pt from the window edge instead of 12. `Layout.Lyrics.verticalInset` was a fixed 260, enough to centre only when the viewport is ≈520pt tall.
+Learner reasoning: CSS `position: fixed` has a SwiftUI equivalent (anchor to a full-window container, not the size-deciding one); the lyric inset should come from the container size because it adapts.
+Implemented: `backButton` moved to `.overlay(alignment: .topLeading)` on the full-size frame in `PlayView.swift`; `LyricsView` wrapped in `GeometryReader` and `.padding(.vertical, geo.size.height / 2)` replaces `Layout.Lyrics.verticalInset`, which is deleted. Middle lines were never affected — inset only decides whether the first/last line can reach `anchor: .center`.
+Verified: `swift build` OK; screenshot with the play view forced open shows the chevron at ≈26pt from the window's left edge. Lyric centring not visually checked (no track with lyrics loaded).
+Note: commit `e5c4a0de` also carries the learner's uncommitted `Layout.PlayControls` tweaks (paddings, spacings).
+
+## Shared cover card + macOS YouTube Music home feed
+Status: Implemented.
+Requirement (learner): "view the home feed and also auto algorithm by youtube" — then, on layout, "generalise it since it's basically just a card of cover art, title, and artist… reuse the item but separate the container to make it consistent. We can do macOS for now".
+Facts found: `AlbumCarouselView` (macOS) is a horizontal `LazyHStack` of `AlbumCard` sized by `AlbumMetrics`; `MusicGridView.xaml` (Windows) is a vertical `ListView` of track rows, so only the carousel matches a feed shelf. `AlbumCard`'s `cover` + `labels` bodies were index-agnostic — reusable; its thumbnail plumbing (`CoverState.album(index:px:)`) is not.
+Learner decision: one shared cover card component, containers stay separate per surface. Autoplay/radio (`RDAMVM` continuation paging) deliberately out of scope until the queue-ownership decision is made.
+Implemented:
+- Core: `FeedShelf { title, items: [SearchItem] }`; `parse_search`'s row mapping factored to `item_of`; `parse_home` collects every `musicCarouselShelfRenderer` (drops empty shelves) and now reads both `musicTwoRowItemRenderer` (feed cards) and `musicResponsiveListItemRenderer` (song rows) in render order; `YouTubeMusic::home()` → `browse {browseId: FEmusic_home}`; `provider_home` (async via `on_runtime`) + blocking; UniFFI export; probe `home` command.
+- Bug found live: feed cards carry their image under `thumbnailRenderer.musicThumbnailRenderer.thumbnail.thumbnails`, not `thumbnail.*` — the second shelf rendered placeholders until `best_thumbnail` learned that path.
+- macOS: `Shared/Views/CoverCard.swift` (cover + labels + selection/hover border + optional context actions, image source injected as `cached`/`load` closures); `AlbumCard` is now a thin mapping; `YoutubeMusicState.shelves` + `loadHome()` (fetched once); `YoutubeShelfView` (title + `LazyHStack` of `CoverCard` via `AlbumMetrics`) with an `NSCache` remote-cover store; `YoutubeMusicView` shows shelves while the query is empty.
+Verified: `cargo test -p fluyer_core` 58 lib + 2 integration; probe `home` live → 2 shelves / 30 items (`Quick picks` 20 songs, `Trending community playlists` 10); `swift build` + `swift test` 65; screenshot with the tab forced open shows both shelves with covers and labels.
+Not verified: clicking a card to play from the UI (no accessibility permission), album/artist/playlist drill-down (nonexistent), Windows/Linux/Android.
+
+### Follow-up: shelf renderer follows the item kind
+Status: Implemented. Learner: "detect whether it's playlist or track. Playlist use album card and track use music card."
+`YoutubeShelfView.isTrackShelf` (`items.first?.kind == .track`) picks the renderer: tracks → vertical `YoutubeTrackRow` rows, playlists/albums → the `CoverCard` carousel. The search row was promoted out of `YoutubeMusicView` into `Screens/Home/YoutubeMusic/YoutubeTrackRow.swift` (now shared by search results and track shelves), along with `SearchItemKind.label`.
+Verified: `swift build`, `swift test` 65; screenshot of the tab shows "Quick picks" as rows and the playlist shelf as cards. Not verified: clicking rows/cards.
+
+### Follow-up: track grid styling, no search field
+Status: Implemented (uncommitted; learner commits).
+- `YoutubeTrackRow` restyled to mirror `TrackCard` (`Layout.TrackRow` metrics: 44 cover, `coverToText`/`titleToSubtitle`/`iconToTitle`, `verticalPadding` 6, `.tint` title + speaker icon while playing), no hover chrome, no fixed row height; trailing label only for items with no video id.
+- Track shelves use the library's adaptive `LazyVGrid` (`Layout.MusicGrid` minColumnWidth/columnSpacing/rowSpacing/horizontalPadding).
+- Container spacing: `HomeView` no longer pads `YoutubeMusicView` (removed the doubled 16pt); each piece pads itself like its library counterpart (grid 16, carousel edge 16, shelf title 16).
+- Search UI removed from the tab: `YoutubeMusicState` keeps `shelves`/`loadHome`/`play`/`playingVideoId`/`error`; `query`, debounce, `items`, `isSearching`, `search()` deleted. Unused `Layout.YoutubeMusic` field/layout constants deleted.
+Pending decision: sort/order for the feed (learner asked for ideas; no choice yet).
+Verified: `swift build`, `swift test` 65. Not visually verified (app not frontmost for screenshots).
+
+### Follow-up: provider cover art + real artist credit
+Status: Implemented (uncommitted; learner commits).
+Bug: remote tracks are not in the library, so `artwork_resolve_track` found no embedded cover and fell through to MusicBrainz, and the queue had no cover at all (`QueueRow.libraryIndex` looks the track up by path). Artist came from `subtitle.split("•")[1]`, which on feed rows is `"3.6B plays"`.
+Learner reasoning: none recorded — direct fix request.
+Implemented:
+- Core: `provider_play_track(_blocking)` takes `thumbnail`, downloads it and writes it into the artwork disk cache under the exact key `artwork_resolve_track` looks up (artist, album, title, audio path) via `cache_remote_cover`, and stores the URL in `MusicMetadata.image`; new `artwork_queue_thumbnail(index, max)` resolves a queue position's cover through `player.queue_get_by_index` (works without a library index); UniFFI `artwork_load_queue_thumbnail`.
+- macOS: `ThumbnailKey.queue(px:path:)` + `CoverState.queue(position:px:path:)`; `QueueRow.loadCover` falls back to it when the track is not in the library; `YoutubeMusicState.credit(_:)` drops `plays`/`views` segments before taking artist/album; `play` passes `item.thumbnail`.
+- Probe: `--thumbnail <url>` and a `queue cover: N bytes` line.
+Verified: probe play with a real cover URL → cache file at `covers/track/Probe Artist - Probe Track.jpg`, `queue cover: 2021 bytes` (a real JPEG, no MusicBrainz call); `cargo test` 58 lib + 2 integration; `swift build`, `swift test` 65. Not verified in the running app (click-through).

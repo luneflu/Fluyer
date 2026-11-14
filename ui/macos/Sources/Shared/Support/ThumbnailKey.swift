@@ -13,6 +13,11 @@ enum ThumbnailKey {
         "album-\(index)@\(px)"
     }
 
+    /// Queue covers are keyed by path (queue positions shift on reorder), not by index.
+    static func queue(px: Int, path: String) -> String {
+        "queue-\(px)-\(path)"
+    }
+
     /// Current artwork is keyed by the playing track's path, not by its index,
     /// so a library rescan that renumbers tracks cannot serve the wrong cover.
     static func current(side: Int, path: String) -> String {

@@ -1028,6 +1028,10 @@ impl MusicPlayer {
             )
         };
 
+        // Provider tracks carry their resolved stream URL in `path`; everything below
+        // (mixer, sync, bar) is identical, so only stream creation branches.
+        let is_remote = music.path.starts_with("http://") || music.path.starts_with("https://");
+
         #[cfg(not(target_os = "windows"))]
         let (flags, path_ptr) = {
             let c_path = match CString::new(music.path.as_str()) {
@@ -1039,7 +1043,8 @@ impl MusicPlayer {
             };
             crate::flog!(
                 "Player",
-                "Calling BASS_StreamCreateFile with path: '{}'",
+                "Calling {} with path: '{}'",
+                if is_remote { "BASS_StreamCreateURL" } else { "BASS_StreamCreateFile" },
                 music.path
             );
             (
@@ -1048,11 +1053,18 @@ impl MusicPlayer {
             )
         };
 
-        let stream = unsafe { BASS_StreamCreateFile(0, path_ptr, 0, 0, flags) };
-
-        #[cfg(not(target_os = "windows"))]
-        unsafe {
-            drop(CString::from_raw(path_ptr as *mut std::ffi::c_char));
+        let stream = unsafe {
+            if is_remote {
+                BASS_StreamCreateURL(
+                    path_ptr as *const std::ffi::c_char,
+                    0,
+                    flags,
+                    std::ptr::null_mut(),
+                    std::ptr::null_mut(),
+                )
+            } else {
+                BASS_StreamCreateFile(0, path_ptr, 0, 0, flags)
+            }
         };
 
         if stream == 0 {

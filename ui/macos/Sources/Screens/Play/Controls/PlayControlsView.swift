@@ -24,6 +24,7 @@ struct PlayControlsView: View {
                 .padding(.top, Layout.PlayControls.transportTopPadding)
 
             volumeRow
+                .padding(.top, Layout.PlayControls.volumeTopPadding)
         }
         .fixedSize(horizontal: false, vertical: true)
     }

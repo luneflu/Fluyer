@@ -2,6 +2,20 @@ import Foundation
 import FluyerCore
 import Observation
 
+/// Which catalogue the window is showing.
+enum BrowseSource: String, CaseIterable, Identifiable {
+    case local, youtubeMusic
+
+    var id: Self { self }
+
+    var label: String {
+        switch self {
+        case .local: "Library"
+        case .youtubeMusic: "YouTube Music"
+        }
+    }
+}
+
 /// Root of the app's observable state.
 ///
 /// Ownership is split by concern so no single type accumulates engine, library,
@@ -14,6 +28,7 @@ import Observation
 /// - `queue`     — play-queue snapshot for the queue sidebar
 /// - `settings`  — persisted user settings (folders, toggles, volume)
 /// - `covers`    — cover art for every view (the only image path to the engine)
+/// - `youtube`   — YouTube Music search + play (anonymous)
 ///
 /// This type owns the engine, translates `FluyerEvent`s into updates on those
 /// objects, and performs the cross-cutting full-library refresh that spans them.
@@ -27,6 +42,10 @@ final class AppState: FluyerEventListener {
     let queue: QueueState
     let settings: SettingsState
     let covers = CoverState()
+    let youtube = YoutubeMusicState()
+
+    /// Local library or the YouTube Music browser, picked in the toolbar.
+    var browseSource: BrowseSource = .local
 
     private(set) var engine: FluyerAppEngine?
 
@@ -59,6 +78,7 @@ final class AppState: FluyerEventListener {
         selection.engine = engine
         queue.engine = engine
         covers.engine = engine
+        youtube.engine = engine
         settings.engine = engine
         settings.load()
 

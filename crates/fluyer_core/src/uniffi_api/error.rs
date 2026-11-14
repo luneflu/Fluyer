@@ -3,12 +3,14 @@
 #[derive(Debug, uniffi::Error)]
 pub enum FluyerError {
     InitFailed { reason: String },
+    ProviderFailed { reason: String },
 }
 
 impl std::fmt::Display for FluyerError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             FluyerError::InitFailed { reason } => write!(f, "Initialization failed: {}", reason),
+            FluyerError::ProviderFailed { reason } => write!(f, "Provider request failed: {}", reason),
         }
     }
 }

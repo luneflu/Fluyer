@@ -121,24 +121,23 @@ enum Layout {
     /// Control card under the cover on the play view.
     enum PlayControls {
         static let infoTopPadding: CGFloat = 4
-        static let infoBottomPadding: CGFloat = 12
+        static let infoBottomPadding: CGFloat = 8
         static let seekHeight: CGFloat = 8
         static let transportTopPadding: CGFloat = 4
-        static let infoSpacing: CGFloat = 10
+        static let infoSpacing: CGFloat = 0
         static let timeLabelWidth: CGFloat = 48
-        static let transportSpacing: CGFloat = 8
+        static let transportSpacing: CGFloat = 12
+        static let volumeTopPadding: CGFloat = 8
         static let volumeSpacing: CGFloat = 12
         static let volumeIconWidth: CGFloat = 20
         static let volumeSliderHeight: CGFloat = 14
         /// Hit area around each icon: icon size + this.
-        static let iconButtonPadding: CGFloat = 18
+        static let iconButtonPadding: CGFloat = 8
     }
 
     /// Lyrics column on the play view.
     enum Lyrics {
         static let lineSpacing: CGFloat = 28
-        /// Lets the first and last line scroll to the centre.
-        static let verticalInset: CGFloat = 260
         static let horizontalPadding: CGFloat = 28
         static let lineVerticalPadding: CGFloat = 20
         static let noteWidth: CGFloat = 32
@@ -150,6 +149,14 @@ enum Layout {
         static let horizontalPadding: CGFloat = 16
         static let verticalPadding: CGFloat = 10
         static let bottomOffset: CGFloat = 80
+    }
+
+    /// YouTube Music browser (search field + result rows).
+    enum YoutubeMusic {
+        /// Home feed: gap between shelves and between a shelf title and its cards.
+        static let shelfSpacing: CGFloat = 24
+        static let shelfTitleSpacing: CGFloat = 10
+        static let shelfVerticalPadding: CGFloat = 8
     }
 
     /// Settings window.

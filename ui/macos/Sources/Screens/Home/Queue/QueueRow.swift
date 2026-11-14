@@ -112,7 +112,11 @@ struct QueueRow: View {
     }
 
     private func loadCover() async {
-        guard let index = libraryIndex else { return }
+        // Provider tracks are not in the library, so they have no index to key on.
+        guard let index = libraryIndex else {
+            cover = await covers.queue(UInt64(row), px: Self.pixels, path: track.path)
+            return
+        }
         if let hit = covers.cached(ThumbnailKey.track(index, px: Self.pixels)) {
             cover = hit
             return

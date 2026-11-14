@@ -30,6 +30,16 @@ Rule: **search the word you see in the app, land on the file.**
     an observable mirror only. Same reasoning applies to any future shared logic: pure
     data goes to Rust, anything needing a platform object (image, GPU handle, timer,
     window size) stays.
+13. YouTube Music provider lives in the core (`services/ytmusic`): browse, album,
+    lyrics, and playable stream URLs. Parsers are Rust. Rotating API data (client
+    version, key, endpoint paths, device-code client) is a **signed profile**
+    (`services/profile.rs`); a newer profile is downloaded, then applied only after the
+    user confirms.
+14. Playback uses the VISIONOS client at `www.youtube.com` (plain `url`s, no PO token,
+    needs `visitorData`). The player's `n`/`sig` transforms only exist as JS, so QuickJS
+    (`rquickjs`) runs yt-dlp's vendored EJS solver (`assets/ejs/`, Unlicense) over a
+    cached preprocessed player — no V8/Node/yt-dlp process. A solve failure costs speed,
+    not playback.
 
 ## Current problems (evidence)
 
@@ -329,8 +339,16 @@ Verified: `gradlew compileDebugKotlin` OK, `gradlew testDebugUnitTest` 18 pass
 | Events sent to the UI | `uniffi_api/events.rs` / `c_api/events.rs` |
 | Persisted settings (file, defaults, folder/volume rules) | `services/settings.rs`, shape in `view_models/settings.rs` |
 | A settings value a view binds to | `Shared/State/SettingsState.swift` (macOS mirror, no I/O) |
+| A YouTube Music request / parser | `services/ytmusic/` (`mod.rs` = envelope + calls, `parsers.rs` = JSON reads) |
+| Device-code login and token refresh | `services/ytmusic/auth.rs`; tokens in `services/secrets.rs` |
+| API constants that rotate (client version, key, endpoints, auth client) | profile update, not code: `services/profile.rs` + `assets/profile.json` |
+| Where provider tokens are stored | `services/secrets.rs` (OS keyring, else encrypted file) |
+| Manually probing the provider (no UI) | `cargo run -p fluyer_core --example ytmusic_probe -- --profile <file> search <q>` (also `album`, `lyrics`, `stream`, `player`, `solve <n>`, `login`, `parse <saved.json>`) |
+| Why a stream URL is slower / needs solving | `services/ytmusic/cipher.rs` (+ `assets/ejs/README.md` for rebuilding the solver) |
 | Any padding / spacing / size | `ui/macos/Sources/Shared/Theme/Layout.swift`, section named after the feature |
 | Cover loading (any view) | `Shared/State/CoverState.swift` |
+| YouTube Music tab (search field, result rows) | `ui/macos/Sources/Screens/Home/YoutubeMusic/` (`YoutubeMusicState.swift` = search/play, `YoutubeMusicView.swift` = rows) |
+| Library / YouTube Music switch | `HomeView.swift` toolbar (`BrowseSource` in `Shared/State/AppState.swift`) |
 | Queue panel look ("Now Playing") | `ui/macos/Sources/Screens/Home/Queue/QueueView.swift`, rows: `QueueRow.swift` |
 | Queue behavior | `Screens/Home/Queue/QueueState.swift` |
 | Song grid / one song row | `Screens/Home/MusicGrid/MusicGridView.swift` / `TrackCard.swift` |

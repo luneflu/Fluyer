@@ -596,6 +596,8 @@ public protocol FluyerAppEngineProtocol : AnyObject {
     
     func artworkLoadCurrentThumbnail(maxSize: UInt32) async  -> Data?
     
+    func artworkLoadQueueThumbnail(index: UInt64, maxSize: UInt32) async  -> Data?
+    
     func artworkLoadTrackThumbnail(index: UInt64, maxSize: UInt32) async  -> Data?
     
     /**
@@ -659,6 +661,49 @@ public protocol FluyerAppEngineProtocol : AnyObject {
     func playerShuffle() 
     
     func playerTogglePlay() 
+    
+    func providerAlbum(browseId: String) async throws  -> AlbumDetail
+    
+    func providerApplyProfile()  -> Bool
+    
+    func providerBeginLogin() async throws  -> DeviceLogin
+    
+    /**
+     * Returns a newer profile without applying it; the UI asks the user first.
+     */
+    func providerCheckProfile() async throws  -> ProfileUpdate?
+    
+    /**
+     * Remembers "not now": that version is not offered again.
+     */
+    func providerDismissProfile()  -> Bool
+    
+    /**
+     * Home feed shelves, for the anonymous account until a login lands.
+     */
+    func providerHome() async throws  -> [FeedShelf]
+    
+    func providerIsLoggedIn()  -> Bool
+    
+    func providerLogout() 
+    
+    func providerLyrics(videoId: String) async throws  -> String
+    
+    /**
+     * Plays a track by video id; the core resolves + caches the audio and feeds BASS.
+     */
+    func providerPlayTrack(videoId: String, title: String, artist: String, album: String, thumbnail: String?, durationMs: UInt64) async throws 
+    
+    func providerPollLogin(deviceCode: String) async throws  -> TokenStatus
+    
+    func providerProfileVersion()  -> UInt32
+    
+    func providerSearch(query: String) async throws  -> [SearchItem]
+    
+    /**
+     * Formats may still be throttle-protected; the core solves `n` before returning.
+     */
+    func providerStreamFormats(videoId: String) async throws  -> StreamInfo
     
     func queueClear() 
     
@@ -811,6 +856,24 @@ open func artworkLoadCurrentThumbnail(maxSize: UInt32)async  -> Data? {
                 uniffi_fluyer_core_fn_method_fluyerappengine_artwork_load_current_thumbnail(
                     self.uniffiClonePointer(),
                     FfiConverterUInt32.lower(maxSize)
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionData.lift,
+            errorHandler: nil
+            
+        )
+}
+    
+open func artworkLoadQueueThumbnail(index: UInt64, maxSize: UInt32)async  -> Data? {
+    return
+        try!  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_artwork_load_queue_thumbnail(
+                    self.uniffiClonePointer(),
+                    FfiConverterUInt64.lower(index),FfiConverterUInt32.lower(maxSize)
                 )
             },
             pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
@@ -1009,6 +1072,208 @@ open func playerTogglePlay() {try! rustCall() {
     uniffi_fluyer_core_fn_method_fluyerappengine_player_toggle_play(self.uniffiClonePointer(),$0
     )
 }
+}
+    
+open func providerAlbum(browseId: String)async throws  -> AlbumDetail {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_provider_album(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(browseId)
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeAlbumDetail.lift,
+            errorHandler: FfiConverterTypeFluyerError.lift
+        )
+}
+    
+open func providerApplyProfile() -> Bool {
+    return try!  FfiConverterBool.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_provider_apply_profile(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+open func providerBeginLogin()async throws  -> DeviceLogin {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_provider_begin_login(
+                    self.uniffiClonePointer()
+                    
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeDeviceLogin.lift,
+            errorHandler: FfiConverterTypeFluyerError.lift
+        )
+}
+    
+    /**
+     * Returns a newer profile without applying it; the UI asks the user first.
+     */
+open func providerCheckProfile()async throws  -> ProfileUpdate? {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_provider_check_profile(
+                    self.uniffiClonePointer()
+                    
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterOptionTypeProfileUpdate.lift,
+            errorHandler: FfiConverterTypeFluyerError.lift
+        )
+}
+    
+    /**
+     * Remembers "not now": that version is not offered again.
+     */
+open func providerDismissProfile() -> Bool {
+    return try!  FfiConverterBool.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_provider_dismiss_profile(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+    /**
+     * Home feed shelves, for the anonymous account until a login lands.
+     */
+open func providerHome()async throws  -> [FeedShelf] {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_provider_home(
+                    self.uniffiClonePointer()
+                    
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterSequenceTypeFeedShelf.lift,
+            errorHandler: FfiConverterTypeFluyerError.lift
+        )
+}
+    
+open func providerIsLoggedIn() -> Bool {
+    return try!  FfiConverterBool.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_provider_is_logged_in(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+open func providerLogout() {try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_provider_logout(self.uniffiClonePointer(),$0
+    )
+}
+}
+    
+open func providerLyrics(videoId: String)async throws  -> String {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_provider_lyrics(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(videoId)
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterString.lift,
+            errorHandler: FfiConverterTypeFluyerError.lift
+        )
+}
+    
+    /**
+     * Plays a track by video id; the core resolves + caches the audio and feeds BASS.
+     */
+open func providerPlayTrack(videoId: String, title: String, artist: String, album: String, thumbnail: String?, durationMs: UInt64)async throws  {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_provider_play_track(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(videoId),FfiConverterString.lower(title),FfiConverterString.lower(artist),FfiConverterString.lower(album),FfiConverterOptionString.lower(thumbnail),FfiConverterUInt64.lower(durationMs)
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_void,
+            completeFunc: ffi_fluyer_core_rust_future_complete_void,
+            freeFunc: ffi_fluyer_core_rust_future_free_void,
+            liftFunc: { $0 },
+            errorHandler: FfiConverterTypeFluyerError.lift
+        )
+}
+    
+open func providerPollLogin(deviceCode: String)async throws  -> TokenStatus {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_provider_poll_login(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(deviceCode)
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeTokenStatus.lift,
+            errorHandler: FfiConverterTypeFluyerError.lift
+        )
+}
+    
+open func providerProfileVersion() -> UInt32 {
+    return try!  FfiConverterUInt32.lift(try! rustCall() {
+    uniffi_fluyer_core_fn_method_fluyerappengine_provider_profile_version(self.uniffiClonePointer(),$0
+    )
+})
+}
+    
+open func providerSearch(query: String)async throws  -> [SearchItem] {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_provider_search(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(query)
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterSequenceTypeSearchItem.lift,
+            errorHandler: FfiConverterTypeFluyerError.lift
+        )
+}
+    
+    /**
+     * Formats may still be throttle-protected; the core solves `n` before returning.
+     */
+open func providerStreamFormats(videoId: String)async throws  -> StreamInfo {
+    return
+        try  await uniffiRustCallAsync(
+            rustFutureFunc: {
+                uniffi_fluyer_core_fn_method_fluyerappengine_provider_stream_formats(
+                    self.uniffiClonePointer(),
+                    FfiConverterString.lower(videoId)
+                )
+            },
+            pollFunc: ffi_fluyer_core_rust_future_poll_rust_buffer,
+            completeFunc: ffi_fluyer_core_rust_future_complete_rust_buffer,
+            freeFunc: ffi_fluyer_core_rust_future_free_rust_buffer,
+            liftFunc: FfiConverterTypeStreamInfo.lift,
+            errorHandler: FfiConverterTypeFluyerError.lift
+        )
 }
     
 open func queueClear() {try! rustCall() {
@@ -1220,6 +1485,104 @@ public func FfiConverterTypeAlbumCardViewModel_lower(_ value: AlbumCardViewModel
 }
 
 
+public struct AlbumDetail {
+    public var browseId: String
+    public var name: String
+    public var artist: String?
+    public var year: String?
+    public var thumbnail: String?
+    public var tracks: [TrackRef]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(browseId: String, name: String, artist: String?, year: String?, thumbnail: String?, tracks: [TrackRef]) {
+        self.browseId = browseId
+        self.name = name
+        self.artist = artist
+        self.year = year
+        self.thumbnail = thumbnail
+        self.tracks = tracks
+    }
+}
+
+
+
+extension AlbumDetail: Equatable, Hashable {
+    public static func ==(lhs: AlbumDetail, rhs: AlbumDetail) -> Bool {
+        if lhs.browseId != rhs.browseId {
+            return false
+        }
+        if lhs.name != rhs.name {
+            return false
+        }
+        if lhs.artist != rhs.artist {
+            return false
+        }
+        if lhs.year != rhs.year {
+            return false
+        }
+        if lhs.thumbnail != rhs.thumbnail {
+            return false
+        }
+        if lhs.tracks != rhs.tracks {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(browseId)
+        hasher.combine(name)
+        hasher.combine(artist)
+        hasher.combine(year)
+        hasher.combine(thumbnail)
+        hasher.combine(tracks)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAlbumDetail: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AlbumDetail {
+        return
+            try AlbumDetail(
+                browseId: FfiConverterString.read(from: &buf), 
+                name: FfiConverterString.read(from: &buf), 
+                artist: FfiConverterOptionString.read(from: &buf), 
+                year: FfiConverterOptionString.read(from: &buf), 
+                thumbnail: FfiConverterOptionString.read(from: &buf), 
+                tracks: FfiConverterSequenceTypeTrackRef.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AlbumDetail, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.browseId, into: &buf)
+        FfiConverterString.write(value.name, into: &buf)
+        FfiConverterOptionString.write(value.artist, into: &buf)
+        FfiConverterOptionString.write(value.year, into: &buf)
+        FfiConverterOptionString.write(value.thumbnail, into: &buf)
+        FfiConverterSequenceTypeTrackRef.write(value.tracks, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAlbumDetail_lift(_ buf: RustBuffer) throws -> AlbumDetail {
+    return try FfiConverterTypeAlbumDetail.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAlbumDetail_lower(_ value: AlbumDetail) -> RustBuffer {
+    return FfiConverterTypeAlbumDetail.lower(value)
+}
+
+
 public struct AlbumDetailViewModel {
     public var header: AlbumCardViewModel
     public var durationMs: UInt64
@@ -1307,6 +1670,72 @@ public func FfiConverterTypeAlbumDetailViewModel_lift(_ buf: RustBuffer) throws 
 #endif
 public func FfiConverterTypeAlbumDetailViewModel_lower(_ value: AlbumDetailViewModel) -> RustBuffer {
     return FfiConverterTypeAlbumDetailViewModel.lower(value)
+}
+
+
+public struct AlbumRef {
+    public var browseId: String
+    public var name: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(browseId: String, name: String) {
+        self.browseId = browseId
+        self.name = name
+    }
+}
+
+
+
+extension AlbumRef: Equatable, Hashable {
+    public static func ==(lhs: AlbumRef, rhs: AlbumRef) -> Bool {
+        if lhs.browseId != rhs.browseId {
+            return false
+        }
+        if lhs.name != rhs.name {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(browseId)
+        hasher.combine(name)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAlbumRef: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AlbumRef {
+        return
+            try AlbumRef(
+                browseId: FfiConverterString.read(from: &buf), 
+                name: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AlbumRef, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.browseId, into: &buf)
+        FfiConverterString.write(value.name, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAlbumRef_lift(_ buf: RustBuffer) throws -> AlbumRef {
+    return try FfiConverterTypeAlbumRef.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAlbumRef_lower(_ value: AlbumRef) -> RustBuffer {
+    return FfiConverterTypeAlbumRef.lower(value)
 }
 
 
@@ -1459,6 +1888,171 @@ public func FfiConverterTypeColorRgb_lift(_ buf: RustBuffer) throws -> ColorRgb 
 #endif
 public func FfiConverterTypeColorRgb_lower(_ value: ColorRgb) -> RustBuffer {
     return FfiConverterTypeColorRgb.lower(value)
+}
+
+
+public struct DeviceLogin {
+    /**
+     * Short code the user types on the verification page.
+     */
+    public var userCode: String
+    public var verificationUrl: String
+    public var deviceCode: String
+    public var intervalSeconds: UInt64
+    public var expiresInSeconds: UInt64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Short code the user types on the verification page.
+         */userCode: String, verificationUrl: String, deviceCode: String, intervalSeconds: UInt64, expiresInSeconds: UInt64) {
+        self.userCode = userCode
+        self.verificationUrl = verificationUrl
+        self.deviceCode = deviceCode
+        self.intervalSeconds = intervalSeconds
+        self.expiresInSeconds = expiresInSeconds
+    }
+}
+
+
+
+extension DeviceLogin: Equatable, Hashable {
+    public static func ==(lhs: DeviceLogin, rhs: DeviceLogin) -> Bool {
+        if lhs.userCode != rhs.userCode {
+            return false
+        }
+        if lhs.verificationUrl != rhs.verificationUrl {
+            return false
+        }
+        if lhs.deviceCode != rhs.deviceCode {
+            return false
+        }
+        if lhs.intervalSeconds != rhs.intervalSeconds {
+            return false
+        }
+        if lhs.expiresInSeconds != rhs.expiresInSeconds {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(userCode)
+        hasher.combine(verificationUrl)
+        hasher.combine(deviceCode)
+        hasher.combine(intervalSeconds)
+        hasher.combine(expiresInSeconds)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeDeviceLogin: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> DeviceLogin {
+        return
+            try DeviceLogin(
+                userCode: FfiConverterString.read(from: &buf), 
+                verificationUrl: FfiConverterString.read(from: &buf), 
+                deviceCode: FfiConverterString.read(from: &buf), 
+                intervalSeconds: FfiConverterUInt64.read(from: &buf), 
+                expiresInSeconds: FfiConverterUInt64.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: DeviceLogin, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.userCode, into: &buf)
+        FfiConverterString.write(value.verificationUrl, into: &buf)
+        FfiConverterString.write(value.deviceCode, into: &buf)
+        FfiConverterUInt64.write(value.intervalSeconds, into: &buf)
+        FfiConverterUInt64.write(value.expiresInSeconds, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDeviceLogin_lift(_ buf: RustBuffer) throws -> DeviceLogin {
+    return try FfiConverterTypeDeviceLogin.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDeviceLogin_lower(_ value: DeviceLogin) -> RustBuffer {
+    return FfiConverterTypeDeviceLogin.lower(value)
+}
+
+
+/**
+ * One horizontally scrolling row of the home feed.
+ */
+public struct FeedShelf {
+    public var title: String
+    public var items: [SearchItem]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(title: String, items: [SearchItem]) {
+        self.title = title
+        self.items = items
+    }
+}
+
+
+
+extension FeedShelf: Equatable, Hashable {
+    public static func ==(lhs: FeedShelf, rhs: FeedShelf) -> Bool {
+        if lhs.title != rhs.title {
+            return false
+        }
+        if lhs.items != rhs.items {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(title)
+        hasher.combine(items)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeFeedShelf: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FeedShelf {
+        return
+            try FeedShelf(
+                title: FfiConverterString.read(from: &buf), 
+                items: FfiConverterSequenceTypeSearchItem.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: FeedShelf, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.title, into: &buf)
+        FfiConverterSequenceTypeSearchItem.write(value.items, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFeedShelf_lift(_ buf: RustBuffer) throws -> FeedShelf {
+    return try FfiConverterTypeFeedShelf.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFeedShelf_lower(_ value: FeedShelf) -> RustBuffer {
+    return FfiConverterTypeFeedShelf.lower(value)
 }
 
 
@@ -1756,6 +2350,76 @@ public func FfiConverterTypePlayerBarViewModel_lower(_ value: PlayerBarViewModel
 }
 
 
+/**
+ * What the confirmation dialog needs: a new profile exists. The payload itself is
+ * opaque to the UI and only the core reads it.
+ */
+public struct ProfileUpdate {
+    public var version: UInt32
+    public var clientVersion: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(version: UInt32, clientVersion: String) {
+        self.version = version
+        self.clientVersion = clientVersion
+    }
+}
+
+
+
+extension ProfileUpdate: Equatable, Hashable {
+    public static func ==(lhs: ProfileUpdate, rhs: ProfileUpdate) -> Bool {
+        if lhs.version != rhs.version {
+            return false
+        }
+        if lhs.clientVersion != rhs.clientVersion {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(version)
+        hasher.combine(clientVersion)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeProfileUpdate: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ProfileUpdate {
+        return
+            try ProfileUpdate(
+                version: FfiConverterUInt32.read(from: &buf), 
+                clientVersion: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ProfileUpdate, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.version, into: &buf)
+        FfiConverterString.write(value.clientVersion, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeProfileUpdate_lift(_ buf: RustBuffer) throws -> ProfileUpdate {
+    return try FfiConverterTypeProfileUpdate.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeProfileUpdate_lower(_ value: ProfileUpdate) -> RustBuffer {
+    return FfiConverterTypeProfileUpdate.lower(value)
+}
+
+
 public struct ScanStatusViewModel {
     public var isScanning: Bool
     public var current: UInt64
@@ -1843,6 +2507,104 @@ public func FfiConverterTypeScanStatusViewModel_lift(_ buf: RustBuffer) throws -
 #endif
 public func FfiConverterTypeScanStatusViewModel_lower(_ value: ScanStatusViewModel) -> RustBuffer {
     return FfiConverterTypeScanStatusViewModel.lower(value)
+}
+
+
+public struct SearchItem {
+    public var title: String
+    public var subtitle: String?
+    public var kind: SearchItemKind
+    public var browseId: String?
+    public var videoId: String?
+    public var thumbnail: String?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(title: String, subtitle: String?, kind: SearchItemKind, browseId: String?, videoId: String?, thumbnail: String?) {
+        self.title = title
+        self.subtitle = subtitle
+        self.kind = kind
+        self.browseId = browseId
+        self.videoId = videoId
+        self.thumbnail = thumbnail
+    }
+}
+
+
+
+extension SearchItem: Equatable, Hashable {
+    public static func ==(lhs: SearchItem, rhs: SearchItem) -> Bool {
+        if lhs.title != rhs.title {
+            return false
+        }
+        if lhs.subtitle != rhs.subtitle {
+            return false
+        }
+        if lhs.kind != rhs.kind {
+            return false
+        }
+        if lhs.browseId != rhs.browseId {
+            return false
+        }
+        if lhs.videoId != rhs.videoId {
+            return false
+        }
+        if lhs.thumbnail != rhs.thumbnail {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(title)
+        hasher.combine(subtitle)
+        hasher.combine(kind)
+        hasher.combine(browseId)
+        hasher.combine(videoId)
+        hasher.combine(thumbnail)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSearchItem: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SearchItem {
+        return
+            try SearchItem(
+                title: FfiConverterString.read(from: &buf), 
+                subtitle: FfiConverterOptionString.read(from: &buf), 
+                kind: FfiConverterTypeSearchItemKind.read(from: &buf), 
+                browseId: FfiConverterOptionString.read(from: &buf), 
+                videoId: FfiConverterOptionString.read(from: &buf), 
+                thumbnail: FfiConverterOptionString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: SearchItem, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.title, into: &buf)
+        FfiConverterOptionString.write(value.subtitle, into: &buf)
+        FfiConverterTypeSearchItemKind.write(value.kind, into: &buf)
+        FfiConverterOptionString.write(value.browseId, into: &buf)
+        FfiConverterOptionString.write(value.videoId, into: &buf)
+        FfiConverterOptionString.write(value.thumbnail, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchItem_lift(_ buf: RustBuffer) throws -> SearchItem {
+    return try FfiConverterTypeSearchItem.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchItem_lower(_ value: SearchItem) -> RustBuffer {
+    return FfiConverterTypeSearchItem.lower(value)
 }
 
 
@@ -1946,6 +2708,182 @@ public func FfiConverterTypeSettingsViewModel_lift(_ buf: RustBuffer) throws -> 
 #endif
 public func FfiConverterTypeSettingsViewModel_lower(_ value: SettingsViewModel) -> RustBuffer {
     return FfiConverterTypeSettingsViewModel.lower(value)
+}
+
+
+public struct StreamFormat {
+    public var mimeType: String?
+    public var bitrate: UInt64?
+    /**
+     * Direct URL when YouTube returned one (no cipher involved).
+     */
+    public var url: String?
+    /**
+     * `s=…&url=…` when the URL still needs the player's cipher; handed onward, not solved here.
+     */
+    public var signatureCipher: String?
+    public var expiresInSeconds: UInt64?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(mimeType: String?, bitrate: UInt64?, 
+        /**
+         * Direct URL when YouTube returned one (no cipher involved).
+         */url: String?, 
+        /**
+         * `s=…&url=…` when the URL still needs the player's cipher; handed onward, not solved here.
+         */signatureCipher: String?, expiresInSeconds: UInt64?) {
+        self.mimeType = mimeType
+        self.bitrate = bitrate
+        self.url = url
+        self.signatureCipher = signatureCipher
+        self.expiresInSeconds = expiresInSeconds
+    }
+}
+
+
+
+extension StreamFormat: Equatable, Hashable {
+    public static func ==(lhs: StreamFormat, rhs: StreamFormat) -> Bool {
+        if lhs.mimeType != rhs.mimeType {
+            return false
+        }
+        if lhs.bitrate != rhs.bitrate {
+            return false
+        }
+        if lhs.url != rhs.url {
+            return false
+        }
+        if lhs.signatureCipher != rhs.signatureCipher {
+            return false
+        }
+        if lhs.expiresInSeconds != rhs.expiresInSeconds {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(mimeType)
+        hasher.combine(bitrate)
+        hasher.combine(url)
+        hasher.combine(signatureCipher)
+        hasher.combine(expiresInSeconds)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeStreamFormat: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> StreamFormat {
+        return
+            try StreamFormat(
+                mimeType: FfiConverterOptionString.read(from: &buf), 
+                bitrate: FfiConverterOptionUInt64.read(from: &buf), 
+                url: FfiConverterOptionString.read(from: &buf), 
+                signatureCipher: FfiConverterOptionString.read(from: &buf), 
+                expiresInSeconds: FfiConverterOptionUInt64.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: StreamFormat, into buf: inout [UInt8]) {
+        FfiConverterOptionString.write(value.mimeType, into: &buf)
+        FfiConverterOptionUInt64.write(value.bitrate, into: &buf)
+        FfiConverterOptionString.write(value.url, into: &buf)
+        FfiConverterOptionString.write(value.signatureCipher, into: &buf)
+        FfiConverterOptionUInt64.write(value.expiresInSeconds, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeStreamFormat_lift(_ buf: RustBuffer) throws -> StreamFormat {
+    return try FfiConverterTypeStreamFormat.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeStreamFormat_lower(_ value: StreamFormat) -> RustBuffer {
+    return FfiConverterTypeStreamFormat.lower(value)
+}
+
+
+public struct StreamInfo {
+    public var formats: [StreamFormat]
+    public var playabilityStatus: String?
+    public var reason: String?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(formats: [StreamFormat], playabilityStatus: String?, reason: String?) {
+        self.formats = formats
+        self.playabilityStatus = playabilityStatus
+        self.reason = reason
+    }
+}
+
+
+
+extension StreamInfo: Equatable, Hashable {
+    public static func ==(lhs: StreamInfo, rhs: StreamInfo) -> Bool {
+        if lhs.formats != rhs.formats {
+            return false
+        }
+        if lhs.playabilityStatus != rhs.playabilityStatus {
+            return false
+        }
+        if lhs.reason != rhs.reason {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(formats)
+        hasher.combine(playabilityStatus)
+        hasher.combine(reason)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeStreamInfo: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> StreamInfo {
+        return
+            try StreamInfo(
+                formats: FfiConverterSequenceTypeStreamFormat.read(from: &buf), 
+                playabilityStatus: FfiConverterOptionString.read(from: &buf), 
+                reason: FfiConverterOptionString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: StreamInfo, into buf: inout [UInt8]) {
+        FfiConverterSequenceTypeStreamFormat.write(value.formats, into: &buf)
+        FfiConverterOptionString.write(value.playabilityStatus, into: &buf)
+        FfiConverterOptionString.write(value.reason, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeStreamInfo_lift(_ buf: RustBuffer) throws -> StreamInfo {
+    return try FfiConverterTypeStreamInfo.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeStreamInfo_lower(_ value: StreamInfo) -> RustBuffer {
+    return FfiConverterTypeStreamInfo.lower(value)
 }
 
 
@@ -2063,11 +3001,87 @@ public func FfiConverterTypeTrackItemViewModel_lower(_ value: TrackItemViewModel
 }
 
 
+public struct TrackRef {
+    public var title: String
+    public var videoId: String?
+    public var duration: String?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(title: String, videoId: String?, duration: String?) {
+        self.title = title
+        self.videoId = videoId
+        self.duration = duration
+    }
+}
+
+
+
+extension TrackRef: Equatable, Hashable {
+    public static func ==(lhs: TrackRef, rhs: TrackRef) -> Bool {
+        if lhs.title != rhs.title {
+            return false
+        }
+        if lhs.videoId != rhs.videoId {
+            return false
+        }
+        if lhs.duration != rhs.duration {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(title)
+        hasher.combine(videoId)
+        hasher.combine(duration)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTrackRef: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TrackRef {
+        return
+            try TrackRef(
+                title: FfiConverterString.read(from: &buf), 
+                videoId: FfiConverterOptionString.read(from: &buf), 
+                duration: FfiConverterOptionString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TrackRef, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.title, into: &buf)
+        FfiConverterOptionString.write(value.videoId, into: &buf)
+        FfiConverterOptionString.write(value.duration, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTrackRef_lift(_ buf: RustBuffer) throws -> TrackRef {
+    return try FfiConverterTypeTrackRef.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTrackRef_lower(_ value: TrackRef) -> RustBuffer {
+    return FfiConverterTypeTrackRef.lower(value)
+}
+
+
 public enum FluyerError {
 
     
     
     case InitFailed(reason: String
+    )
+    case ProviderFailed(reason: String
     )
 }
 
@@ -2088,6 +3102,9 @@ public struct FfiConverterTypeFluyerError: FfiConverterRustBuffer {
         case 1: return .InitFailed(
             reason: try FfiConverterString.read(from: &buf)
             )
+        case 2: return .ProviderFailed(
+            reason: try FfiConverterString.read(from: &buf)
+            )
 
          default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -2102,6 +3119,11 @@ public struct FfiConverterTypeFluyerError: FfiConverterRustBuffer {
         
         case let .InitFailed(reason):
             writeInt(&buf, Int32(1))
+            FfiConverterString.write(reason, into: &buf)
+            
+        
+        case let .ProviderFailed(reason):
+            writeInt(&buf, Int32(2))
             FfiConverterString.write(reason, into: &buf)
             
         }
@@ -2326,6 +3348,173 @@ extension NativeRepeatMode: Equatable, Hashable {}
 
 
 
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
+public enum SearchItemKind {
+    
+    case track
+    case album
+    case artist
+    case playlist
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSearchItemKind: FfiConverterRustBuffer {
+    typealias SwiftType = SearchItemKind
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SearchItemKind {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .track
+        
+        case 2: return .album
+        
+        case 3: return .artist
+        
+        case 4: return .playlist
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: SearchItemKind, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .track:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .album:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .artist:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .playlist:
+            writeInt(&buf, Int32(4))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchItemKind_lift(_ buf: RustBuffer) throws -> SearchItemKind {
+    return try FfiConverterTypeSearchItemKind.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSearchItemKind_lower(_ value: SearchItemKind) -> RustBuffer {
+    return FfiConverterTypeSearchItemKind.lower(value)
+}
+
+
+
+extension SearchItemKind: Equatable, Hashable {}
+
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
+public enum TokenStatus {
+    
+    /**
+     * Authorisation accepted; stored in the secret store already.
+     */
+    case granted(accessToken: String, refreshToken: String?, expiresIn: UInt64
+    )
+    /**
+     * User has not approved yet; poll again after `interval_seconds`.
+     */
+    case pending
+    case denied
+    case expired
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTokenStatus: FfiConverterRustBuffer {
+    typealias SwiftType = TokenStatus
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TokenStatus {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .granted(accessToken: try FfiConverterString.read(from: &buf), refreshToken: try FfiConverterOptionString.read(from: &buf), expiresIn: try FfiConverterUInt64.read(from: &buf)
+        )
+        
+        case 2: return .pending
+        
+        case 3: return .denied
+        
+        case 4: return .expired
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TokenStatus, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .granted(accessToken,refreshToken,expiresIn):
+            writeInt(&buf, Int32(1))
+            FfiConverterString.write(accessToken, into: &buf)
+            FfiConverterOptionString.write(refreshToken, into: &buf)
+            FfiConverterUInt64.write(expiresIn, into: &buf)
+            
+        
+        case .pending:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .denied:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .expired:
+            writeInt(&buf, Int32(4))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTokenStatus_lift(_ buf: RustBuffer) throws -> TokenStatus {
+    return try FfiConverterTypeTokenStatus.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTokenStatus_lower(_ value: TokenStatus) -> RustBuffer {
+    return FfiConverterTypeTokenStatus.lower(value)
+}
+
+
+
+extension TokenStatus: Equatable, Hashable {}
+
+
+
 
 
 
@@ -2434,6 +3623,54 @@ extension FfiConverterCallbackInterfaceFluyerEventListener : FfiConverter {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionUInt64: FfiConverterRustBuffer {
+    typealias SwiftType = UInt64?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterUInt64.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterUInt64.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
+    typealias SwiftType = String?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterString.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterString.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionData: FfiConverterRustBuffer {
     typealias SwiftType = Data?
 
@@ -2498,6 +3735,30 @@ fileprivate struct FfiConverterOptionTypeAlbumDetailViewModel: FfiConverterRustB
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterTypeAlbumDetailViewModel.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeProfileUpdate: FfiConverterRustBuffer {
+    typealias SwiftType = ProfileUpdate?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeProfileUpdate.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeProfileUpdate.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -2629,6 +3890,31 @@ fileprivate struct FfiConverterSequenceTypeColorRgb: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceTypeFeedShelf: FfiConverterRustBuffer {
+    typealias SwiftType = [FeedShelf]
+
+    public static func write(_ value: [FeedShelf], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeFeedShelf.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [FeedShelf] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [FeedShelf]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeFeedShelf.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceTypeLyricLine: FfiConverterRustBuffer {
     typealias SwiftType = [LyricLine]
 
@@ -2654,6 +3940,56 @@ fileprivate struct FfiConverterSequenceTypeLyricLine: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceTypeSearchItem: FfiConverterRustBuffer {
+    typealias SwiftType = [SearchItem]
+
+    public static func write(_ value: [SearchItem], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeSearchItem.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [SearchItem] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [SearchItem]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeSearchItem.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeStreamFormat: FfiConverterRustBuffer {
+    typealias SwiftType = [StreamFormat]
+
+    public static func write(_ value: [StreamFormat], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeStreamFormat.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [StreamFormat] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [StreamFormat]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeStreamFormat.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceTypeTrackItemViewModel: FfiConverterRustBuffer {
     typealias SwiftType = [TrackItemViewModel]
 
@@ -2671,6 +4007,31 @@ fileprivate struct FfiConverterSequenceTypeTrackItemViewModel: FfiConverterRustB
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeTrackItemViewModel.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeTrackRef: FfiConverterRustBuffer {
+    typealias SwiftType = [TrackRef]
+
+    public static func write(_ value: [TrackRef], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeTrackRef.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [TrackRef] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [TrackRef]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeTrackRef.read(from: &buf))
         }
         return seq
     }
@@ -2761,6 +4122,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_artwork_load_current_thumbnail() != 7013) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_artwork_load_queue_thumbnail() != 17170) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_artwork_load_track_thumbnail() != 53146) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -2822,6 +4186,48 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_player_toggle_play() != 34310) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_album() != 57674) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_apply_profile() != 7544) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_begin_login() != 58874) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_check_profile() != 10232) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_dismiss_profile() != 62664) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_home() != 37606) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_is_logged_in() != 49001) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_logout() != 29381) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_lyrics() != 52684) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_play_track() != 11338) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_poll_login() != 57948) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_profile_version() != 5532) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_search() != 11689) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_fluyer_core_checksum_method_fluyerappengine_provider_stream_formats() != 1874) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_fluyer_core_checksum_method_fluyerappengine_queue_clear() != 53786) {

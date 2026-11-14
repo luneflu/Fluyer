@@ -34,6 +34,17 @@ impl FluyerEngine {
         )
     }
 
+    /// Cover for a queue position. Works for provider tracks too: their cover lives in
+    /// the artwork cache under the audio path, so no library index is needed.
+    pub fn artwork_queue_thumbnail(&self, index: usize, max_size: u32) -> Option<Arc<Vec<u8>>> {
+        let track = self.player.queue_get_by_index(index)?;
+        self.artwork_cached_thumbnail(
+            format!("queue:{}:{}", index, track.path),
+            || self.artwork_resolve_track(&track, None),
+            max_size,
+        )
+    }
+
     pub fn artwork_current_thumbnail(&self, max_size: u32) -> Option<Arc<Vec<u8>>> {
         let track = self.player.get_current_track()?;
         self.artwork_cached_thumbnail(

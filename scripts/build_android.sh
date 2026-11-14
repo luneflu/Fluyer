@@ -33,6 +33,11 @@ export CC_aarch64_linux_android="$TOOLCHAIN/${TARGET}${API}-clang"
 export AR_aarch64_linux_android="$TOOLCHAIN/llvm-ar"
 export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$TOOLCHAIN/${TARGET}${API}-clang"
 
+# rquickjs-sys generates its bindings with bindgen on Android (no prebuilt aarch64
+# header set), so clang needs the NDK sysroot and its own include dir.
+BINDGEN_CLANG_DIR="$(ls -d "$TOOLCHAIN"/../lib/clang/* | head -1)"
+export BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android="--sysroot=$TOOLCHAIN/../sysroot -I$TOOLCHAIN/../sysroot/usr/include -I$TOOLCHAIN/../sysroot/usr/include/aarch64-linux-android -I$BINDGEN_CLANG_DIR/include"
+
 echo "==> Building fluyer_core ($PROFILE, $TARGET)..."
 rustup target add "$TARGET" >/dev/null 2>&1 || true
 cargo build --manifest-path "$CRATE_DIR/Cargo.toml" --lib --target "$TARGET" "${CARGO_FLAGS[@]}"

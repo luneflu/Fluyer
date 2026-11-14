@@ -15,6 +15,7 @@ mod library;
 mod lyrics;
 mod memory;
 mod player;
+mod provider;
 mod queue;
 mod settings;
 

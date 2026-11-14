@@ -28,6 +28,19 @@ struct HomeView: View {
             }
         }
         .toolbar {
+            // Catalogue switch, left top: local library or YouTube Music. Not on the
+            // full-screen player, which has nothing to browse.
+            if !state.playback.showPlayView {
+                ToolbarItem(placement: .navigation) {
+                    Picker("Source", selection: $state.browseSource) {
+                        Label("Library", systemImage: "folder").tag(BrowseSource.local)
+                        Label("YouTube Music", systemImage: "play.square.stack").tag(BrowseSource.youtubeMusic)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelStyle(.iconOnly)
+                    .help("Library / YouTube Music")
+                }
+            }
             // Adding folders lives in File ▸ Open Music Folder (⌘O) and Settings.
             if state.library.scanStatus.isScanning {
                 ToolbarItem(placement: .automatic) {
@@ -36,7 +49,7 @@ struct HomeView: View {
             }
             // Search, then the queue toggle at the far right, in one item so the
             // order holds. `.primaryAction` is trailing in a titled, unified toolbar.
-            if !state.playback.showPlayView {
+            if !state.playback.showPlayView && state.browseSource == .local {
                 ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: Layout.Window.toolbarSpacing) {
                         Picker("View", selection: Bindable(state.selection).mode) {
@@ -95,26 +108,34 @@ struct HomeView: View {
             GeometryReader { geo in
                 let sidebarWidth = AlbumMetrics.sidebarWidth(forWidth: geo.size.width)
                 ZStack(alignment: .trailing) {
-                    VStack(spacing: 0) {
-                        switch state.selection.mode {
-                        case .albums:
-                            AlbumGridView(filter: state.selection, library: state.library, covers: state.covers)
-                                .transition(.opacity)
-                        case .tracks:
-                            AlbumCarouselView(filter: state.selection, covers: state.covers)
+                    // Cards behind the open queue fade out (useAlbumList / useMusicList).
+                    let sidebarMinX = state.queue.isOpen ? geo.size.width - Layout.Queue.outerInset - sidebarWidth : .infinity
+                    Group {
+                        if state.browseSource == .youtubeMusic {
+                            // Padded per piece, like the local library (grid 16, carousel 16).
+                            YoutubeMusicView(youtube: state.youtube)
+                        } else {
+                            VStack(spacing: 0) {
+                                switch state.selection.mode {
+                                case .albums:
+                                    AlbumGridView(filter: state.selection, library: state.library, covers: state.covers)
+                                        .transition(.opacity)
+                                case .tracks:
+                                    AlbumCarouselView(filter: state.selection, covers: state.covers)
 
-                            if state.selection.isActive {
-                                AlbumHeaderView(filter: state.selection)
-                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                                    if state.selection.isActive {
+                                        AlbumHeaderView(filter: state.selection)
+                                            .transition(.opacity.combined(with: .move(edge: .top)))
+                                    }
+
+                                    MusicGridView(filter: state.selection, library: state.library, playback: state.playback,
+                                                  covers: state.covers, onAddFolder: state.promptAddFolder)
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                }
                             }
-
-                            MusicGridView(filter: state.selection, library: state.library, playback: state.playback,
-                                          covers: state.covers, onAddFolder: state.promptAddFolder)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                     }
-                    // Cards behind the open queue fade out (useAlbumList / useMusicList).
-                    .environment(\.sidebarMinX, state.queue.isOpen ? geo.size.width - Layout.Queue.outerInset - sidebarWidth : .infinity)
+                    .environment(\.sidebarMinX, sidebarMinX)
 
                     if state.queue.isOpen {
                         QueueView(queue: state.queue, playback: state.playback, library: state.library,
